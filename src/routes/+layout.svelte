@@ -1,12 +1,15 @@
 <script>
+	import { page } from '$app/stores';
 	import '../app.css';
 	import Canvas from '$lib/components/Canvas.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
-    import ToastContainer from '$lib/components/ToastContainer.svelte';
+	import ToastContainer from '$lib/components/ToastContainer.svelte';
 
-    /** @type {import('./$types').LayoutData} */
-    export let data;
+	/** @type {import('./$types').LayoutData} */
+	export let data;
+
+	$: isAdminRoute = $page.url.pathname.startsWith('/admin');
 </script>
 
 <svelte:head>
@@ -23,12 +26,17 @@
 	/>
 </svelte:head>
 
-<Canvas />
-<Header {data} />
-
-<main>
+{#if isAdminRoute}
+	<!-- For admin routes, render only the slot and toasts -->
 	<slot />
-</main>
+{:else}
+	<!-- For public routes, render the full public layout -->
+	<Canvas />
+	<Header {data} />
+	<main>
+		<slot />
+	</main>
+	<Footer />
+{/if}
 
-<Footer />
 <ToastContainer />
