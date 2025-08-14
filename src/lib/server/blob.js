@@ -1,5 +1,5 @@
 import { put } from '@vercel/blob';
-import { BLOB_READ_WRITE_TOKEN } from '$env/dynamic/private';
+import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
 import crypto from 'crypto';
 
 /**
