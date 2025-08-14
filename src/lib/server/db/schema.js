@@ -95,6 +95,20 @@ export const lead = pgTable('lead', {
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
 
+// --- SITE SETTINGS ---
+export const siteSettings = pgTable('site_setting', {
+	key: varchar('key', { length: 255 }).primaryKey(),
+	value: text('value')
+});
+
+// --- LOCATIONS ---
+export const location = pgTable('location', {
+	id: serial('id').primaryKey(),
+	countryName: varchar('country_name', { length: 255 }).notNull(),
+	countryCode: varchar('country_code', { length: 2 }).notNull(), // For geo-targeting (e.g., ZW, ZA)
+	address: text('address').notNull()
+});
+
 // --- RELATIONS for Drizzle Kit ---
 export const userRelations = relations(userTable, ({ many }) => ({
 	blogPosts: many(blogPost)
