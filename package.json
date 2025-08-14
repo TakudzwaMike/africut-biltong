@@ -45,11 +45,12 @@
 		"@lucia-auth/adapter-drizzle": "^1.0.7",
 		"@oslojs/crypto": "^1.0.1",
 		"@oslojs/encoding": "^1.1.0",
+		"@tiptap/core": "^2.5.7",
+		"@tiptap/starter-kit": "^2.5.7",
 		"@vercel/blob": "^0.23.4",
 		"drizzle-orm": "^0.40.0",
 		"lucia": "^3.2.0",
 		"oslo": "^1.2.1",
-		"postgres": "^3.4.5",
-		"svelte-tiptap": "^2.2.0"
+		"postgres": "^3.4.5"
 	}
 }
