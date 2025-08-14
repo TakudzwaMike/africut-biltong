@@ -1,11 +1,17 @@
 <script>
-    /** @type {import('../../routes/$types').PageData} */
-    export let data;
+	/** @type {import('../../routes/$types').PageData} */
+	export let data;
 </script>
 
 <header class="sticky top-0 z-50 border-b border-main/10 bg-light/80 px-8 backdrop-blur-md">
 	<nav class="mx-auto flex max-w-6xl items-center justify-between py-4">
-		<a href="/" class="text-xl font-bold">Vision AI Tech</a>
+		<a href="/" class="text-xl font-bold">
+			{#if data.settings?.logoUrl}
+				<img src={data.settings.logoUrl} alt={data.settings.siteName} class="h-8 object-contain" />
+			{:else}
+				{data.settings?.siteName || 'Vision AI Tech'}
+			{/if}
+		</a>
 		<ul class="flex items-center gap-6">
 			<li>
 				<a
