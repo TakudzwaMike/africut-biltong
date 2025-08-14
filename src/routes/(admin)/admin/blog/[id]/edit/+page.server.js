@@ -46,11 +46,6 @@ export const actions = {
 				columns: { isPublished: true }
 			});
 
-			const currentPost = await db.query.blogPost.findFirst({
-				where: eq(blogPost.id, id),
-				columns: { isPublished: true }
-			});
-
 			const shouldSetPublishedDate = isPublished && !currentPost?.isPublished;
 
 			await db
