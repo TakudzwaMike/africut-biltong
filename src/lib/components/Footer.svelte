@@ -1,9 +1,23 @@
+<script>
+	import { page } from '$app/stores';
+</script>
+
 <footer class="relative z-10 border-t border-main/10 bg-light">
 	<div class="mx-auto max-w-6xl px-8 py-12">
 		<div class="grid grid-cols-1 gap-12 text-center sm:grid-cols-3 sm:text-left">
 			<!-- Column 1: Branding -->
 			<div class="flex flex-col items-center sm:items-start">
-				<a href="/" class="text-2xl font-bold">Vision AI Tech</a>
+				<a href="/" class="text-xl font-bold">
+					{#if $page.data.settings?.logoUrl}
+						<img
+							src={$page.data.settings.logoUrl}
+							alt={$page.data.settings.siteName}
+							class="h-8 object-contain"
+						/>
+					{:else}
+						{$page.data.settings?.siteName || 'Vision AI Tech'}
+					{/if}
+				</a>
 				<p class="mt-2 text-main/70">Smart, Simple AI Solutions.</p>
 			</div>
 
@@ -53,16 +67,28 @@
 							>contact@vision-ai.tech</a
 						>
 					</li>
-					<li class="text-main/80">Harare, Zimbabwe</li>
-					<li class="text-main/80">Johannesburg, South Africa</li>
+					{#if $page.data.locations?.length > 0}
+						{#each $page.data.locations as loc}
+							<li
+								class="transition {$page.data.userCountryCode === loc.countryCode
+									? 'text-accent font-bold'
+									: 'text-main/80'}"
+							>
+								{loc.address}
+							</li>
+						{/each}
+					{/if}
 				</ul>
 			</div>
 		</div>
 
 		<!-- Bottom Bar -->
-		<div class="mt-12 flex flex-col items-center border-t border-main/10 pt-8 sm:flex-row sm:justify-between">
+		<div
+			class="mt-12 flex flex-col items-center border-t border-main/10 pt-8 sm:flex-row sm:justify-between"
+		>
 			<p class="text-sm text-main/60">
-				© {new Date().getFullYear()} Vision AI Tech. All Rights Reserved.
+				© {new Date().getFullYear()} {$page.data.settings?.siteName || 'Vision AI Tech'}. All
+				Rights Reserved.
 			</p>
 			<a href="#hero" class="mt-4 text-sm font-bold text-main/60 transition hover:text-accent sm:mt-0">
 				Back to Top ↑
