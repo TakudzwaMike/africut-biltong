@@ -1,3 +1,6 @@
+# Vision AI Website
+It's still a work in progress as we try to find the design that will work for us and will be inherited by the store 
+
 # sv
 
 Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
