@@ -6,7 +6,7 @@
 @theme {
   --color-main: #12102B;
   --color-accent: #C0D532;
-  --color-light: #FEFEFE;
+  --color-light: #FCFDEB;
 
   --shadow-accent-glow: 0 0 15px rgba(192, 213, 50, 0.6);
   --drop-shadow-accent-glow: drop-shadow(0 0 6px rgba(192, 213, 50, 0.6));
