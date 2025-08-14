@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
-import { blogPost, caseStudy } from '$lib/server/db/schema.js';
-import { eq, desc } from 'drizzle-orm';
+import { blogPost, caseStudy, client } from '$lib/server/db/schema.js';
+import { eq, desc, isNotNull } from 'drizzle-orm';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load() {
@@ -26,8 +26,14 @@ export async function load() {
 		}
 	});
 
+	const clients = await db.query.client.findMany({
+		where: isNotNull(client.logoUrl),
+		orderBy: desc(client.id)
+	});
+
 	return {
 		caseStudies,
-		posts
+		posts,
+		clients
 	};
 }

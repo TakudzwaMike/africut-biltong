@@ -21,13 +21,26 @@
 <!-- Section 1: Hero -->
 <Hero />
 
-<!-- Section 2: Trust Bar (simple version) -->
-<div class="bg-light py-8 text-center">
-	<h3 class="text-sm font-bold uppercase tracking-widest text-main/60">
-		Trusted by Industry Leaders
-	</h3>
-	<!-- In the future, you can add client logos here -->
-</div>
+<!-- Section 2: Trust Bar (Dynamic) -->
+{#if data.clients.length > 0}
+	<div class="bg-light py-16 text-center">
+		<div class="mx-auto max-w-6xl px-8">
+			<h3 class="text-sm font-bold uppercase tracking-widest text-main/60">
+				Trusted by Industry Leaders
+			</h3>
+			<div class="mt-10 flex flex-wrap items-center justify-center gap-x-12 gap-y-8">
+				{#each data.clients as client}
+					<img
+						src={client.logoUrl}
+						alt="{client.name} Logo"
+						title={client.name}
+						class="h-10 w-auto object-contain opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0 sm:h-12"
+					/>
+				{/each}
+			</div>
+		</div>
+	</div>
+{/if}
 
 <!-- Section 3: Solutions Overview -->
 <SolutionsOverview />

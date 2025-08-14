@@ -1,0 +1,90 @@
+<script>
+	import { enhance } from '$app/forms';
+	import { toast } from '$lib/toast-service';
+
+	let { data, form } = $props();
+
+	let siteSettings = $state(data);
+
+	$effect(() => {
+		if (form?.success) {
+			toast.success(form.message);
+		}
+	});
+</script>
+
+<div class="p-8">
+	<h1 class="text-3xl font-bold tracking-tight text-main">Site Settings</h1>
+	<p class="mt-2 text-base text-main/70">Manage global branding and logos for the website.</p>
+
+	<form
+		method="POST"
+		enctype="multipart/form-data"
+		use:enhance={() => {
+			return ({ result }) => {
+				if (result.type === 'success' && result.data) {
+					// We can't update the data store directly after a successful form post
+					// without a full page reload or more complex state management.
+					// A toast notification is the simplest feedback.
+					toast.success('Settings saved! Reloading page to see changes.');
+					setTimeout(() => window.location.reload(), 1500);
+				}
+			};
+		}}
+		class="mt-8 max-w-2xl space-y-6"
+	>
+		<div class="rounded-xl border border-main/10 p-6">
+			<h3 class="text-lg font-bold">Branding</h3>
+			<div class="mt-4 space-y-6">
+				<div>
+					<label for="siteName" class="mb-1 block font-medium text-main/80">Site Name</label>
+					<input
+						type="text"
+						id="siteName"
+						name="siteName"
+						required
+						bind:value={siteSettings.siteName}
+						class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+					/>
+				</div>
+
+				<div>
+					<label for="logo" class="mb-1 block font-medium text-main/80">Site Logo</label>
+					{#if siteSettings.logoUrl}
+						<div class="mb-2">
+							<p class="text-sm text-main/80">Current Logo:</p>
+							<img
+								src={siteSettings.logoUrl}
+								alt="Current logo"
+								class="mt-1 h-12 max-w-48 rounded-md bg-main/5 object-contain p-1"
+							/>
+						</div>
+					{/if}
+					<input
+						type="file"
+						id="logo"
+						name="logo"
+						accept="image/png, image/jpeg, image/svg+xml, image/webp"
+						class="w-full rounded-md border border-main/10 bg-main/5 text-sm text-main/80 file:mr-4 file:border-0 file:bg-main/10 file:px-4 file:py-2 file:font-bold"
+					/>
+					<p class="mt-1 text-xs text-main/60">
+						Optional. Uploading a new file will replace the current logo.
+					</p>
+				</div>
+			</div>
+		</div>
+
+		{#if form?.message && !form.success}
+			<p class="text-center font-bold text-red-600">{form.message}</p>
+		{/if}
+
+		<div class="text-left">
+			<button
+				type="submit"
+				class="rounded-md bg-accent px-6 py-2 font-bold text-main shadow-lg shadow-accent/30 transition hover:-translate-y-0.5"
+			>
+				Save Settings
+			</button>
+		</div>
+	</form>
+</div>

@@ -1,6 +1,18 @@
 <script>
 	let { data, form } = $props();
 	const { solution } = data;
+
+	// This state will hold the message content.
+	// It defaults to the form data if a submission failed, otherwise it's empty.
+	let message = $state(form?.data?.message ?? '');
+
+	// This effect runs when the component loads.
+	// If there's a solution and the form hasn't been submitted, it pre-fills the message.
+	$effect(() => {
+		if (solution && !form?.data?.message) {
+			message = `I'm interested in discussing your "${solution.solutionName}" solution.`;
+		}
+	});
 </script>
 
 <section id="contact" class="relative z-10">
@@ -84,7 +96,8 @@
 								placeholder="Message"
 								required
 								class="block w-full rounded-md border-0 bg-light/5 px-3.5 py-2 text-light shadow-sm ring-1 ring-inset ring-light/10 placeholder:text-light/50 focus:ring-2 focus:ring-inset focus:ring-accent"
-							>{form?.data?.message ?? ''}</textarea>
+								bind:value={message}
+							></textarea>
 						</div>
 					</div>
 					<div class="mt-10 text-center">
