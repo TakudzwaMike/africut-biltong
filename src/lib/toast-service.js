@@ -9,7 +9,7 @@ export const toasts = writable([]);
  * @param {string} options.message - The message to display.
  * @param {number} [options.duration=3000] - How long the toast should be visible.
  */
-function addToast({ type = 'info', message, duration = 3000 }) {
+export function addToast({ type = 'info', message, duration = 3000 }) {
 	const id = Math.random().toString(36).slice(2, 9);
 
 	// Add the new toast to the store
@@ -27,7 +27,7 @@ function addToast({ type = 'info', message, duration = 3000 }) {
  * Removes a toast from the list by its ID.
  * @param {string} id - The ID of the toast to remove.
  */
-function removeToast(id) {
+export function removeToast(id) {
 	toasts.update((all) => all.filter((t) => t.id !== id));
 }
 

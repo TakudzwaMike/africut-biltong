@@ -1,7 +1,6 @@
-import { PUBLIC_STRAPI_URL } from '$env/static/public';
+import { db } from '$lib/server/db';
 
-export async function load({ fetch }) {
-    const response = await fetch(`${PUBLIC_STRAPI_URL}/api/solutions`);
-    const apiData = await response.json();
-    return { solutions: apiData.data };
+export async function load() {
+	const solutions = await db.query.solution.findMany();
+	return { solutions };
 }

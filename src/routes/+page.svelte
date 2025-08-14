@@ -3,8 +3,19 @@
 	import CaseStudyHighlights from '$lib/components/CaseStudyHighlights.svelte';
 	import SolutionsOverview from '$lib/components/SolutionsOverview.svelte';
 
-	/** @type {import('./$types').PageData} */
-	export let data;
+	let { data } = $props();
+
+	/**
+	 * Extracts the first paragraph of text from a TipTap JSON object.
+	 * @param {object | null | undefined} richText
+	 * @returns {string}
+	 */
+	function getExcerpt(richText) {
+		if (!richText?.content) return '';
+		const paragraph = richText.content.find((node) => node.type === 'paragraph');
+		if (!paragraph?.content) return '';
+		return paragraph.content.map((node) => node.text).join('') + '...';
+	}
 </script>
 
 <!-- Section 1: Hero -->
@@ -26,7 +37,7 @@
 
 <!-- Section 5: Technology Teaser -->
 <section class="relative z-10">
-	<div class="mx-auto max-w-6xl px-8 py-20 sm:py-24 text-center">
+	<div class="mx-auto max-w-6xl px-8 py-20 text-center sm:py-24">
 		<h2 class="text-3xl font-bold tracking-tight text-main sm:text-4xl">
 			Built on a Foundation of Data and Trust
 		</h2>
@@ -44,10 +55,40 @@
 	</div>
 </section>
 
-<!-- Section 6: Final CTA -->
+<!-- Section 6: Blog Highlights -->
+<section id="blog-highlights" class="relative z-10">
+	<div class="mx-auto max-w-6xl px-8 py-20 sm:py-24">
+		<div class="text-center">
+			<h2 class="text-3xl font-bold tracking-tight text-main sm:text-4xl">Latest Insights</h2>
+			<p class="mx-auto mt-4 max-w-2xl text-lg leading-8 text-main/70">
+				Explore our latest articles and findings on the intersection of AI and heavy industry.
+			</p>
+		</div>
+		<div class="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
+			{#each data.posts as post}
+				<a href={`/blog/${post.slug}`} class="corner-border block">
+					<h3 class="text-xl font-bold">{post.title}</h3>
+					<p class="mt-2 text-sm text-main/70">
+						{getExcerpt(post.contentJson)}
+					</p>
+					<cite class="mt-4 block text-sm font-bold not-italic text-accent drop-shadow-accent-glow">
+						Read More →
+					</cite>
+				</a>
+			{/each}
+		</div>
+		<div class="mt-16 text-center">
+			<a href="/blog" class="font-bold text-accent transition hover:drop-shadow-accent-glow"
+				>Visit The Blog →</a
+			>
+		</div>
+	</div>
+</section>
+
+<!-- Section 7: Final CTA -->
 <section class="relative z-10">
 	<div class="mx-auto max-w-6xl px-8 pb-20 sm:pb-24">
-		<div class="rounded-xl bg-main p-8 sm:p-16 text-center">
+		<div class="rounded-xl bg-main p-8 text-center sm:p-16">
 			<h2 class="text-3xl font-bold tracking-tight text-light sm:text-4xl">
 				Ready to See Your Data in a New Light?
 			</h2>

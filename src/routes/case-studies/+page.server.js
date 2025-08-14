@@ -1,7 +1,10 @@
-import { PUBLIC_STRAPI_URL } from '$env/static/public';
+import { db } from '$lib/server/db';
 
-export async function load({ fetch }) {
-    const response = await fetch(`${PUBLIC_STRAPI_URL}/api/case-studies?populate=*`);
-    const apiData = await response.json();
-    return { caseStudies: apiData.data };
+export async function load() {
+	const caseStudies = await db.query.caseStudy.findMany({
+		with: {
+			results: true
+		}
+	});
+	return { caseStudies };
 }

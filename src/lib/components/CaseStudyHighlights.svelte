@@ -20,7 +20,7 @@
 							"{caseStudy.results[0]?.kpiValue || 'Significant'}"
 						</blockquote>
 						<cite class="mt-4 block font-bold not-italic text-accent drop-shadow-accent-glow">
-							- {caseStudy.clientName}
+							- {caseStudy.client?.name || 'A Valued Partner'}
 						</cite>
                         <p class="mt-2 text-sm text-main/60">{caseStudy.title}</p>
 					</a>

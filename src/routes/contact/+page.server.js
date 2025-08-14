@@ -1,31 +1,48 @@
-// File: src/routes/contact/+page.server.js
-import { PUBLIC_STRAPI_URL } from '$env/static/public';
+import { db } from '$lib/server/db';
+import { lead as leadTable, solution as solutionTable } from '$lib/server/db/schema';
 import { fail } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
 
-/** @type {import('./$types').Actions} */
+export async function load({ url }) {
+	const solutionSlug = url.searchParams.get('solution');
+	if (!solutionSlug) {
+		return { solution: null };
+	}
+
+	const solution = await db.query.solution.findFirst({
+		where: eq(solutionTable.slug, solutionSlug)
+	});
+
+	return { solution };
+}
+
 export const actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 
+		const { firstName, lastName, email, message, solutionId } = data;
+
+		if (!email || !firstName || !lastName || !message) {
+			return fail(400, { data, message: 'All fields are required.' });
+		}
+
 		try {
-			const response = await fetch(`${PUBLIC_STRAPI_URL}/api/leads`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				// Strapi expects the payload to be wrapped in a 'data' object
-				body: JSON.stringify({ data })
+			await db.insert(leadTable).values({
+				firstName: String(firstName),
+				lastName: String(lastName),
+				email: String(email),
+				message: String(message),
+				solutionId: solutionId ? Number(solutionId) : null
 			});
 
-			if (!response.ok) {
-				const errorData = await response.json();
-				console.error('Strapi error:', errorData);
-				return fail(response.status, { message: 'Failed to submit form.' });
-			}
-
-			return { success: true, message: "Thank you! We've received your message and will be in touch shortly." };
+			return {
+				success: true,
+				message: "Thank you! We've received your message and will be in touch shortly."
+			};
 		} catch (error) {
-			console.error('Network or server error:', error);
-			return fail(500, { message: 'Could not connect to the server.' });
+			console.error('Database error:', error);
+			return fail(500, { data, message: 'Could not submit your message due to a server error.' });
 		}
 	}
 };

@@ -18,8 +18,12 @@ export function holographic(node, options = {}) {
 	const { tiltStrength = 15 } = options;
 	let rect;
 
-	const onMouseMove = (e) => {
+	const updateRect = () => {
 		rect = node.getBoundingClientRect();
+	};
+
+	const onMouseMove = (e) => {
+		if (!rect) return;
 		const mouseX = e.clientX;
 		const mouseY = e.clientY;
 
@@ -36,15 +40,13 @@ export function holographic(node, options = {}) {
 		node.style.transform = 'scale(1) rotateX(0deg) rotateY(0deg)';
 	};
 
-	node.addEventListener('mouseenter', () => {
-		rect = node.getBoundingClientRect(); // Get dimensions on enter
-	});
+	node.addEventListener('mouseenter', updateRect);
 	node.addEventListener('mousemove', onMouseMove);
 	node.addEventListener('mouseleave', onMouseLeave);
 
 	return {
 		destroy() {
-			node.removeEventListener('mouseenter', () => (rect = node.getBoundingClientRect()));
+			node.removeEventListener('mouseenter', updateRect);
 			node.removeEventListener('mousemove', onMouseMove);
 			node.removeEventListener('mouseleave', onMouseLeave);
 		}
