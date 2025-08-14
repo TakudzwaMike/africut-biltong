@@ -1,5 +1,8 @@
 # Vision AI Website
-It's still a work in progress as we try to find the design that will work for us and will be inherited by the store 
+It's still a work in progress as we try to find the design that will work for us and will be inherited by the store
+
+## todo 
+- simplify the management process
 
 # Built using sveltekit
 
