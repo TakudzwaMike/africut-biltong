@@ -109,9 +109,37 @@ export const location = pgTable('location', {
 	address: text('address').notNull()
 });
 
+// --- PRODUCTS ---
+export const product = pgTable('product', {
+	id: serial('id').primaryKey(),
+	slug: varchar('slug', { length: 255 }).notNull().unique(),
+	name: varchar('name', { length: 255 }).notNull(),
+	imageUrl: text('image_url'),
+	shortDescription: text('short_description'),
+	longDescription: jsonb('long_description') // For rich text content
+});
+
+// --- AUDIT LOG ---
+export const auditLog = pgTable('audit_log', {
+	id: serial('id').primaryKey(),
+	userId: text('user_id').references(() => userTable.id, { onDelete: 'set null' }),
+	action: varchar('action', { length: 255 }).notNull(), // e.g., 'create_product', 'delete_client'
+	targetId: varchar('target_id', { length: 255 }), // e.g., the ID of the product that was created
+	data: jsonb('data'), // A snapshot of the created/updated/deleted data
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
+});
+
 // --- RELATIONS for Drizzle Kit ---
 export const userRelations = relations(userTable, ({ many }) => ({
-	blogPosts: many(blogPost)
+	blogPosts: many(blogPost),
+	auditLogs: many(auditLog)
+}));
+
+export const auditLogRelations = relations(auditLog, ({ one }) => ({
+	user: one(userTable, {
+		fields: [auditLog.userId],
+		references: [userTable.id]
+	})
 }));
 
 export const blogPostRelations = relations(blogPost, ({ one }) => ({
