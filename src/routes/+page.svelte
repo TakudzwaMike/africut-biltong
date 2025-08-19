@@ -2,6 +2,7 @@
 	import Hero from '$lib/components/Hero.svelte';
 	import CaseStudyHighlights from '$lib/components/CaseStudyHighlights.svelte';
 	import SolutionsOverview from '$lib/components/SolutionsOverview.svelte';
+	import ImagePlaceholder from '$lib/components/ImagePlaceholder.svelte';
 
 	let { data } = $props();
 
@@ -48,22 +49,30 @@
 <!-- Section 4: Proven Results (Dynamic) -->
 <CaseStudyHighlights caseStudies={data.caseStudies} />
 
-<!-- Section 5: Technology Teaser -->
+<!-- Section 5: Technology Section -->
+
 <section class="relative z-10">
-	<div class="mx-auto max-w-6xl px-8 py-20 text-center sm:py-24">
-		<h2 class="text-3xl font-bold tracking-tight text-main sm:text-4xl">
-			Built on a Foundation of Data and Trust
-		</h2>
-		<p class="mx-auto mt-6 max-w-3xl text-lg leading-8 text-main/70">
-			Our systems are engineered for reliability and precision. We leverage advanced AI and computer
-			vision to detect unsafe conditions, predict equipment failure, and enable autonomous
-			navigation. By processing your existing data streams securely, we deliver insights without
-			disrupting your workflow.
-		</p>
-		<div class="mt-10">
-			<a href="/about" class="font-bold text-accent transition hover:drop-shadow-accent-glow"
-				>Discover Our Technology →</a
-			>
+	<div class="mx-auto max-w-6xl px-8 py-20 sm:py-24">
+		<div class="grid items-center gap-12 md:grid-cols-2">
+			<div class="text-center md:text-left">
+				<h2 class="text-3xl font-bold tracking-tight text-main sm:text-4xl">
+					Built on a Foundation of Data and Trust
+				</h2>
+				<p class="mx-auto mt-6 max-w-3xl text-lg leading-8 text-main/70">
+					Our systems are engineered for reliability and precision. We leverage advanced AI and
+					computer vision to detect unsafe conditions, predict equipment failure, and enable
+					autonomous navigation. By processing your existing data streams securely, we deliver
+					insights without disrupting your workflow.
+				</p>
+				<div class="mt-10">
+					<a
+						href="/about"
+						class="font-bold text-accent transition hover:drop-shadow-accent-glow"
+						>Discover Our Technology →</a
+					>
+				</div>
+			</div>
+			<ImagePlaceholder aspectRatio="1/1" label="1:1 Aspect Ratio" />
 		</div>
 	</div>
 </section>
@@ -80,6 +89,7 @@
 		<div class="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
 			{#each data.posts as post}
 				<a href={`/blog/${post.slug}`} class="corner-border block">
+					<ImagePlaceholder aspectRatio="16/9" class="mb-6" />
 					<h3 class="text-xl font-bold">{post.title}</h3>
 					<p class="mt-2 text-sm text-main/70">
 						{getExcerpt(post.contentJson)}

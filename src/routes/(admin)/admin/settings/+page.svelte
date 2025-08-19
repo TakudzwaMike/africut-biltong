@@ -74,6 +74,35 @@
 			</div>
 		</div>
 
+		<div class="rounded-xl border border-main/10 p-6">
+			<h3 class="text-lg font-bold">Company Brochure</h3>
+			<div class="mt-4">
+				<label for="brochure" class="mb-1 block font-medium text-main/80">Upload Brochure (PDF)</label>
+				{#if siteSettings.brochureUrl}
+					<div class="mb-2">
+						<p class="text-sm text-main/80">Current Brochure:</p>
+						<a
+							href={siteSettings.brochureUrl}
+							target="_blank"
+							class="mt-1 block text-accent underline"
+						>
+							View Current Brochure
+						</a>
+					</div>
+				{/if}
+				<input
+					type="file"
+					id="brochure"
+					name="brochure"
+					accept="application/pdf"
+					class="w-full rounded-md border border-main/10 bg-main/5 text-sm text-main/80 file:mr-4 file:border-0 file:bg-main/10 file:px-4 file:py-2 file:font-bold"
+				/>
+				<p class="mt-1 text-xs text-main/60">
+					Optional. Uploading a new PDF will replace the current one.
+				</p>
+			</div>
+		</div>
+
 		{#if form?.message && !form.success}
 			<p class="text-center font-bold text-red-600">{form.message}</p>
 		{/if}

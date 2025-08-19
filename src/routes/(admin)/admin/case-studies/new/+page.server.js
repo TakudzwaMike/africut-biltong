@@ -2,6 +2,7 @@ import { db } from '$lib/server/db';
 import { caseStudy, caseStudyResult, client } from '$lib/server/db/schema.js';
 import { fail, redirect } from '@sveltejs/kit';
 import { desc } from 'drizzle-orm';
+import { log } from '$lib/server/auditLog.js';
 
 const toRichText = (text) => {
 	if (!text) return [];
@@ -16,7 +17,7 @@ export async function load() {
 }
 
 export const actions = {
-	default: async ({ request }) => {
+	default: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 
@@ -36,13 +37,14 @@ export const actions = {
 					challenge: toRichText(challenge),
 					solution: toRichText(solution)
 				})
-				.returning({ id: caseStudy.id });
+				.returning();
 
 			const kpiNames = formData.getAll('kpiName');
 			const kpiValues = formData.getAll('kpiValue');
+			let resultsToInsert = [];
 
 			if (kpiNames.length > 0) {
-				const resultsToInsert = kpiNames
+				resultsToInsert = kpiNames
 					.map((name, index) => ({
 						name: String(name),
 						value: String(kpiValues[index])
@@ -58,6 +60,12 @@ export const actions = {
 					await db.insert(caseStudyResult).values(resultsToInsert);
 				}
 			}
+			
+			await log(locals.user?.id, 'create_case_study', {
+				targetId: newCaseStudy.id,
+				data: { ...newCaseStudy, results: resultsToInsert }
+			});
+
 		} catch (error) {
 			console.error('Error creating case study:', error);
 			if (error.message.includes('duplicate key value violates unique constraint')) {

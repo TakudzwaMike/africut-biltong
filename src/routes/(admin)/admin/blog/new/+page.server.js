@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db';
 import { blogPost } from '$lib/server/db/schema.js';
 import { fail, redirect } from '@sveltejs/kit';
+import { log } from '$lib/server/auditLog.js';
 
 export const actions = {
 	default: async ({ request, locals }) => {
@@ -25,13 +26,19 @@ export const actions = {
 		}
 
 		try {
-			await db.insert(blogPost).values({
+			const valuesToInsert = {
 				authorId: locals.user.id,
 				title: String(title),
 				slug: String(slug),
 				contentJson: content,
 				isPublished,
 				publishedAt: isPublished ? new Date() : null
+			};
+			const [newPost] = await db.insert(blogPost).values(valuesToInsert).returning();
+
+			await log(locals.user?.id, 'create_blog_post', {
+				targetId: newPost.id,
+				data: newPost
 			});
 		} catch (error) {
 			console.error('Error creating blog post:', error);

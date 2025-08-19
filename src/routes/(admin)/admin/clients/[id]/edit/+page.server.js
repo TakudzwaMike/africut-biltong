@@ -4,6 +4,7 @@ import { fail, error } from '@sveltejs/kit';
 import { eq, desc } from 'drizzle-orm';
 import { uploadFile } from '$lib/server/blob';
 import crypto from 'crypto';
+import { log } from '$lib/server/auditLog.js';
 
 export async function load({ params }) {
 	const id = Number(params.id);
@@ -28,7 +29,7 @@ export async function load({ params }) {
 }
 
 export const actions = {
-	updateClient: async ({ request, params }) => {
+	updateClient: async ({ request, params, locals }) => {
 		const id = Number(params.id);
 		const formData = await request.formData();
 		const name = formData.get('name');
@@ -53,6 +54,11 @@ export const actions = {
 
 		try {
 			await db.update(client).set(dataToUpdate).where(eq(client.id, id));
+
+			await log(locals.user?.id, 'update_client', {
+				targetId: id,
+				data: dataToUpdate
+			});
 		} catch (err) {
 			console.error('Database Update Error:', err);
 			if (err.message.includes('duplicate key value violates unique constraint')) {

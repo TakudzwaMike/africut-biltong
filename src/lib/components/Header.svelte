@@ -34,6 +34,13 @@
 		<ul class="hidden items-center gap-6 md:flex">
 			<li>
 				<a
+					href="/products"
+					class="font-medium transition hover:text-accent hover:drop-shadow-accent-glow"
+					>Products</a
+				>
+			</li>
+			<li>
+				<a
 					href="/solutions"
 					class="font-medium transition hover:text-accent hover:drop-shadow-accent-glow"
 					>Solutions</a
@@ -108,17 +115,20 @@
 	</nav>
 </header>
 
-<!-- Mobile Menu Overlay -->
-{#if isMenuOpen}
-	<div
-		class="fixed inset-0 z-[55] flex flex-col items-center justify-center bg-light/90 pt-20 text-center backdrop-blur-lg"
-	>
-		<ul class="flex flex-col gap-8">
-			<li>
-				<a href="/solutions" class="text-2xl font-bold text-main">Solutions</a>
-			</li>
-			<li>
-				<a href="/case-studies" class="text-2xl font-bold text-main">Case Studies</a>
+	<!-- Mobile Menu Overlay -->
+	{#if isMenuOpen}
+		<div
+			class="fixed inset-0 z-[55] flex flex-col items-center justify-center bg-light/90 pt-20 text-center backdrop-blur-lg"
+		>
+			<ul class="flex flex-col gap-8">
+				<li>
+					<a href="/products" class="text-2xl font-bold text-main">Products</a>
+				</li>
+				<li>
+					<a href="/solutions" class="text-2xl font-bold text-main">Solutions</a>
+				</li>
+				<li>
+					<a href="/case-studies" class="text-2xl font-bold text-main">Case Studies</a>
 			</li>
 			<li>
 				<a href="/about" class="text-2xl font-bold text-main">About Us</a>

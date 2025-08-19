@@ -13,7 +13,7 @@
 		"lint": "eslint .",
 		"db:start": "docker compose up",
 		"db:push": "drizzle-kit push",
-		"db:migrate": "drizzle-kit migrate",
+		"db:migrate": "drizzle-kit generate && drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio",
 		"db:seed": "node --loader ts-node/esm src/lib/server/db/seed.js"
 	},

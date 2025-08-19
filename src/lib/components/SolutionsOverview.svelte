@@ -1,5 +1,6 @@
 <script>
 	import { viewport } from '$lib/actions/viewport.js';
+	import ImagePlaceholder from './ImagePlaceholder.svelte';
 	let isVisible = $state(false);
 </script>
 
@@ -19,6 +20,7 @@
 			</p>
 			<div class="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
 				<div class="corner-border">
+					<ImagePlaceholder aspectRatio="16/9" class="mb-6" />
 					<h3 class="text-xl font-bold">Production & Fleet Monitoring</h3>
 					<p class="mt-2 text-main/70">
 						An all-in-one solution to manage your heavy assets. We use telematics and AI to reduce
@@ -26,6 +28,7 @@
 					</p>
 				</div>
 				<div class="corner-border">
+					<ImagePlaceholder aspectRatio="16/9" class="mb-6" />
 					<h3 class="text-xl font-bold">GeoTechnical Intelligence</h3>
 					<p class="mt-2 text-main/70">
 						Enhance site safety and stability with our AI-driven geotechnical monitoring module.
@@ -33,6 +36,7 @@
 					</p>
 				</div>
 				<div class="corner-border">
+					<ImagePlaceholder aspectRatio="16/9" class="mb-6" />
 					<h3 class="text-xl font-bold">Tailored AI Solutions</h3>
 					<p class="mt-2 text-main/70">
 						Every operation is unique. Our team can partner with you to build a custom AI engine

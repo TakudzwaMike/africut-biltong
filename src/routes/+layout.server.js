@@ -22,7 +22,8 @@ export async function load({ locals, request }) {
 		user: locals.user,
 		settings: {
 			siteName: settings.site_name || 'Vision AI Tech',
-			logoUrl: settings.site_logo_url || null
+			logoUrl: settings.site_logo_url || null,
+			brochureUrl: settings.brochure_url || null
 		},
 		locations,
 		userCountryCode

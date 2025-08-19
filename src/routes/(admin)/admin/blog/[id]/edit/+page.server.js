@@ -2,6 +2,7 @@ import { db } from '$lib/server/db';
 import { blogPost } from '$lib/server/db/schema.js';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
+import { log } from '$lib/server/auditLog.js';
 
 export async function load({ params }) {
 	const id = Number(params.id);
@@ -21,7 +22,7 @@ export async function load({ params }) {
 }
 
 export const actions = {
-	default: async ({ request, params }) => {
+	default: async ({ request, params, locals }) => {
 		const id = Number(params.id);
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
@@ -40,7 +41,6 @@ export const actions = {
 		}
 
 		try {
-			// Check if we are publishing a draft
 			const currentPost = await db.query.blogPost.findFirst({
 				where: eq(blogPost.id, id),
 				columns: { isPublished: true }
@@ -48,16 +48,20 @@ export const actions = {
 
 			const shouldSetPublishedDate = isPublished && !currentPost?.isPublished;
 
-			await db
-				.update(blogPost)
-				.set({
-					title: String(title),
-					slug: String(slug),
-					contentJson: content,
-					isPublished,
-					publishedAt: shouldSetPublishedDate ? new Date() : null
-				})
-				.where(eq(blogPost.id, id));
+			const dataToUpdate = {
+				title: String(title),
+				slug: String(slug),
+				contentJson: content,
+				isPublished,
+				publishedAt: shouldSetPublishedDate ? new Date() : null
+			};
+
+			await db.update(blogPost).set(dataToUpdate).where(eq(blogPost.id, id));
+
+			await log(locals.user?.id, 'update_blog_post', {
+				targetId: id,
+				data: dataToUpdate
+			});
 		} catch (error) {
 			console.error('Error updating blog post:', error);
 			if (error.message.includes('duplicate key value violates unique constraint')) {

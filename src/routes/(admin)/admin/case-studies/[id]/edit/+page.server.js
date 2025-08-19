@@ -2,6 +2,7 @@ import { db } from '$lib/server/db';
 import { caseStudy, caseStudyResult, client } from '$lib/server/db/schema.js';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { eq, desc } from 'drizzle-orm';
+import { log } from '$lib/server/auditLog.js';
 
 const toRichText = (text) => {
 	if (!text) return [];
@@ -45,7 +46,7 @@ export async function load({ params }) {
 }
 
 export const actions = {
-	default: async ({ request, params }) => {
+	default: async ({ request, params, locals }) => {
 		const id = Number(params.id);
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
@@ -56,24 +57,24 @@ export const actions = {
 		}
 
 		try {
+			let resultsToInsert = [];
+			const dataToUpdate = {
+				title: String(title),
+				slug: String(slug),
+				clientId: clientId ? Number(clientId) : null,
+				challenge: toRichText(challenge),
+				solution: toRichText(solution)
+			};
+
 			await db.transaction(async (tx) => {
-				await tx
-					.update(caseStudy)
-					.set({
-						title: String(title),
-						slug: String(slug),
-						clientId: clientId ? Number(clientId) : null,
-						challenge: toRichText(challenge),
-						solution: toRichText(solution)
-					})
-					.where(eq(caseStudy.id, id));
+				await tx.update(caseStudy).set(dataToUpdate).where(eq(caseStudy.id, id));
 
 				await tx.delete(caseStudyResult).where(eq(caseStudyResult.caseStudyId, id));
 
 				const kpiNames = formData.getAll('kpiName');
 				const kpiValues = formData.getAll('kpiValue');
 
-				const resultsToInsert = kpiNames
+				resultsToInsert = kpiNames
 					.map((name, index) => ({
 						name: String(name),
 						value: String(kpiValues[index])
@@ -88,6 +89,11 @@ export const actions = {
 				if (resultsToInsert.length > 0) {
 					await tx.insert(caseStudyResult).values(resultsToInsert);
 				}
+			});
+
+			await log(locals.user?.id, 'update_case_study', {
+				targetId: id,
+				data: { ...dataToUpdate, results: resultsToInsert }
 			});
 		} catch (error) {
 			console.error('Error updating case study:', error);

@@ -53,6 +53,16 @@
 							>Contact</a
 						>
 					</li>
+					{#if $page.data.settings?.brochureUrl}
+						<li>
+							<a
+								href={$page.data.settings.brochureUrl}
+								target="_blank"
+								class="font-bold text-accent transition hover:drop-shadow-accent-glow"
+								>Download Brochure</a
+							>
+						</li>
+					{/if}
 				</ul>
 			</div>
 
@@ -62,9 +72,9 @@
 				<ul class="mt-4 space-y-2">
 					<li>
 						<a
-							href="mailto:contact@vision-ai.tech"
+							href="mailto:hello@vision-ai.tech"
 							class="text-main/80 transition hover:text-accent hover:drop-shadow-accent-glow"
-							>contact@vision-ai.tech</a
+							>hello@vision-ai.tech</a
 						>
 					</li>
 					{#if $page.data.locations?.length > 0}
