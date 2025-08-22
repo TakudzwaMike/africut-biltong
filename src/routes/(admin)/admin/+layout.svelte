@@ -5,12 +5,14 @@
 	let isMenuOpen = $state(false);
 
 	const navItems = [
+		{ href: '/admin/page-content', label: 'Page Content' },
 		{ href: '/admin/products', label: 'Products' },
 		{ href: '/admin/solutions', label: 'Solutions' },
 		{ href: '/admin/clients', label: 'Clients' },
 		{ href: '/admin/case-studies', label: 'Case Studies' },
 		{ href: '/admin/blog', label: 'Blog Posts' },
 		{ href: '/admin/leads', label: 'Leads' },
+		{ href: '/admin/media', label: 'Media Library' },
 		{ href: '/admin/settings', label: 'Site Settings' },
 		{ href: '/admin/locations', label: 'Office Locations' },
 		{ href: '/admin/audit-log', label: 'Audit Log' }
@@ -20,7 +22,6 @@
 		isMenuOpen = !isMenuOpen;
 	}
 
-	// Close the mobile menu after navigation
 	afterNavigate(() => {
 		isMenuOpen = false;
 	});
@@ -82,7 +83,7 @@
 	<div class="flex flex-col">
 		<!-- Mobile Header -->
 		<header
-			class="sticky top-0 z-10 flex items-center justify-between border-b border-main/10 bg-light/80 p-4 backdrop-blur-md lg:hidden"
+			class="sticky top-0 z-90 flex items-center justify-between border-b border-main/10 bg-light/80 p-4 backdrop-blur-md lg:hidden"
 		>
 			<a href="/admin" class="text-lg font-bold">{$page.data.settings?.siteName || 'Admin'}</a>
 			<button onclick={toggleMenu} aria-label="Open menu" class="rounded-md p-2">
