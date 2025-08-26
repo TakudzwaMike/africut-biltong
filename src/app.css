@@ -23,6 +23,9 @@
     font-family: var(--font-sans);
     color: var(--color-main);
   }
+  .prose {
+    text-align: justify;
+  }
 }
 
 @layer utilities {
