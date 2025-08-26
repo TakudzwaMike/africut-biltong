@@ -14,7 +14,14 @@ export const actions = {
 	create: async ({ request }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { countryName, countryCode, address, phoneNumber } = data;
+		const { 
+			countryName,
+			countryCode,
+			address,
+			phoneNumber,
+			latitude,
+			longitude
+		} = data;
 
 		if (!countryName || !countryCode || !address ) {
 			return fail(400, { data, message: 'All fields are required.' });
@@ -30,6 +37,8 @@ export const actions = {
 				countryCode: String(countryCode).toUpperCase(),
 				address: String(address),
 				phoneNumber: String(phoneNumber)
+				latitude: String(latitude),
+				longitude: String(longitude)
 			}
 
 			await db.insert(location).values(newLocation);
