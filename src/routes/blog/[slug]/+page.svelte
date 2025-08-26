@@ -48,6 +48,18 @@
 			<p class="mt-6 text-lg leading-8 text-main/70">
 				By {post.author.username} on {new Date(post.publishedAt).toLocaleDateString()}
 			</p>
+			{#if post.categories.length > 0}
+				<div class="mt-4 flex flex-wrap items-center justify-center gap-2">
+					{#each post.categories as postCategory}
+						<a
+							href={`/blog/category/${postCategory.category.slug}`}
+							class="rounded-full bg-main/10 px-3 py-1 text-sm font-semibold text-main/80 transition hover:bg-main/20"
+						>
+							{postCategory.category.name}
+						</a>
+					{/each}
+				</div>
+			{/if}
 		</div>
 
 		{#if post.featuredImage}

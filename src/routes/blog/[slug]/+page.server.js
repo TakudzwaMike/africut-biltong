@@ -14,7 +14,12 @@ export async function load({ params }) {
 					username: true
 				}
 			},
-			featuredImage: true
+			featuredImage: true,
+			categories: {
+				with: {
+					category: true
+				}
+			}
 		}
 	});
 

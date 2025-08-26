@@ -1,13 +1,17 @@
 import { db } from '$lib/server/db';
-import { blogPost, media } from '$lib/server/db/schema.js';
+import { blogPost, media, blogCategory, blogPostsToCategories } from '$lib/server/db/schema.js';
 import { fail, redirect } from '@sveltejs/kit';
 import { log } from '$lib/server/auditLog.js';
+import { desc } from 'drizzle-orm';
 
-async function load() {
+export async function load() {
 	const mediaItems = await db.query.media.findMany({
 		orderBy: desc(media.uploadedAt)
 	});
-	return {mediaItems}
+	const categories = await db.query.blogCategory.findMany({
+		orderBy: desc(blogCategory.name)
+	});
+	return { mediaItems, categories };
 }
 
 export const actions = {
@@ -15,6 +19,7 @@ export const actions = {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 		const { title, slug, contentJson, mediaId } = data;
+		const categoryIds = formData.getAll('categoryIds').map(Number);
 		const isPublished = data.isPublished === 'on';
 
 		if (!locals.user?.id) {
@@ -44,9 +49,19 @@ export const actions = {
 			};
 			const [newPost] = await db.insert(blogPost).values(valuesToInsert).returning();
 
+			// Handle categories
+			if (categoryIds.length > 0) {
+				await db.insert(blogPostsToCategories).values(
+					categoryIds.map((catId) => ({
+						postId: newPost.id,
+						categoryId: catId
+					}))
+				);
+			}
+
 			await log(locals.user?.id, 'create_blog_post', {
 				targetId: newPost.id,
-				data: newPost
+				data: { ...newPost, categoryIds }
 			});
 		} catch (error) {
 			console.error('Error creating blog post:', error);

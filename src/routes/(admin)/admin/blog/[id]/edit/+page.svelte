@@ -60,6 +60,33 @@
 				<h3 class="text-lg font-bold">Content</h3>
 				<RichTextEditor bind:content={contentJson} initialContent={postData.contentJson} />
 			</div>
+			
+			<div class="space-y-4 rounded-xl border border-main/10 p-6">
+				<h3 class="text-lg font-bold">Categories</h3>
+				{@const postCategoryIds = new Set(postData.categories.map(c => c.categoryId))}
+				<div class="grid grid-cols-2 gap-4 md:grid-cols-3">
+					{#each data.allCategories as category}
+						<label class="flex items-center gap-2 rounded-md bg-main/5 p-3">
+							<input
+								type="checkbox"
+								name="categoryIds"
+								value={category.id}
+								checked={postCategoryIds.has(category.id)}
+								class="h-4 w-4 rounded border-main/20 bg-main/10 text-accent focus:ring-accent"
+							/>
+							<span>{category.name}</span>
+						</label>
+					{/each}
+				</div>
+				{#if data.allCategories.length === 0}
+					<p class="text-sm text-main/70">
+						No categories created yet. <a
+							href="/admin/blog/categories"
+							class="text-accent underline">Create one first</a
+						>.
+					</p>
+				{/if}
+			</div>
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Publishing</h3>

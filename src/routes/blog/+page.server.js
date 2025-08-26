@@ -11,6 +11,12 @@ export async function load() {
 				columns: {
 					username: true
 				}
+			},
+			featuredImage: true,
+			categories: {
+				with: {
+					category: true
+				}
 			}
 		}
 	});

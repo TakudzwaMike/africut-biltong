@@ -69,6 +69,27 @@
 						>
 							{item.label}
 						</a>
+						<!-- Special case for Blog submenu -->
+						{#if item.href === '/admin/blog' && $page.url.pathname.startsWith('/admin/blog')}
+							<ul class="ml-4 mt-2 space-y-1 border-l-2 border-main/10 pl-4">
+								<li>
+									<a
+										href="/admin/blog"
+										class="block rounded-md px-3 py-1 text-sm transition"
+										class:font-bold={$page.url.pathname === '/admin/blog'}
+									>Posts</a
+									>
+								</li>
+								<li>
+									<a
+										href="/admin/blog/categories"
+										class="block rounded-md px-3 py-1 text-sm transition"
+										class:font-bold={$page.url.pathname.startsWith('/admin/blog/categories')}
+									>Categories</a
+									>
+								</li>
+							</ul>
+						{/if}
 					</li>
 				{/each}
 			</ul>
@@ -161,6 +182,27 @@
 						>
 							{item.label}
 						</a>
+						<!-- Special case for Blog submenu -->
+						{#if item.href === '/admin/blog' && $page.url.pathname.startsWith('/admin/blog')}
+							<ul class="ml-4 mt-2 space-y-1 border-l-2 border-main/10 pl-4">
+								<li>
+									<a
+										href="/admin/blog"
+										class="block rounded-md px-3 py-2 text-base transition"
+										class:font-bold={$page.url.pathname === '/admin/blog'}
+									>Posts</a
+									>
+								</li>
+								<li>
+									<a
+										href="/admin/blog/categories"
+										class="block rounded-md px-3 py-2 text-base transition"
+										class:font-bold={$page.url.pathname.startsWith('/admin/blog/categories')}
+									>Categories</a
+									>
+								</li>
+							</ul>
+						{/if}
 					</li>
 				{/each}
 			</ul>

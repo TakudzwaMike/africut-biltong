@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { blogPost, media } from '$lib/server/db/schema.js';
+import { blogPost, media, blogCategory, blogPostsToCategories } from '$lib/server/db/schema.js';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { eq, desc } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
@@ -13,7 +13,12 @@ export async function load({ params }) {
 	const post = await db.query.blogPost.findFirst({
 		where: eq(blogPost.id, id),
 		with: {
-			featuredImage: true
+			featuredImage: true,
+			categories: {
+				with: {
+					category: true
+				}
+			}
 		}
 	});
 
@@ -24,8 +29,12 @@ export async function load({ params }) {
 	const mediaItems = await db.query.media.findMany({
 		orderBy: desc(media.uploadedAt)
 	});
+	
+	const allCategories = await db.query.blogCategory.findMany({
+		orderBy: desc(blogCategory.name)
+	});
 
-	return { post, mediaItems };
+	return { post, mediaItems, allCategories };
 }
 
 export const actions = {
@@ -33,7 +42,8 @@ export const actions = {
 		const id = Number(params.id);
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { title, slug, contentJson } = data;
+		const { title, slug, contentJson, mediaId } = data;
+		const categoryIds = formData.getAll('categoryIds').map(Number);
 		const isPublished = data.isPublished === 'on';
 
 		if (!title || !slug) {
@@ -64,11 +74,25 @@ export const actions = {
 				mediaId: mediaId ? Number(mediaId) : null
 			};
 
-			await db.update(blogPost).set(dataToUpdate).where(eq(blogPost.id, id));
+			await db.transaction(async (tx) => {
+				await tx.update(blogPost).set(dataToUpdate).where(eq(blogPost.id, id));
+				
+				// Sync categories
+				await tx.delete(blogPostsToCategories).where(eq(blogPostsToCategories.postId, id));
+				if (categoryIds.length > 0) {
+					await tx.insert(blogPostsToCategories).values(
+						categoryIds.map((catId) => ({
+							postId: id,
+							categoryId: catId
+						}))
+					);
+				}
+			});
+
 
 			await log(locals.user?.id, 'update_blog_post', {
 				targetId: id,
-				data: dataToUpdate
+				data: { ...dataToUpdate, categoryIds }
 			});
 		} catch (error) {
 			console.error('Error updating blog post:', error);
