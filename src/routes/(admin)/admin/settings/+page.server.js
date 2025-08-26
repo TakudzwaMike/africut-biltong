@@ -19,7 +19,8 @@ export async function load() {
 	return {
 		siteName: settings.site_name || 'Vision AI Tech',
 		logoUrl: settings.site_logo_url || null,
-		brochureUrl: settings.brochure_url || null
+		brochureUrl: settings.brochure_url || null,
+		heroVideoUrl: settings.hero_video_url || null
 	};
 }
 
@@ -29,7 +30,7 @@ export const actions = {
 		const siteName = formData.get('siteName');
 		const logoFile = formData.get('logo');
 		const brochureFile = formData.get('brochure');
-
+		const heroVideoUrl = formData.get('heroVideoUrl');
 		if (!siteName || typeof siteName !== 'string') {
 			return fail(400, { message: 'Site name is required.' });
 		}
@@ -79,6 +80,16 @@ export const actions = {
 					});
 				dataToLog.brochure_url = brochureUrl;
 			}
+
+			// Upsert Hero Video URL
+			await db
+				.insert(siteSettings)
+				.values({ key: 'hero_video_url', value: String(heroVideoUrl) })
+				.onConflictDoUpdate({
+					target: siteSettings.key,
+					set: { value: String(heroVideoUrl) }
+				});
+			dataToLog.hero_video_url = heroVideoUrl;
 
 			await log(locals.user?.id, 'update_site_settings', { data: dataToLog });
 

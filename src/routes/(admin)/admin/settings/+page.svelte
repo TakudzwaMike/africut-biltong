@@ -103,6 +103,27 @@
 			</div>
 		</div>
 
+		<div class="rounded-xl border border-main/10 p-6">
+			<h3 class="text-lg font-bold">Homepage Hero</h3>
+			<div class="mt-4">
+				<label for="heroVideoUrl" class="mb-1 block font-medium text-main/80"
+					>Background YouTube Video URL</label
+				>
+				<input
+					type="url"
+					id="heroVideoUrl"
+					name="heroVideoUrl"
+					bind:value={siteSettings.heroVideoUrl}
+					placeholder="e.g., https://www.youtube.com/watch?v=..."
+					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+				/>
+				<p class="mt-1 text-xs text-main/60">
+					Optional. If provided, this will replace the background image. Use the full YouTube URL,
+					not the embed link
+				</p>
+			</div>
+		</div>
+
 		{#if form?.message && !form.success}
 			<p class="text-center font-bold text-red-600">{form.message}</p>
 		{/if}

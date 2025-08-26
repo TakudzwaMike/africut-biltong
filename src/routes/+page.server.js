@@ -1,12 +1,12 @@
 import { db } from '$lib/server/db';
-import { blogPost, caseStudy, client } from '$lib/server/db/schema.js';
+import { blogPost, caseStudy, client, pageContent, solution } from '$lib/server/db/schema.js';
 import { eq, desc, isNotNull } from 'drizzle-orm';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load() {
 	const caseStudies = await db.query.caseStudy.findMany({
 		with: {
-			client: true, // Eager load the related client
+			client: true,
 			results: true
 		},
 		limit: 3,
@@ -22,7 +22,8 @@ export async function load() {
 				columns: {
 					username: true
 				}
-			}
+			},
+			featuredImage: true
 		}
 	});
 
@@ -30,10 +31,29 @@ export async function load() {
 		where: isNotNull(client.logoUrl),
 		orderBy: desc(client.id)
 	});
+	
+	const contentList = await db.query.pageContent.findMany({
+		where: eq(pageContent.page, 'homepage'),
+		with: {
+			media: true
+		}
+	});
+
+	const content = contentList.reduce((acc, item) => {
+		acc[item.section] = item;
+		return acc;
+	}, {});
+
+	const solutions = await db.query.solution.findMany({
+		orderBy: desc(solution.id),
+		limit: 3
+	});
 
 	return {
 		caseStudies,
 		posts,
-		clients
+		clients,
+		content,
+		solutions
 	};
 }
