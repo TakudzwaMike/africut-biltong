@@ -58,9 +58,14 @@
 					method: 'POST',
 					body: formData
 				});
+				if (!response.ok) {
+					// Handle HTTP errors like 500 Internal Server Error
+					throw new Error(`Failed to save to database (status: ${response.status})`);
+				}
+				
 				const result = await response.json();
 
-				if (response.ok && result.success) {
+				if (result.success) {
 					// Add the new media item to the top of the list for immediate feedback
 					data.mediaItems.unshift(result.newMedia);
 					// Mark local upload item as complete

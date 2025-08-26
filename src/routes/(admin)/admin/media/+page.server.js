@@ -20,7 +20,7 @@ export const actions = {
 		const altText = formData.get('altText');
 
 		if (!url || typeof url !== 'string' || !altText || typeof altText !== 'string') {
-			return fail(400, { message: 'URL and Alt Text are required.' });
+			return json({ success: false, message: 'URL and Alt Text are required.' }, { status: 400 });
 		}
 
 		try {
@@ -32,11 +32,11 @@ export const actions = {
 			});
 			
 			// Return the new media item so the client can update instantly
-			return { success: true, newMedia };
+			return json({ success: true, newMedia });
 
 		} catch (error) {
 			console.error('Error saving media reference:', error);
-			return fail(500, { message: 'Could not save media reference to the database.' });
+			return json({ success: false, message: 'Could not save media reference to the database.' }, { status: 500 });
 		}
 	},
 
