@@ -41,6 +41,13 @@
 					</li>
 					<li>
 						<a
+							href="/resources"
+							class="text-main/80 transition hover:text-accent hover:drop-shadow-accent-glow"
+							>Resources</a
+						>
+					</li>	
+					<li>
+						<a
 							href="/about"
 							class="text-main/80 transition hover:text-accent hover:drop-shadow-accent-glow"
 							>About Us</a
