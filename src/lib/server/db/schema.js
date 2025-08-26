@@ -34,7 +34,9 @@ export const solution = pgTable('solution', {
 	solutionName: varchar('solution_name', { length: 255 }).notNull(),
 	imageUrl: text('image_url'),
 	shortDescription: text('short_description'),
-	longDescription: jsonb('long_description')
+	longDescription: jsonb('long_description'),
+	ctaText: varchar('cta_text', { length: 255 }),
+	ctaLink: varchar('cta_link', { length: 255 })
 });
 
 export const caseStudy = pgTable('case_study', {
@@ -135,7 +137,9 @@ export const product = pgTable('product', {
 	name: varchar('name', { length: 255 }).notNull(),
 	imageUrl: text('image_url'),
 	shortDescription: text('short_description'),
-	longDescription: jsonb('long_description') // For rich text content
+	longDescription: jsonb('long_description'),
+	ctaText: varchar('cta_text', { length: 255 }),
+	ctaLink: varchar('cta_link', { length: 255 })
 });
 
 export const auditLog = pgTable('audit_log', {
