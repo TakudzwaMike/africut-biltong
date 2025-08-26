@@ -1,7 +1,5 @@
 # Vision AI Website
-It's still a work in progress as we try to find the design that will work for us and will be inherited by the store
-## 
-- Audit log
+The main website for vision-ai
 
 # Built using sveltekit
 
