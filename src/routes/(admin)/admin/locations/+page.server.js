@@ -14,9 +14,9 @@ export const actions = {
 	create: async ({ request }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { countryName, countryCode, address } = data;
+		const { countryName, countryCode, address, phoneNumber } = data;
 
-		if (!countryName || !countryCode || !address) {
+		if (!countryName || !countryCode || !address ) {
 			return fail(400, { data, message: 'All fields are required.' });
 		}
 
@@ -25,11 +25,16 @@ export const actions = {
 		}
 
 		try {
-			await db.insert(location).values({
+			const newLocation = {
 				countryName: String(countryName),
 				countryCode: String(countryCode).toUpperCase(),
-				address: String(address)
-			});
+				address: String(address),
+				phoneNumber: String(phoneNumber)
+			}
+
+			await db.insert(location).values(newLocation);
+			await log(locals.user?.id, 'create_location', { data: newLocation });
+
 			return { success: true, message: 'Location added successfully!' };
 		} catch (error) {
 			console.error('Error creating location:', error);
@@ -37,17 +42,26 @@ export const actions = {
 		}
 	},
 
-	delete: async ({ url }) => {
+	delete: async ({ url, locals }) => {
 		const id = url.searchParams.get('id');
 		if (!id) {
 			return fail(400, { message: 'Invalid request' });
 		}
 
 		try {
+			const locToDelete = await db.query.location.findFirst({ where: eq(location.id, Number(id)) });
+
+			if (!locToDelete) {
+				return fail(404, { message: 'Location not found.' });
+			}
+
 			await db.delete(location).where(eq(location.id, Number(id)));
+			await log(locals.user?.id, 'delete_location', { targetId: id, data: locToDelete });
+
 			return { success: true, message: 'Location deleted successfully!' };
 		} catch (error) {
 			console.error('Error deleting location:', error);
+
 			return fail(500, { message: 'Could not delete the location.' });
 		}
 	}

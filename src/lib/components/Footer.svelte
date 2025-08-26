@@ -85,6 +85,12 @@
 									: 'text-main/80'}"
 							>
 								{loc.address}
+								{#if loc.phoneNumber}
+									<br />
+									<a href="tel:{loc.phoneNumber.replace(/\s/g, '')}" class="hover:underline"
+										>{loc.phoneNumber}</a
+									>
+								{/if}
 							</li>
 						{/each}
 					{/if}
