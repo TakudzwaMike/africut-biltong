@@ -124,7 +124,9 @@ export const location = pgTable('location', {
 	countryName: varchar('country_name', { length: 255 }).notNull(),
 	countryCode: varchar('country_code', { length: 2 }).notNull(), // For geo-targeting (e.g., ZW, ZA)
 	address: text('address').notNull(),
-	phoneNumber: varchar('phone_number', { length: 255 })
+	phoneNumber: varchar('phone_number', { length: 255 }),
+	latitude: varchar('latitude', { length: 255 }),
+	longitude: varchar('longitude', { length: 255 })
 });
 
 export const product = pgTable('product', {
