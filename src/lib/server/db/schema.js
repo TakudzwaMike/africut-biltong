@@ -101,7 +101,8 @@ export const location = pgTable('location', {
 	id: serial('id').primaryKey(),
 	countryName: varchar('country_name', { length: 255 }).notNull(),
 	countryCode: varchar('country_code', { length: 2 }).notNull(),
-	address: text('address').notNull()
+	address: text('address').notNull(),
+	phoneNumber: varchar('phone_number', { length: 255 })
 });
 
 export const product = pgTable('product', {

@@ -1,0 +1,1 @@
+ALTER TABLE "location" ADD COLUMN "phone_number" varchar(255);
