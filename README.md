@@ -1,5 +1,5 @@
 # Vision AI Website
-The main website for vision-ai
+The main website for vision-ai 
 
 # Built using sveltekit
 
