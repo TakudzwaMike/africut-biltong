@@ -1,5 +1,6 @@
 <script>
 	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
+	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
 
 	let { data, form } = $props();
 
@@ -43,6 +44,16 @@
 						class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 					/>
 				</div>
+			</div>
+			
+			<div class="space-y-4 rounded-xl border border-main/10 p-6">
+				<h3 class="text-lg font-bold">Featured Image</h3>
+				<FeaturedImagePicker
+					mediaItems={data.mediaItems}
+					bind:selectedMediaId={postData.mediaId}
+					currentImageUrl={postData.featuredImage?.url}
+					currentImageAlt={postData.featuredImage?.altText}
+				/>
 			</div>
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">

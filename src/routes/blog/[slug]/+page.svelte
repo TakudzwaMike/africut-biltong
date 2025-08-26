@@ -38,7 +38,7 @@
 
 <svelte:head>
 	<title>{post.title} | Vision AI Tech Blog</title>
-	<!-- A simple excerpt function for the meta description could be added here -->
+	<!--todo: add seo optimisation function -->
 </svelte:head>
 
 <div class="relative z-10">
@@ -49,6 +49,16 @@
 				By {post.author.username} on {new Date(post.publishedAt).toLocaleDateString()}
 			</p>
 		</div>
+
+		{#if post.featuredImage}
+			<div class="mt-16">
+				<Image
+					src={post.featuredImage.url}
+					alt={post.featuredImage.altText}
+					class="aspect-video w-full rounded-xl shadow-lg"
+				/>
+			</div>
+		{/if}
 
 		<article class="prose prose-lg mx-auto mt-16 text-main/80">
 			{@html renderRichTextToHtml(post.contentJson)}

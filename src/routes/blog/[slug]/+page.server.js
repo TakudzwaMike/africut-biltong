@@ -13,7 +13,8 @@ export async function load({ params }) {
 				columns: {
 					username: true
 				}
-			}
+			},
+			featuredImage: true
 		}
 	});
 

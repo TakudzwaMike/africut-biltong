@@ -1,13 +1,20 @@
 import { db } from '$lib/server/db';
-import { blogPost } from '$lib/server/db/schema.js';
+import { blogPost, media } from '$lib/server/db/schema.js';
 import { fail, redirect } from '@sveltejs/kit';
 import { log } from '$lib/server/auditLog.js';
+
+async function load() {
+	const mediaItems = await db.query.media.findMany({
+		orderBy: desc(media.uploadedAt)
+	});
+	return {mediaItems}
+}
 
 export const actions = {
 	default: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { title, slug, contentJson } = data;
+		const { title, slug, contentJson, mediaId } = data;
 		const isPublished = data.isPublished === 'on';
 
 		if (!locals.user?.id) {
@@ -32,7 +39,8 @@ export const actions = {
 				slug: String(slug),
 				contentJson: content,
 				isPublished,
-				publishedAt: isPublished ? new Date() : null
+				publishedAt: isPublished ? new Date() : null,
+				mediaId: mediaId ? Number(mediaId) : null
 			};
 			const [newPost] = await db.insert(blogPost).values(valuesToInsert).returning();
 

@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
-import { blogPost } from '$lib/server/db/schema.js';
+import { blogPost, media } from '$lib/server/db/schema.js';
 import { fail, redirect, error } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
 
 export async function load({ params }) {
@@ -11,14 +11,21 @@ export async function load({ params }) {
 	}
 
 	const post = await db.query.blogPost.findFirst({
-		where: eq(blogPost.id, id)
+		where: eq(blogPost.id, id),
+		with: {
+			featuredImage: true
+		}
 	});
 
 	if (!post) {
 		throw error(404, 'Post not found');
 	}
 
-	return { post };
+	const mediaItems = await db.query.media.findMany({
+		orderBy: desc(media.uploadedAt)
+	});
+
+	return { post, mediaItems };
 }
 
 export const actions = {
@@ -53,7 +60,8 @@ export const actions = {
 				slug: String(slug),
 				contentJson: content,
 				isPublished,
-				publishedAt: shouldSetPublishedDate ? new Date() : null
+				publishedAt: shouldSetPublishedDate ? new Date() : null,
+				mediaId: mediaId ? Number(mediaId) : null
 			};
 
 			await db.update(blogPost).set(dataToUpdate).where(eq(blogPost.id, id));
