@@ -2,6 +2,7 @@ import { db } from '$lib/server/db';
 import { location } from '$lib/server/db/schema.js';
 import { fail } from '@sveltejs/kit';
 import { desc, eq } from 'drizzle-orm';
+import { log } from '$lib/server/auditLog.js';
 
 export async function load() {
 	const locations = await db.query.location.findMany({
@@ -11,43 +12,45 @@ export async function load() {
 }
 
 export const actions = {
-	create: async ({ request }) => {
+	save: async ({ request, locals }) => {
 		const formData = await request.formData();
-		const data = Object.fromEntries(formData);
-		const { 
-			countryName,
-			countryCode,
-			address,
-			phoneNumber,
-			latitude,
-			longitude
-		} = data;
+		const id = Number(formData.get('id'));
+		const { countryName, countryCode, address, phoneNumber, latitude, longitude } =
+			Object.fromEntries(formData);
 
-		if (!countryName || !countryCode || !address ) {
-			return fail(400, { data, message: 'All fields are required.' });
+		if (!countryName || !countryCode || !address) {
+			return fail(400, { message: 'All fields are required.' });
 		}
-
 		if (typeof countryCode !== 'string' || countryCode.length !== 2) {
-			return fail(400, { data, message: 'Country Code must be 2 characters (e.g., ZW).' });
+			return fail(400, { message: 'Country Code must be 2 characters (e.g., ZW).' });
 		}
+
+		const dataToSave = {
+			countryName: String(countryName),
+			countryCode: String(countryCode).toUpperCase(),
+			address: String(address),
+			phoneNumber: String(phoneNumber),
+			latitude: String(latitude),
+			longitude: String(longitude)
+		};
 
 		try {
-			const newLocation = {
-				countryName: String(countryName),
-				countryCode: String(countryCode).toUpperCase(),
-				address: String(address),
-				phoneNumber: String(phoneNumber)
-				latitude: String(latitude),
-				longitude: String(longitude)
+			if (isNaN(id)) {
+				// Create new location
+				const [newLocation] = await db.insert(location).values(dataToSave).returning();
+				await log(locals.user?.id, 'create_location', {
+					targetId: newLocation.id,
+					data: newLocation
+				});
+			} else {
+				// Update existing location
+				await db.update(location).set(dataToSave).where(eq(location.id, id));
+				await log(locals.user?.id, 'update_location', { targetId: id, data: dataToSave });
 			}
-
-			await db.insert(location).values(newLocation);
-			await log(locals.user?.id, 'create_location', { data: newLocation });
-
-			return { success: true, message: 'Location added successfully!' };
+			return { success: true, message: 'Location saved successfully!' };
 		} catch (error) {
-			console.error('Error creating location:', error);
-			return fail(500, { data, message: 'Could not create the location.' });
+			console.error('Error saving location:', error);
+			return fail(500, { message: 'Could not save location.' });
 		}
 	},
 

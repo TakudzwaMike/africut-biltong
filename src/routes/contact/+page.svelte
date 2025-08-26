@@ -1,4 +1,6 @@
 <script>
+	//import RegionalMap from '$lib/components/RegionalMap.svelte';
+
 	let { data, form } = $props();
 	const { solution } = data;
 
@@ -113,3 +115,9 @@
 		</div>
 	</div>
 </section>
+
+<!--
+<div class="mx-auto max-w-4xl px-8 pb-20 sm:pb-24">
+	<RegionalMap locations={data.locations} />
+</div>
+-->
