@@ -6,6 +6,9 @@
 
 	let postData = $state(data.post);
 	let contentJson = $state(data.post.contentJson);
+
+	// Create a reactive Set of the post's current category IDs
+	let postCategoryIds = $derived(new Set(postData.categories.map((c) => c.categoryId)));
 </script>
 
 <div class="relative z-10">
@@ -45,7 +48,7 @@
 					/>
 				</div>
 			</div>
-			
+
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Featured Image</h3>
 				<FeaturedImagePicker
@@ -60,10 +63,9 @@
 				<h3 class="text-lg font-bold">Content</h3>
 				<RichTextEditor bind:content={contentJson} initialContent={postData.contentJson} />
 			</div>
-			
+
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Categories</h3>
-				{@const postCategoryIds = new Set(postData.categories.map(c => c.categoryId))}
 				<div class="grid grid-cols-2 gap-4 md:grid-cols-3">
 					{#each data.allCategories as category}
 						<label class="flex items-center gap-2 rounded-md bg-main/5 p-3">
