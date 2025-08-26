@@ -27,16 +27,17 @@
 </svelte:head>
 
 {#if isAdminRoute}
-	<!-- For admin routes, render only the slot and toasts -->
 	<slot />
 {:else}
-	<!-- For public routes, render the full public layout -->
 	<Canvas />
 	<Header {data} />
 	<main>
 		<slot />
 	</main>
 	<Footer />
+	{#if data.settings?.whatsappNumber}
+			<QuickChatButton phoneNumber={data.settings.whatsappNumber} />
+	{/if}
 {/if}
 
 <ToastContainer />

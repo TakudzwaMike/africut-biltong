@@ -20,7 +20,8 @@ export async function load() {
 		siteName: settings.site_name || 'Vision AI Tech',
 		logoUrl: settings.site_logo_url || null,
 		brochureUrl: settings.brochure_url || null,
-		heroVideoUrl: settings.hero_video_url || null
+		heroVideoUrl: settings.hero_video_url || '',
+		whatsappNumber: settings.whatsappNumber || ''
 	};
 }
 
@@ -31,6 +32,8 @@ export const actions = {
 		const logoFile = formData.get('logo');
 		const brochureFile = formData.get('brochure');
 		const heroVideoUrl = formData.get('heroVideoUrl');
+		const whatsappNumber = formData.get('whatsappNumber');
+
 		if (!siteName || typeof siteName !== 'string') {
 			return fail(400, { message: 'Site name is required.' });
 		}
@@ -90,6 +93,15 @@ export const actions = {
 					set: { value: String(heroVideoUrl) }
 				});
 			dataToLog.hero_video_url = heroVideoUrl;
+
+			await db
+				.insert(siteSettings)
+				.values({ key: 'whatsapp_number', value: String(whatsappNumber) })
+				.onConflictDoUpdate({
+					target: siteSettings.key,
+					set: { value: String(whatsappNumber) }
+				});
+			dataToLog.whatsapp_number = whatsappNumber;
 
 			await log(locals.user?.id, 'update_site_settings', { data: dataToLog });
 

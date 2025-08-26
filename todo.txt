@@ -1,0 +1,7 @@
+20250822:
+- create a dedicated resources page (this should have a panel item to
+	configure)
+- Custom for analytics in QR codes generated on the dashboard - should show
+	who generated, where was it shared and the likes so we can have a map of
+	where our clients are coming from
+- 
