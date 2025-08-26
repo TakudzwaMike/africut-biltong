@@ -1,8 +1,7 @@
 import { db } from '$lib/server/db';
 import { media } from '$lib/server/db/schema.js';
-import { fail } from '@sveltejs/kit';
+import { fail, json } from '@sveltejs/kit';
 import { desc, eq } from 'drizzle-orm';
-import { uploadFile } from '$lib/server/blob';
 import { log } from '$lib/server/auditLog.js';
 
 export async function load() {
@@ -13,39 +12,31 @@ export async function load() {
 }
 
 export const actions = {
-	upload: async ({ request, locals }) => {
+	// This action is called AFTER the file has been uploaded to Vercel Blob on the client.
+	// Its job is to save the reference to our database.
+	addReference: async ({ request, locals }) => {
 		const formData = await request.formData();
-		const imageFile = formData.get('image');
+		const url = formData.get('url');
 		const altText = formData.get('altText');
 
-		if (!(imageFile instanceof File) || imageFile.size === 0) {
-			return fail(400, { message: 'Image file is required.' });
-		}
-		if (!altText || typeof altText !== 'string') {
-			return fail(400, { message: 'Alt text is required for accessibility.' });
+		if (!url || typeof url !== 'string' || !altText || typeof altText !== 'string') {
+			return fail(400, { message: 'URL and Alt Text are required.' });
 		}
 
 		try {
-			const buffer = Buffer.from(await imageFile.arrayBuffer());
-			const url = await uploadFile(buffer, imageFile.name, imageFile.type);
-
-			const [newMedia] = await db
-				.insert(media)
-				.values({
-					url,
-					altText: String(altText)
-				})
-				.returning();
+			const [newMedia] = await db.insert(media).values({ url, altText }).returning();
 
 			await log(locals.user?.id, 'upload_media', {
 				targetId: newMedia.id,
 				data: newMedia
 			});
+			
+			// Return the new media item so the client can update instantly
+			return { success: true, newMedia };
 
-			return { success: true, message: 'Image uploaded successfully!' };
 		} catch (error) {
-			console.error('Error uploading media:', error);
-			return fail(500, { message: 'Could not upload the image.' });
+			console.error('Error saving media reference:', error);
+			return fail(500, { message: 'Could not save media reference to the database.' });
 		}
 	},
 
@@ -64,7 +55,6 @@ export const actions = {
 				return fail(404, { message: 'Media not found.' });
 			}
 			// Note: This does not delete the file from Vercel Blob storage.
-			// A robust implementation would require a separate call to the blob storage API.
 			await db.delete(media).where(eq(media.id, Number(id)));
 
 			await log(locals.user?.id, 'delete_media', {
