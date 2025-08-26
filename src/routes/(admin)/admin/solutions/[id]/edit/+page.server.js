@@ -42,7 +42,7 @@ export const actions = {
 		const id = Number(params.id);
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { solutionName, slug, shortDescription, longDescription } = data;
+		const { solutionName, slug, shortDescription, longDescription, ctaText, ctaLink } = data;
 		const imageFile = formData.get('image');
 
 		if (!solutionName || !slug) {
@@ -53,7 +53,9 @@ export const actions = {
 			solutionName: String(solutionName),
 			slug: String(slug),
 			shortDescription: String(shortDescription),
-			longDescription: toRichText(longDescription)
+			longDescription: toRichText(longDescription),
+			ctaText: String(ctaText),
+			ctaLink: String(ctaLink)
 		};
 
 		if (imageFile instanceof File && imageFile.size > 0) {

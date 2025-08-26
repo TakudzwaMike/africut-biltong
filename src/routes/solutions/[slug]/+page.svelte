@@ -37,10 +37,10 @@
 
 		<div class="mt-16 text-center">
 			<a
-				href={`/contact?solution=${solution.slug}`}
+				href={solution.ctaLink || `/contact?solution=${solution.slug}`}
 				class="rounded-md bg-accent px-6 py-3 font-bold text-main shadow-lg shadow-accent/30 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/40"
 			>
-				Discuss this Solution
+				{solution.ctaText || 'Discuss this Solution'}
 			</a>
 		</div>
 	</div>

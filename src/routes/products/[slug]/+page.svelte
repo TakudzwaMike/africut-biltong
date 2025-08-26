@@ -64,10 +64,10 @@
 
 		<div class="mt-16 text-center">
 			<a
-				href={`/contact?solution=${product.slug}`}
+				href={product.ctaLink || `/contact?product=${product.slug}`}
 				class="rounded-md bg-accent px-6 py-3 font-bold text-main shadow-lg shadow-accent/30 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/40"
 			>
-				Inquire About This Product
+				{product.ctaText || 'Inquire About This Product'}
 			</a>
 		</div>
 	</div>

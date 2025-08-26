@@ -8,7 +8,7 @@ export const actions = {
 	default: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { name, slug, shortDescription, longDescription: longDescriptionJson } = data;
+		const { name, slug, shortDescription, longDescription: longDescriptionJson, ctaText, ctaLink } = data;
 		const imageFile = formData.get('image');
 
 		if (!name || !slug) {
@@ -41,7 +41,9 @@ export const actions = {
 					slug: String(slug),
 					shortDescription: String(shortDescription),
 					longDescription,
-					imageUrl
+					imageUrl,
+					ctaText: String(ctaText),
+					ctaLink: String(ctaLink)
 				})
 				.returning();
 

@@ -27,7 +27,7 @@ export const actions = {
 		const id = Number(params.id);
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { name, slug, shortDescription, longDescription: longDescriptionJson } = data;
+		const { name, slug, shortDescription, longDescription: longDescriptionJson, ctaText, ctaLink } = data;
 		const imageFile = formData.get('image');
 
 		if (!name || !slug) {
@@ -37,7 +37,9 @@ export const actions = {
 		const dataToUpdate = {
 			name: String(name),
 			slug: String(slug),
-			shortDescription: String(shortDescription)
+			shortDescription: String(shortDescription),
+			ctaText: String(ctaText),
+			ctaLink: String(ctaLink)
 		};
 
 		if (imageFile instanceof File && imageFile.size > 0) {

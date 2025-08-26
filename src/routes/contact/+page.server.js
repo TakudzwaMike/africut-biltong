@@ -1,19 +1,24 @@
 import { db } from '$lib/server/db';
-import { lead as leadTable, solution as solutionTable } from '$lib/server/db/schema';
+import { lead as leadTable, solution as solutionTable, location } from '$lib/server/db/schema';
 import { fail } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 
 export async function load({ url }) {
 	const solutionSlug = url.searchParams.get('solution');
+	
+	const locations = await db.query.location.findMany({
+		orderBy: desc(location.countryName)
+	});
+
 	if (!solutionSlug) {
-		return { solution: null };
+		return { solution: null, locations };
 	}
 
 	const solution = await db.query.solution.findFirst({
 		where: eq(solutionTable.slug, solutionSlug)
 	});
 
-	return { solution };
+	return { solution, locations };
 }
 
 export const actions = {
