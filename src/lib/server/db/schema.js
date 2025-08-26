@@ -68,6 +68,13 @@ export const testimonial = pgTable('testimonial', {
 	tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true, mode: 'date' }).notNull()
 });
 
+export const media = pgTable('media', {
+	id: serial('id').primaryKey(),
+	url: text('url').notNull(),
+	altText: varchar('alt_text', { length: 255 }).notNull(),
+	uploadedAt: timestamp('uploaded_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
+});
+
 export const blogPost = pgTable('blog_post', {
 	id: serial('id').primaryKey(),
 	authorId: text('author_id')
@@ -80,6 +87,21 @@ export const blogPost = pgTable('blog_post', {
 	isPublished: boolean('is_published').notNull().default(false),
 	publishedAt: timestamp('published_at', { withTimezone: true, mode: 'date' }),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
+});
+
+export const blogCategory = pgTable('blog_category', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	slug: varchar('slug', { length: 255 }).notNull().unique()
+});
+
+export const blogPostsToCategories = pgTable('blog_posts_to_categories', {
+	postId: integer('post_id')
+		.notNull()
+		.references(() => blogPost.id, { onDelete: 'cascade' }),
+	categoryId: integer('category_id')
+		.notNull()
+		.references(() => blogCategory.id, { onDelete: 'cascade' })
 });
 
 export const lead = pgTable('lead', {
@@ -100,7 +122,7 @@ export const siteSettings = pgTable('site_setting', {
 export const location = pgTable('location', {
 	id: serial('id').primaryKey(),
 	countryName: varchar('country_name', { length: 255 }).notNull(),
-	countryCode: varchar('country_code', { length: 2 }).notNull(),
+	countryCode: varchar('country_code', { length: 2 }).notNull(), // For geo-targeting (e.g., ZW, ZA)
 	address: text('address').notNull(),
 	phoneNumber: varchar('phone_number', { length: 255 })
 });
@@ -111,29 +133,22 @@ export const product = pgTable('product', {
 	name: varchar('name', { length: 255 }).notNull(),
 	imageUrl: text('image_url'),
 	shortDescription: text('short_description'),
-	longDescription: jsonb('long_description') 
+	longDescription: jsonb('long_description') // For rich text content
 });
 
 export const auditLog = pgTable('audit_log', {
 	id: serial('id').primaryKey(),
 	userId: text('user_id').references(() => userTable.id, { onDelete: 'set null' }),
-	action: varchar('action', { length: 255 }).notNull(),
-	targetId: varchar('target_id', { length: 255 }),
-	data: jsonb('data'),
+	action: varchar('action', { length: 255 }).notNull(), // e.g., 'create_product', 'delete_client'
+	targetId: varchar('target_id', { length: 255 }), // e.g., the ID of the product that was created
+	data: jsonb('data'), // A snapshot of the created/updated/deleted data
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
-});
-
-export const media = pgTable('media', {
-	id: serial('id').primaryKey(),
-	url: text('url').notNull(),
-	altText: varchar('alt_text', { length: 255 }).notNull(),
-	uploadedAt: timestamp('uploaded_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
 
 export const pageContent = pgTable('page_content', {
 	id: serial('id').primaryKey(),
-	page: varchar('page', { length: 255 }).notNull(),
-	section: varchar('section', { length: 255 }).notNull().unique(),
+	page: varchar('page', { length: 255 }).notNull(), // e.g., 'homepage'
+	section: varchar('section', { length: 255 }).notNull().unique(), // e.g., 'technology_teaser'
 	title: varchar('title', { length: 255 }),
 	text: text('text'),
 	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' })
@@ -158,7 +173,7 @@ export const pageContentRelations = relations(pageContent, ({ one }) => ({
 	})
 }));
 
-export const blogPostRelations = relations(blogPost, ({ one }) => ({
+export const blogPostRelations = relations(blogPost, ({ one, many }) => ({
 	author: one(userTable, {
 		fields: [blogPost.authorId],
 		references: [userTable.id]
@@ -166,6 +181,22 @@ export const blogPostRelations = relations(blogPost, ({ one }) => ({
 	featuredImage: one(media, {
 		fields: [blogPost.mediaId],
 		references: [media.id]
+	}),
+	categories: many(blogPostsToCategories)
+}));
+
+export const blogCategoryRelations = relations(blogCategory, ({ many }) => ({
+	posts: many(blogPostsToCategories)
+}));
+
+export const blogPostsToCategoriesRelations = relations(blogPostsToCategories, ({ one }) => ({
+	post: one(blogPost, {
+		fields: [blogPostsToCategories.postId],
+		references: [blogPost.id]
+	}),
+	category: one(blogCategory, {
+		fields: [blogPostsToCategories.categoryId],
+		references: [blogCategory.id]
 	})
 }));
 
