@@ -154,6 +154,14 @@ export const pageContent = pgTable('page_content', {
 	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' })
 });
 
+export const teamMember = pgTable('team_member', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	title: varchar('title', { length: 255 }).notNull(),
+	bio: text('bio'),
+	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' })
+});
+
 export const userRelations = relations(userTable, ({ many }) => ({
 	blogPosts: many(blogPost),
 	auditLogs: many(auditLog)
@@ -169,6 +177,13 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
 export const pageContentRelations = relations(pageContent, ({ one }) => ({
 	media: one(media, {
 		fields: [pageContent.mediaId],
+		references: [media.id]
+	})
+}));
+
+export const teamMemberRelations = relations(teamMember, ({ one }) => ({
+	photo: one(media, {
+		fields: [teamMember.mediaId],
 		references: [media.id]
 	})
 }));
