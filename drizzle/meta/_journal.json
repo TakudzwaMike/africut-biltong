@@ -57,6 +57,27 @@
       "when": 1755548650713,
       "tag": "0007_ordinary_rattler",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1755787684461,
+      "tag": "0008_abandoned_shen",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1755789642591,
+      "tag": "0009_bent_maddog",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1755860313023,
+      "tag": "0010_easy_butterfly",
+      "breakpoints": true
     }
   ]
 }
