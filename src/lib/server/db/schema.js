@@ -1,6 +1,7 @@
 import { pgTable, text, timestamp, serial, varchar, jsonb, integer, pgEnum, boolean } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
+// --- ENUMS ---
 export const testimonialStatusEnum = pgEnum('testimonial_status', [
 	'pending',
 	'submitted',
@@ -8,6 +9,7 @@ export const testimonialStatusEnum = pgEnum('testimonial_status', [
 	'rejected'
 ]);
 
+// --- AUTH (compatible with Lucia-auth) ---
 export const userTable = pgTable('user', {
 	id: text('id').primaryKey(),
 	username: varchar('username', { length: 255 }).notNull().unique(),
@@ -22,19 +24,20 @@ export const sessionTable = pgTable('session', {
 	expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull()
 });
 
+// --- CONTENT ---
 export const client = pgTable('client', {
 	id: serial('id').primaryKey(),
 	name: varchar('name', { length: 255 }).notNull().unique(),
-	logoUrl: text('logo_url')
+	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' })
 });
 
 export const solution = pgTable('solution', {
 	id: serial('id').primaryKey(),
 	slug: varchar('slug', { length: 255 }).notNull().unique(),
 	solutionName: varchar('solution_name', { length: 255 }).notNull(),
-	imageUrl: text('image_url'),
+	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' }),
 	shortDescription: text('short_description'),
-	longDescription: jsonb('long_description'),
+	longDescription: jsonb('long_description'), // For rich text content
 	ctaText: varchar('cta_text', { length: 255 }),
 	ctaLink: varchar('cta_link', { length: 255 })
 });
@@ -72,8 +75,13 @@ export const testimonial = pgTable('testimonial', {
 
 export const media = pgTable('media', {
 	id: serial('id').primaryKey(),
-	url: text('url').notNull(),
 	altText: varchar('alt_text', { length: 255 }).notNull(),
+	originalUrl: text('original_url').notNull(),
+	width: integer('width').notNull(),
+	height: integer('height').notNull(),
+	thumbnailUrl: text('thumbnail_url'),
+	displayUrl: text('display_url'),
+	blurDataUrl: text('blur_data_url'),
 	uploadedAt: timestamp('uploaded_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
 
@@ -106,6 +114,7 @@ export const blogPostsToCategories = pgTable('blog_posts_to_categories', {
 		.references(() => blogCategory.id, { onDelete: 'cascade' })
 });
 
+// --- LEADS (from contact form) ---
 export const lead = pgTable('lead', {
 	id: serial('id').primaryKey(),
 	solutionId: integer('solution_id').references(() => solution.id, { onDelete: 'set null' }),
@@ -116,11 +125,13 @@ export const lead = pgTable('lead', {
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
 
+// --- SITE SETTINGS ---
 export const siteSettings = pgTable('site_setting', {
 	key: varchar('key', { length: 255 }).primaryKey(),
 	value: text('value')
 });
 
+// --- LOCATIONS ---
 export const location = pgTable('location', {
 	id: serial('id').primaryKey(),
 	countryName: varchar('country_name', { length: 255 }).notNull(),
@@ -131,17 +142,19 @@ export const location = pgTable('location', {
 	longitude: varchar('longitude', { length: 255 })
 });
 
+// --- PRODUCTS ---
 export const product = pgTable('product', {
 	id: serial('id').primaryKey(),
 	slug: varchar('slug', { length: 255 }).notNull().unique(),
 	name: varchar('name', { length: 255 }).notNull(),
-	imageUrl: text('image_url'),
+	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' }),
 	shortDescription: text('short_description'),
-	longDescription: jsonb('long_description'),
+	longDescription: jsonb('long_description'), // For rich text content
 	ctaText: varchar('cta_text', { length: 255 }),
 	ctaLink: varchar('cta_link', { length: 255 })
 });
 
+// --- AUDIT LOG ---
 export const auditLog = pgTable('audit_log', {
 	id: serial('id').primaryKey(),
 	userId: text('user_id').references(() => userTable.id, { onDelete: 'set null' }),
@@ -151,6 +164,7 @@ export const auditLog = pgTable('audit_log', {
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
 
+// --- PAGE CONTENT ---
 export const pageContent = pgTable('page_content', {
 	id: serial('id').primaryKey(),
 	page: varchar('page', { length: 255 }).notNull(), // e.g., 'homepage'
@@ -160,6 +174,7 @@ export const pageContent = pgTable('page_content', {
 	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' })
 });
 
+// --- TEAM MEMBERS ---
 export const teamMember = pgTable('team_member', {
 	id: serial('id').primaryKey(),
 	name: varchar('name', { length: 255 }).notNull(),
@@ -168,9 +183,33 @@ export const teamMember = pgTable('team_member', {
 	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' })
 });
 
+// --- QR CODE ANALYTICS ---
+export const trackedLink = pgTable('tracked_link', {
+	id: serial('id').primaryKey(),
+	shortCode: varchar('short_code', { length: 255 }).notNull().unique(),
+	destinationUrl: text('destination_url').notNull(),
+	description: varchar('description', { length: 255 }), // e.g., "LinkedIn Campaign Q3"
+	userId: text('user_id')
+		.notNull()
+		.references(() => userTable.id, { onDelete: 'cascade' }),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
+});
+
+export const linkVisit = pgTable('link_visit', {
+	id: serial('id').primaryKey(),
+	linkId: integer('link_id')
+		.notNull()
+		.references(() => trackedLink.id, { onDelete: 'cascade' }),
+	ipCountry: varchar('ip_country', { length: 2 }), // e.g., ZW, ZA
+	visitedAt: timestamp('visited_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
+});
+
+
+// --- RELATIONS for Drizzle Kit ---
 export const userRelations = relations(userTable, ({ many }) => ({
 	blogPosts: many(blogPost),
-	auditLogs: many(auditLog)
+	auditLogs: many(auditLog),
+	trackedLinks: many(trackedLink)
 }));
 
 export const auditLogRelations = relations(auditLog, ({ one }) => ({
@@ -190,6 +229,13 @@ export const pageContentRelations = relations(pageContent, ({ one }) => ({
 export const teamMemberRelations = relations(teamMember, ({ one }) => ({
 	photo: one(media, {
 		fields: [teamMember.mediaId],
+		references: [media.id]
+	})
+}));
+
+export const productRelations = relations(product, ({ one }) => ({
+	featuredImage: one(media, {
+		fields: [product.mediaId],
 		references: [media.id]
 	})
 }));
@@ -221,15 +267,26 @@ export const blogPostsToCategoriesRelations = relations(blogPostsToCategories, (
 	})
 }));
 
-export const clientRelations = relations(client, ({ many }) => ({
+export const clientRelations = relations(client, ({ many, one }) => ({
 	caseStudies: many(caseStudy),
-	testimonials: many(testimonial)
+	testimonials: many(testimonial),
+	logo: one(media, {
+		fields: [client.mediaId],
+		references: [media.id]
+	})
 }));
 
 export const leadRelations = relations(lead, ({ one }) => ({
 	solution: one(solution, {
 		fields: [lead.solutionId],
 		references: [solution.id]
+	})
+}));
+
+export const solutionRelations = relations(solution, ({ one }) => ({
+	featuredImage: one(media, {
+		fields: [solution.mediaId],
+		references: [media.id]
 	})
 }));
 
@@ -252,5 +309,20 @@ export const caseStudyResultRelations = relations(caseStudyResult, ({ one }) => 
 	caseStudy: one(caseStudy, {
 		fields: [caseStudyResult.caseStudyId],
 		references: [caseStudy.id]
+	})
+}));
+
+export const trackedLinkRelations = relations(trackedLink, ({ one, many }) => ({
+	user: one(userTable, {
+		fields: [trackedLink.userId],
+		references: [userTable.id]
+	}),
+	visits: many(linkVisit)
+}));
+
+export const linkVisitRelations = relations(linkVisit, ({ one }) => ({
+	link: one(trackedLink, {
+		fields: [linkVisit.linkId],
+		references: [trackedLink.id]
 	})
 }));

@@ -1,4 +1,5 @@
 <script>
+	import Image from '$lib/components/Image.svelte';
 	export let data;
 </script>
 
@@ -12,7 +13,15 @@
 		</div>
 		<div class="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2">
 			{#each data.solutions as solution}
-				<a href={`/solutions/${solution.slug}`} class="corner-border block p-8">
+				<a href={`/solutions/${solution.slug}`} class="corner-border group block">
+					{#if solution.featuredImage}
+						<Image
+							src={solution.featuredImage.url}
+							alt={solution.featuredImage.altText}
+							aspectRatio="16/9"
+							class="mb-6 rounded-md transition-transform duration-300 group-hover:scale-105"
+						/>
+					{/if}
 					<h3 class="text-2xl font-bold text-main">{solution.solutionName}</h3>
 					<p class="mt-2 text-main/70">{solution.shortDescription}</p>
 					<span class="mt-4 block font-bold text-accent transition hover:drop-shadow-accent-glow"

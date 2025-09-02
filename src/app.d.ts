@@ -12,6 +12,10 @@ declare global {
 		// interface PageData {}
 		// interface PageState {}
 		// interface Platform {}
+		interface PrivateEnv {
+			IMAGE_PROCESSING_SECRET: string;
+			BLOB_READ_WRITE_TOKEN: string;
+		}
 	}
 }
 

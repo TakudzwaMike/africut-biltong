@@ -1,5 +1,5 @@
 <script>
-	import { page } from '$app/state';
+	import { page } from '$app/stores';
 	import { afterNavigate } from '$app/navigation';
 
 	let isMenuOpen = $state(false);
@@ -12,8 +12,10 @@
 		{ href: '/admin/case-studies', label: 'Case Studies' },
 		{ href: '/admin/team-members', label: 'Team Members' },
 		{ href: '/admin/blog', label: 'Blog Posts' },
+		{ href: '/admin/tracked-links', label: 'Tracked Links & QR' },
 		{ href: '/admin/leads', label: 'Leads' },
 		{ href: '/admin/media', label: 'Media Library' },
+		{ href: '/admin/users', label: 'Users' },
 		{ href: '/admin/settings', label: 'Site Settings' },
 		{ href: '/admin/locations', label: 'Office Locations' },
 		{ href: '/admin/audit-log', label: 'Audit Log' }
@@ -23,91 +25,87 @@
 		isMenuOpen = !isMenuOpen;
 	}
 
+	// Close the mobile menu after navigation
 	afterNavigate(() => {
 		isMenuOpen = false;
 	});
 </script>
 
-<svelte:head>
-	<style>
-		@media (min-width: 1024px) {
-			.admin-grid {
-				display: grid;
-				grid-template-columns: 260px 1fr;
-			}
-		}
-	</style>
-</svelte:head>
-
 <svelte:body class:overflow-hidden={isMenuOpen} />
 
-<div class="admin-grid" style="min-height: 100vh;">
-	<!-- Desktop-Only Sidebar -->
+<div class="flex h-screen bg-light">
+	<!-- Desktop-Only Fixed Sidebar -->
 	<aside
-		class="hidden flex-col border-r border-main/10 bg-main/5 p-6 lg:flex"
+		class="hidden w-64 flex-shrink-0 flex-col border-r border-main/10 bg-main/5 lg:flex"
 	>
-		<a href="/admin" class="flex items-center gap-3 text-xl font-bold">
-			{#if page.data.settings?.logoUrl}
-				<img
-					src={page.data.settings.logoUrl}
-					alt="Logo"
-					class="h-8 w-8 rounded-md object-contain"
-				/>
-			{/if}
-			<span>{page.data.settings?.siteName || 'Vision AI'} Dashboard</span>
-		</a>
-		<nav class="mt-8">
-			<ul class="space-y-2">
-				{#each navItems as item}
-					<li>
-						<a
-							href={item.href}
-							class="block rounded-md px-4 py-2 font-medium transition {page.url.pathname.startsWith(
-								item.href
-							)
-								? 'bg-accent text-main'
-								: 'text-main/70 hover:bg-main/10'}"
-						>
-							{item.label}
-						</a>
-						<!-- Special case for Blog submenu -->
-						{#if item.href === '/admin/blog' && page.url.pathname.startsWith('/admin/blog')}
-							<ul class="ml-4 mt-2 space-y-1 border-l-2 border-main/10 pl-4">
-								<li>
-									<a
-										href="/admin/blog"
-										class="block rounded-md px-3 py-1 text-sm transition"
-										class:font-bold={page.url.pathname === '/admin/blog'}
-									>Posts</a
-									>
-								</li>
-								<li>
-									<a
-										href="/admin/blog/categories"
-										class="block rounded-md px-3 py-1 text-sm transition"
-										class:font-bold={page.url.pathname.startsWith('/admin/blog/categories')}
-									>Categories</a
-									>
-								</li>
-							</ul>
-						{/if}
-					</li>
-				{/each}
-			</ul>
-		</nav>
+		<div class="flex h-full flex-col p-6">
+			<a href="/admin" class="flex items-center gap-3 text-xl font-bold">
+				{#if $page.data.settings?.logo}
+					<img
+						src={$page.data.settings.logo.url}
+						alt={$page.data.settings.logo.altText}
+						class="h-8 w-8 rounded-md object-contain"
+					/>
+				{/if}
+				<span>{$page.data.settings?.siteName || 'Vision AI'} Dashboard</span>
+			</a>
+			<nav class="mt-8 flex-grow overflow-y-auto">
+				<ul class="space-y-2">
+					{#each navItems as item}
+						<li>
+							<a
+								href={item.href}
+								class="block rounded-md px-4 py-2 font-medium transition {$page.url.pathname.startsWith(
+									item.href
+								)
+									? 'bg-accent text-main'
+									: 'text-main/70 hover:bg-main/10'}"
+							>
+								{item.label}
+							</a>
+							<!-- Special case for Blog submenu -->
+							{#if item.href === '/admin/blog' && $page.url.pathname.startsWith('/admin/blog')}
+								<ul class="ml-4 mt-2 space-y-1 border-l-2 border-main/10 pl-4">
+									<li>
+										<a
+											href="/admin/blog"
+											class="block rounded-md px-3 py-1 text-sm transition"
+											class:font-bold={$page.url.pathname === '/admin/blog'}
+										>Posts</a
+										>
+									</li>
+									<li>
+										<a
+											href="/admin/blog/categories"
+											class="block rounded-md px-3 py-1 text-sm transition"
+											class:font-bold={$page.url.pathname.startsWith(
+												'/admin/blog/categories'
+											)}
+										>Categories</a
+										>
+									</li>
+								</ul>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</nav>
 
-		<div class="mt-auto">
-			<a href="/" class="block text-center text-sm text-main/60 hover:text-accent">← Back to Site</a>
+			<div class="mt-auto flex-shrink-0 pt-4">
+				<a href="/" class="block text-center text-sm text-main/60 hover:text-accent"
+					>← Back to Site</a
+				>
+			</div>
 		</div>
 	</aside>
 
 	<!-- Main Content Area -->
-	<div class="flex flex-col">
+	<div class="flex flex-1 flex-col overflow-hidden">
 		<!-- Mobile Header -->
 		<header
-			class="sticky top-0 z-90 flex items-center justify-between border-b border-main/10 bg-light/80 p-4 backdrop-blur-md lg:hidden"
+			class="flex flex-shrink-0 items-center justify-between border-b border-main/10 bg-light/80 p-4 backdrop-blur-md lg:hidden"
 		>
-			<a href="/admin" class="text-lg font-bold">{page.data.settings?.siteName || 'Admin'}</a>
+			<a href="/admin" class="text-lg font-bold">{$page.data.settings?.siteName || 'Admin'}</a>
 			<button onclick={toggleMenu} aria-label="Open menu" class="rounded-md p-2">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -130,7 +128,7 @@
 			</button>
 		</header>
 
-		<main class="flex-grow overflow-y-auto bg-light">
+		<main class="flex-grow overflow-y-auto">
 			<slot />
 		</main>
 	</div>
@@ -138,19 +136,25 @@
 
 <!-- Mobile Fullscreen Menu -->
 {#if isMenuOpen}
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<div
-		class="fixed inset-0 z-40 flex flex-col bg-light/95 p-6 backdrop-blur-lg lg:hidden"
+		onclick={toggleMenu}
+		class="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm lg:hidden"
+	></div>
+
+	<div
+		class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-light/95 p-6 backdrop-blur-lg lg:hidden"
 	>
 		<div class="flex items-center justify-between">
 			<a href="/admin" class="flex items-center gap-3 text-xl font-bold">
-				{#if page.data.settings?.logoUrl}
+				{#if $page.data.settings?.logo}
 					<img
-						src={page.data.settings.logoUrl}
-						alt="Logo"
+						src={$page.data.settings.logo.url}
+						alt={$page.data.settings.logo.altText}
 						class="h-8 w-8 rounded-md object-contain"
 					/>
 				{/if}
-				<span>{page.data.settings?.siteName || 'Vision AI'} Dashboard</span>
+				<span>{$page.data.settings?.siteName || 'Vision AI'}</span>
 			</a>
 			<button onclick={toggleMenu} aria-label="Close menu" class="rounded-md p-2">
 				<svg
@@ -169,13 +173,13 @@
 			</button>
 		</div>
 
-		<nav class="mt-8 flex flex-1 flex-col">
+		<nav class="mt-8 flex-1 overflow-y-auto">
 			<ul class="space-y-2">
 				{#each navItems as item}
 					<li>
 						<a
 							href={item.href}
-							class="block rounded-md px-4 py-3 text-lg font-medium transition {page.url.pathname.startsWith(
+							class="block rounded-md px-4 py-3 text-lg font-medium transition {$page.url.pathname.startsWith(
 								item.href
 							)
 								? 'bg-accent text-main'
@@ -184,13 +188,13 @@
 							{item.label}
 						</a>
 						<!-- Special case for Blog submenu -->
-						{#if item.href === '/admin/blog' && page.url.pathname.startsWith('/admin/blog')}
+						{#if item.href === '/admin/blog' && $page.url.pathname.startsWith('/admin/blog')}
 							<ul class="ml-4 mt-2 space-y-1 border-l-2 border-main/10 pl-4">
 								<li>
 									<a
 										href="/admin/blog"
 										class="block rounded-md px-3 py-2 text-base transition"
-										class:font-bold={page.url.pathname === '/admin/blog'}
+										class:font-bold={$page.url.pathname === '/admin/blog'}
 									>Posts</a
 									>
 								</li>
@@ -198,7 +202,9 @@
 									<a
 										href="/admin/blog/categories"
 										class="block rounded-md px-3 py-2 text-base transition"
-										class:font-bold={page.url.pathname.startsWith('/admin/blog/categories')}
+										class:font-bold={$page.url.pathname.startsWith(
+											'/admin/blog/categories'
+										)}
 									>Categories</a
 									>
 								</li>
@@ -209,8 +215,10 @@
 			</ul>
 		</nav>
 
-		<div class="mt-auto">
-			<a href="/" class="block text-center text-sm text-main/60 hover:text-accent">← Back to Site</a>
+		<div class="mt-auto flex-shrink-0 pt-4">
+			<a href="/" class="block text-center text-sm text-main/60 hover:text-accent"
+				>← Back to Site</a
+			>
 		</div>
 	</div>
 {/if}

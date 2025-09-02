@@ -6,8 +6,9 @@
 
 	let { data } = $props();
 
+	// Correct Svelte 5 syntax for a derived reactive value
 	let technology = $derived(data.content?.technology);
-	let heroContent = $derived(data.content?.hero)
+	let heroContent = $derived(data.content?.hero);
 
 	/**
 	 * Extracts the first paragraph of text from a TipTap JSON object.
@@ -22,10 +23,12 @@
 	}
 </script>
 
+<!-- Section 1: Hero -->
 {#if heroContent}
 	<Hero content={heroContent} videoUrl={data.settings?.heroVideoUrl} />
 {/if}
 
+<!-- Section 2: Trust Bar (Dynamic) -->
 {#if data.clients.length > 0}
 	<div class="bg-light py-16 text-center">
 		<div class="mx-auto max-w-6xl px-8">
@@ -34,22 +37,27 @@
 			</h3>
 			<div class="mt-10 flex flex-wrap items-center justify-center gap-x-12 gap-y-8">
 				{#each data.clients as client}
-					<img
-						src={client.logoUrl}
-						alt="{client.name} Logo"
-						title={client.name}
-						class="h-10 w-auto object-contain opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0 sm:h-12"
-					/>
+					{#if client.logo}
+						<img
+							src={client.logo.url}
+							alt={client.logo.altText}
+							title={client.name}
+							class="h-10 w-auto object-contain opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0 sm:h-12"
+						/>
+					{/if}
 				{/each}
 			</div>
 		</div>
 	</div>
 {/if}
 
+<!-- Section 3: Solutions Overview -->
 <SolutionsOverview solutions={data.solutions} content={data.content?.solutions_overview} />
 
+<!-- Section 4: Proven Results (Dynamic) -->
 <CaseStudyHighlights caseStudies={data.caseStudies} />
 
+<!-- Section 5: Technology Section -->
 <section class="relative z-10">
 	<div class="mx-auto max-w-6xl px-8 py-20 sm:py-24">
 		{#if technology}
@@ -82,6 +90,7 @@
 	</div>
 </section>
 
+<!-- Section 6: Blog Highlights -->
 <section id="blog-highlights" class="relative z-10">
 	<div class="mx-auto max-w-6xl px-8 py-20 sm:py-24">
 		<div class="text-center">
@@ -119,6 +128,7 @@
 	</div>
 </section>
 
+<!-- Section 7: Final CTA -->
 <section class="relative z-10">
 	<div class="mx-auto max-w-6xl px-8 pb-20 sm:pb-24">
 		<div class="rounded-xl bg-main p-8 text-center sm:p-16">

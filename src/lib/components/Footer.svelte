@@ -4,7 +4,7 @@
 
 <footer class="relative z-10 border-t border-main/10 bg-light">
 	<div class="mx-auto max-w-6xl px-8 py-12">
-		<div class="grid grid-cols-1 gap-12 text-center sm:grid-cols-3 sm:text-left">
+		<div class="grid grid-cols-1 gap-12 text-center sm:grid-cols-2 lg:grid-cols-4 sm:text-left">
 			<!-- Column 1: Branding -->
 			<div class="flex flex-col items-center sm:items-start">
 				<a href="/" class="text-xl font-bold">
@@ -102,6 +102,82 @@
 						{/each}
 					{/if}
 				</ul>
+			</div>
+
+			<!-- Column 4: Social Links -->
+			<div>
+				<h3 class="font-bold uppercase tracking-wider text-main/60">Follow Us</h3>
+				<div class="mt-4 flex justify-center gap-6 sm:justify-start">
+					{#if $page.data.settings?.socialLinkedIn}
+						<a
+							href={$page.data.settings.socialLinkedIn}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="text-main/70 hover:text-accent"
+							aria-label="LinkedIn"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								><path
+									d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"
+								/><rect width="4" height="12" x="2" y="9" /><circle cx="4" cy="4" r="2" /></svg
+							>
+						</a>
+					{/if}
+					{#if $page.data.settings?.socialX}
+						<a
+							href={$page.data.settings.socialX}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="text-main/70 hover:text-accent"
+							aria-label="X (formerly Twitter)"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								class="lucide lucide-x"
+								><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg
+							>
+						</a>
+					{/if}
+					{#if $page.data.settings?.socialFacebook}
+						<a
+							href={$page.data.settings.socialFacebook}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="text-main/70 hover:text-accent"
+							aria-label="Facebook"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg
+							>
+						</a>
+					{/if}
+				</div>
 			</div>
 		</div>
 

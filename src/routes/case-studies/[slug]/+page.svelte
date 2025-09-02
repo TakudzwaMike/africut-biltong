@@ -5,7 +5,7 @@
 
 	// A helper function to render our JSON-based rich text
 	function renderRichText(richTextArray) {
-        if (!Array.isArray(richTextArray)) return '';
+		if (!Array.isArray(richTextArray)) return '';
 		return richTextArray
 			.map((element) => {
 				if (element.type === 'paragraph') {
@@ -22,7 +22,7 @@
 	<title>{caseStudy.title} | Vision AI Tech Case Study</title>
 	<meta
 		name="description"
-		content="Read our case study with {caseStudy.clientName} on {caseStudy.title.toLowerCase()}."
+		content="Read our case study with {caseStudy.client?.name} on {caseStudy.title.toLowerCase()}."
 	/>
 </svelte:head>
 
@@ -31,7 +31,7 @@
 		<!-- Header -->
 		<div class="text-center">
 			<p class="font-bold text-accent drop-shadow-accent-glow">
-				Case Study: {caseStudy.clientName}
+				Case Study: {caseStudy.client?.name || 'A Valued Partner'}
 			</p>
 			<h1 class="mt-2 text-4xl font-bold tracking-tight text-main sm:text-5xl">
 				{caseStudy.title}

@@ -1,8 +1,8 @@
 import { db } from '$lib/server/db';
-import { siteSettings } from '$lib/server/db/schema.js';
+import { siteSettings, media } from '$lib/server/db/schema.js';
 import { fail } from '@sveltejs/kit';
-import { uploadFile } from '$lib/server/blob';
 import { log } from '$lib/server/auditLog.js';
+import { desc, eq } from 'drizzle-orm';
 
 // Helper to get all settings as a simple key-value object
 async function getSettings() {
@@ -16,12 +16,25 @@ async function getSettings() {
 
 export async function load() {
 	const settings = await getSettings();
+	const mediaItems = await db.query.media.findMany({ orderBy: desc(media.uploadedAt) });
+
+	let logo = null;
+	const logoId = Number(settings.site_logo_media_id);
+	if (!isNaN(logoId)) {
+		logo = await db.query.media.findFirst({ where: eq(media.id, logoId) });
+	}
+
 	return {
 		siteName: settings.site_name || 'Vision AI Tech',
-		logoUrl: settings.site_logo_url || null,
+		logo,
 		brochureUrl: settings.brochure_url || null,
 		heroVideoUrl: settings.hero_video_url || '',
-		whatsappNumber: settings.whatsappNumber || ''
+		whatsappNumber: settings.whatsapp_number || '',
+		mediaItems,
+		siteLogoMediaId: settings.site_logo_media_id || null,
+		socialLinkedIn: settings.social_linkedin || '',
+		socialX: settings.social_x || '',
+		socialFacebook: settings.social_facebook || ''
 	};
 }
 
@@ -29,10 +42,13 @@ export const actions = {
 	default: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const siteName = formData.get('siteName');
-		const logoFile = formData.get('logo');
 		const brochureFile = formData.get('brochure');
 		const heroVideoUrl = formData.get('heroVideoUrl');
 		const whatsappNumber = formData.get('whatsappNumber');
+		const siteLogoMediaId = formData.get('siteLogoMediaId');
+		const socialLinkedIn = formData.get('socialLinkedIn');
+		const socialX = formData.get('socialX');
+		const socialFacebook = formData.get('socialFacebook');
 
 		if (!siteName || typeof siteName !== 'string') {
 			return fail(400, { message: 'Site name is required.' });
@@ -40,33 +56,32 @@ export const actions = {
 
 		try {
 			const dataToLog = {};
-			
-			// Upsert site name (insert or update if it exists)
+
+			// Upsert site name
 			await db
 				.insert(siteSettings)
 				.values({ key: 'site_name', value: siteName })
-				.onConflictDoUpdate({
-					target: siteSettings.key,
-					set: { value: siteName }
-				});
+				.onConflictDoUpdate({ target: siteSettings.key, set: { value: siteName } });
 			dataToLog.site_name = siteName;
+			
+			// Upsert site logo media ID
+			await db
+				.insert(siteSettings)
+				.values({ key: 'site_logo_media_id', value: String(siteLogoMediaId) })
+				.onConflictDoUpdate({ target: siteSettings.key, set: { value: String(siteLogoMediaId) } });
+			dataToLog.site_logo_media_id = siteLogoMediaId;
 
-			// Handle logo upload
-			if (logoFile instanceof File && logoFile.size > 0) {
-				const buffer = Buffer.from(await logoFile.arrayBuffer());
-				const logoUrl = await uploadFile(buffer, logoFile.name, logoFile.type);
-
-				// Upsert logo URL
+			// Handle brochure upload (still a direct upload for now)
+			if (brochureFile instanceof File && brochureFile.size > 0) {
+				const { uploadFile } = await import('$lib/server/blob');
+				const buffer = Buffer.from(await brochureFile.arrayBuffer());
+				const brochureUrl = await uploadFile(buffer, brochureFile.name, brochureFile.type);
 				await db
 					.insert(siteSettings)
-					.values({ key: 'site_logo_url', value: logoUrl })
-					.onConflictDoUpdate({
-						target: siteSettings.key,
-						set: { value: logoUrl }
-					});
-				dataToLog.site_logo_url = logoUrl;
+					.values({ key: 'brochure_url', value: brochureUrl })
+					.onConflictDoUpdate({ target: siteSettings.key, set: { value: brochureUrl } });
+				dataToLog.brochure_url = brochureUrl;
 			}
-
 			// Handle brochure upload
 			if (brochureFile instanceof File && brochureFile.size > 0) {
 				const buffer = Buffer.from(await brochureFile.arrayBuffer());
@@ -102,6 +117,21 @@ export const actions = {
 					set: { value: String(whatsappNumber) }
 				});
 			dataToLog.whatsapp_number = whatsappNumber;
+
+			// Upsert Social Links
+			const socialLinks = {
+				social_linkedin: String(socialLinkedIn),
+				social_x: String(socialX),
+				social_facebook: String(socialFacebook)
+			};
+
+			for (const [key, value] of Object.entries(socialLinks)) {
+				await db
+					.insert(siteSettings)
+					.values({ key, value })
+					.onConflictDoUpdate({ target: siteSettings.key, set: { value } });
+				dataToLog[key] = value;
+			}
 
 			await log(locals.user?.id, 'update_site_settings', { data: dataToLog });
 

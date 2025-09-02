@@ -1,8 +1,15 @@
 import { db } from '$lib/server/db';
-import { solution } from '$lib/server/db/schema.js';
+import { solution, media } from '$lib/server/db/schema.js';
 import { fail, redirect } from '@sveltejs/kit';
-import { uploadFile } from '$lib/server/blob';
 import { log } from '$lib/server/auditLog.js';
+import { desc } from 'drizzle-orm';
+
+export async function load() {
+	const mediaItems = await db.query.media.findMany({
+		orderBy: desc(media.uploadedAt)
+	});
+	return { mediaItems };
+}
 
 const toRichText = (text) => {
 	if (!text) return [];
@@ -13,22 +20,11 @@ export const actions = {
 	default: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { solutionName, slug, shortDescription, longDescription, ctaText, ctaLink } = data;
-		const imageFile = formData.get('image');
+		const { solutionName, slug, shortDescription, longDescription, ctaText, ctaLink, mediaId } =
+			data;
 
 		if (!solutionName || !slug) {
 			return fail(400, { data, message: 'Solution Name and Slug are required.' });
-		}
-
-		let imageUrl = null;
-		if (imageFile instanceof File && imageFile.size > 0) {
-			try {
-				const buffer = Buffer.from(await imageFile.arrayBuffer());
-				imageUrl = await uploadFile(buffer, imageFile.name, imageFile.type);
-			} catch (error) {
-				console.error('Blob Upload Error:', error);
-				return fail(500, { data, message: 'Failed to upload image.' });
-			}
 		}
 
 		try {
@@ -37,7 +33,7 @@ export const actions = {
 				slug: String(slug),
 				shortDescription: String(shortDescription),
 				longDescription: toRichText(longDescription),
-				imageUrl,
+				mediaId: mediaId ? Number(mediaId) : null,
 				ctaText: String(ctaText),
 				ctaLink: String(ctaLink)
 			};

@@ -1,5 +1,5 @@
-import { put } from '@vercel/blob';
-import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
+import { put, del } from '@vercel/blob';
+import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
 
 /**
@@ -16,7 +16,7 @@ export async function uploadFile(buffer, originalName, contentType) {
 	const blob = await put(pathname, buffer, {
 		access: 'public',
 		contentType,
-		token: BLOB_READ_WRITE_TOKEN
+		token: env.BLOB_READ_WRITE_TOKEN
 	});
 
 	return blob.url;

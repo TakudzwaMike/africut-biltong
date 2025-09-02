@@ -1,8 +1,7 @@
 import { db } from '$lib/server/db';
-import { solution } from '$lib/server/db/schema.js';
+import { solution, media } from '$lib/server/db/schema.js';
 import { fail, redirect, error } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
-import { uploadFile } from '$lib/server/blob';
+import { eq, desc } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
 
 const toRichText = (text) => {
@@ -22,18 +21,26 @@ export async function load({ params }) {
 	}
 
 	const sol = await db.query.solution.findFirst({
-		where: eq(solution.id, id)
+		where: eq(solution.id, id),
+		with: {
+			featuredImage: true
+		}
 	});
 
 	if (!sol) {
 		throw error(404, 'Not found');
 	}
 
+	const mediaItems = await db.query.media.findMany({
+		orderBy: desc(media.uploadedAt)
+	});
+
 	return {
 		solution: {
 			...sol,
 			longDescription: fromRichText(sol.longDescription)
-		}
+		},
+		mediaItems
 	};
 }
 
@@ -42,8 +49,8 @@ export const actions = {
 		const id = Number(params.id);
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { solutionName, slug, shortDescription, longDescription, ctaText, ctaLink } = data;
-		const imageFile = formData.get('image');
+		const { solutionName, slug, shortDescription, longDescription, ctaText, ctaLink, mediaId } =
+			data;
 
 		if (!solutionName || !slug) {
 			return fail(400, { data, message: 'Solution Name and Slug are required.' });
@@ -55,18 +62,9 @@ export const actions = {
 			shortDescription: String(shortDescription),
 			longDescription: toRichText(longDescription),
 			ctaText: String(ctaText),
-			ctaLink: String(ctaLink)
+			ctaLink: String(ctaLink),
+			mediaId: mediaId ? Number(mediaId) : null
 		};
-
-		if (imageFile instanceof File && imageFile.size > 0) {
-			try {
-				const buffer = Buffer.from(await imageFile.arrayBuffer());
-				dataToUpdate.imageUrl = await uploadFile(buffer, imageFile.name, imageFile.type);
-			} catch (err) {
-				console.error('Blob Upload Error:', err);
-				return fail(500, { data, message: 'Failed to upload new image.' });
-			}
-		}
 
 		try {
 			await db.update(solution).set(dataToUpdate).where(eq(solution.id, id));
@@ -77,14 +75,13 @@ export const actions = {
 			});
 		} catch (error) {
 			console.error('Error updating solution:', error);
-			const { image, ...restOfData } = data;
 			if (error.message.includes('duplicate key value violates unique constraint')) {
-				return fail(400, {
-					data: restOfData,
+				return fail({
+					data,
 					message: 'This slug is already in use. Please choose another.'
 				});
 			}
-			return fail(500, { data: restOfData, message: 'Could not update the solution.' });
+			return fail({ data, message: 'Could not update the solution.' });
 		}
 
 		throw redirect(302, '/admin/solutions');

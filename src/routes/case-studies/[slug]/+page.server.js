@@ -1,14 +1,17 @@
 import { db } from '$lib/server/db';
 import { error } from '@sveltejs/kit';
+import { caseStudy as caseStudyTable } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
 	const { slug } = params;
 
 	const caseStudy = await db.query.caseStudy.findFirst({
-		where: (cs, { eq }) => eq(cs.slug, slug),
+		where: eq(caseStudyTable.slug, slug),
 		with: {
-			results: true
+			results: true,
+			client: true
 		}
 	});
 

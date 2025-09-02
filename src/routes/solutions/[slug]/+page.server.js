@@ -8,7 +8,10 @@ export async function load({ params }) {
 	const { slug } = params;
 
 	const solution = await db.query.solution.findFirst({
-		where: eq(solutionTable.slug, slug)
+		where: eq(solutionTable.slug, slug),
+		with: {
+			featuredImage: true
+		}
 	});
 
 	if (!solution) {

@@ -7,7 +7,10 @@ export async function load({ params }) {
 	const { slug } = params;
 
 	const product = await db.query.product.findFirst({
-		where: eq(productTable.slug, slug)
+		where: eq(productTable.slug, slug),
+		with: {
+			featuredImage: true
+		}
 	});
 
 	if (!product) {

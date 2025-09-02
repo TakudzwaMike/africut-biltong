@@ -5,12 +5,42 @@
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
+	import QuickChatButton from '$lib/components/QuickChatButton.svelte';
+	import JsonLD from '$lib/components/JsonLD.svelte';
 
 	/** @type {import('./$types').LayoutData} */
 	export let data;
 
 	$: isAdminRoute = $page.url.pathname.startsWith('/admin');
+
+	const organizationSchema = {
+		'@context': 'https://schema.org',
+		'@type': 'Organization',
+		name: data.settings?.siteName || 'Vision AI Tech',
+		url: 'https://www.vision-ai.tech', // Replace with your actual production domain
+		logo: data.settings?.logo?.url,
+		// Dynamically add locations if they exist
+		location: data.locations?.map((loc) => ({
+			'@type': 'Place',
+			address: {
+				'@type': 'PostalAddress',
+				addressLocality: loc.address, // Using address as locality, adjust if needed
+				addressCountry: loc.countryCode
+			}
+		})),
+		areaServed: {
+			'@type': 'GeoCircle',
+			geoMidpoint: {
+				'@type': 'GeoCoordinates',
+				latitude: '-29.0', // Approximate center of Southern Africa
+				longitude: '24.0'
+			},
+			geoRadius: '1500000' // Radius in meters (1500 km)
+		}
+	};
 </script>
+
+<JsonLD data={organizationSchema} />
 
 <svelte:head>
 	<title>Vision AI Tech - AI Solutions for Heavy Industry</title>

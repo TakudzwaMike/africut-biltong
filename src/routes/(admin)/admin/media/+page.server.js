@@ -12,32 +12,12 @@ export async function load() {
 }
 
 export const actions = {
-	// This action is called AFTER the file has been uploaded to Vercel Blob on the client.
-	// Its job is to save the reference to our database.
-	addReference: async ({ request, locals }) => {
-		const formData = await request.formData();
-		const url = formData.get('url');
-		const altText = formData.get('altText');
-
-		if (!url || typeof url !== 'string' || !altText || typeof altText !== 'string') {
-			return json({ success: false, message: 'URL and Alt Text are required.' }, { status: 400 });
-		}
-
-		try {
-			const [newMedia] = await db.insert(media).values({ url, altText }).returning();
-
-			await log(locals.user?.id, 'upload_media', {
-				targetId: newMedia.id,
-				data: newMedia
-			});
-			
-			// Return the new media item so the client can update instantly
-			return json({ success: true, newMedia });
-
-		} catch (error) {
-			console.error('Error saving media reference:', error);
-			return json({ success: false, message: 'Could not save media reference to the database.' }, { status: 500 });
-		}
+	// The client-side upload now triggers a separate processing endpoint.
+	// This action is kept for progressive enhancement but is no longer the primary method.
+	addReference: async () => {
+		// The actual database insertion is now handled by /api/process-image
+		// This action can be used as a fallback or for different upload strategies in the future.
+		return json({ success: true, message: 'Upload initiated.' });
 	},
 
 	delete: async ({ url, locals }) => {
@@ -54,7 +34,16 @@ export const actions = {
 			if (!mediaToDelete) {
 				return fail(404, { message: 'Media not found.' });
 			}
-			// Note: This does not delete the file from Vercel Blob storage.
+			
+			// Delete files from Vercel Blob storage.
+			// We wrap this in a Promise.allSettled to ensure that even if one file fails to delete,
+			// we still proceed with deleting the database record.
+			await Promise.allSettled([
+				mediaToDelete.originalUrl ? del(mediaToDelete.originalUrl) : Promise.resolve(),
+				mediaToDelete.displayUrl ? del(mediaToDelete.displayUrl) : Promise.resolve(),
+				mediaToDelete.thumbnailUrl ? del(mediaToDelete.thumbnailUrl) : Promise.resolve()
+			]);
+
 			await db.delete(media).where(eq(media.id, Number(id)));
 
 			await log(locals.user?.id, 'delete_media', {

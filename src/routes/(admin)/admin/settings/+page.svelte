@@ -1,6 +1,7 @@
 <script>
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/toast-service';
+	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
 
 	let { data, form } = $props();
 
@@ -49,27 +50,12 @@
 				</div>
 
 				<div>
-					<label for="logo" class="mb-1 block font-medium text-main/80">Site Logo</label>
-					{#if siteSettings.logoUrl}
-						<div class="mb-2">
-							<p class="text-sm text-main/80">Current Logo:</p>
-							<img
-								src={siteSettings.logoUrl}
-								alt="Current logo"
-								class="mt-1 h-12 max-w-48 rounded-md bg-main/5 object-contain p-1"
-							/>
-						</div>
-					{/if}
-					<input
-						type="file"
-						id="logo"
-						name="logo"
-						accept="image/png, image/jpeg, image/svg+xml, image/webp"
-						class="w-full rounded-md border border-main/10 bg-main/5 text-sm text-main/80 file:mr-4 file:border-0 file:bg-main/10 file:px-4 file:py-2 file:font-bold"
+					<FeaturedImagePicker
+						mediaItems={data.mediaItems}
+						bind:selectedMediaId={siteSettings.siteLogoMediaId}
+						currentImageUrl={data.logo?.url}
+						currentImageAlt={data.logo?.altText}
 					/>
-					<p class="mt-1 text-xs text-main/60">
-						Optional. Uploading a new file will replace the current logo.
-					</p>
 				</div>
 			</div>
 		</div>
@@ -141,6 +127,46 @@
 				<p class="mt-1 text-xs text-main/60">
 					Optional. If provided, a floating WhatsApp chat button will appear on the site.
 				</p>
+			</div>
+			<hr class="border-main/10" />
+			<div>
+				<label for="socialLinkedIn" class="mb-1 block font-medium text-main/80"
+					>LinkedIn Profile URL</label
+				>
+				<input
+					type="url"
+					id="socialLinkedIn"
+					name="socialLinkedIn"
+					bind:value={siteSettings.socialLinkedIn}
+					placeholder="https://www.linkedin.com/company/..."
+					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+				/>
+			</div>
+			<div>
+				<label for="socialX" class="mb-1 block font-medium text-main/80"
+					>X (Twitter) Profile URL</label
+				>
+				<input
+					type="url"
+					id="socialX"
+					name="socialX"
+					bind:value={siteSettings.socialX}
+					placeholder="https://x.com/..."
+					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+				/>
+			</div>
+			<div>
+				<label for="socialFacebook" class="mb-1 block font-medium text-main/80"
+					>Facebook Profile URL</label
+				>
+				<input
+					type="url"
+					id="socialFacebook"
+					name="socialFacebook"
+					bind:value={siteSettings.socialFacebook}
+					placeholder="https://www.facebook.com/..."
+					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+				/>
 			</div>
 		</div>
 

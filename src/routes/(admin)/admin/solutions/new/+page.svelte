@@ -1,7 +1,8 @@
 <script>
 	import { slugify } from '$lib/utils.js';
+	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
 
-	let { form } = $props();
+	let { data, form } = $props();
 
 	let solutionName = $state('');
 	let slug = $state('');
@@ -57,15 +58,8 @@
 				/>
 			</div>
 			<div>
-				<label for="image" class="mb-1 block font-medium text-main/80">Header Image</label>
-				<input
-					type="file"
-					id="image"
-					name="image"
-					accept="image/png, image/jpeg, image/webp"
-					class="w-full rounded-md border border-main/10 bg-main/5 text-sm text-main/80 file:mr-4 file:border-0 file:bg-main/10 file:px-4 file:py-2 file:font-bold"
-				/>
-				<p class="mt-1 text-xs text-main/60">Optional. Recommended aspect ratio 16:9.</p>
+				<h3 class="text-lg font-bold">Featured Image</h3>
+				<FeaturedImagePicker mediaItems={data.mediaItems} />
 			</div>
 			<div>
 				<label for="shortDescription" class="mb-1 block font-medium text-main/80"

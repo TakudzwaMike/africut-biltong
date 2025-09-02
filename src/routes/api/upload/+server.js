@@ -1,36 +1,52 @@
 import { handleUpload } from '@vercel/blob/client';
 import { json } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
+import { building } from '$app/environment';
 
-export async function POST({ request }) {
+export async function POST({ request, url }) {
 	const body = await request.json();
 
 	try {
 		const jsonResponse = await handleUpload({
 			body,
 			request,
-			onBeforeGenerateToken: async (pathname /*, clientPayload */) => {
-				// This callback is called before a token is generated.
-				// It can be used to authorize the user and check if they have permission to upload.
+			onBeforeGenerateToken: async (pathname, clientPayload) => {
 				return {
 					allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'],
 					tokenPayload: JSON.stringify({
-						// optional, sent to your server on upload completion
-						// you could pass a user id from cookies or a session here
+						// Pass the altText from the client to the completion callback
+						altText: JSON.parse(clientPayload || '{}').altText || pathname
 					})
 				};
 			},
 			onUploadCompleted: async ({ blob, tokenPayload }) => {
-				// This callback is called after the upload is completed.
-				// Use this to update your database with the new blob URL.
-				console.log('Blob upload completed', blob, tokenPayload);
+				console.log('Blob upload completed, starting processing...', blob.url);
+				const { altText } = JSON.parse(tokenPayload);
+
+				// Don't run the processor during the build process
+				if (building) return;
+				
+				// Trigger the processing endpoint asynchronously. We don't need to wait for it.
+				// We use the full URL because this might be called from a different Vercel region.
+				const processUrl = new URL('/api/process-image', url.origin);
+				fetch(processUrl.toString(), {
+					method: 'POST',
+					headers: {
+						'content-type': 'application/json',
+						authorization: `Bearer ${env.IMAGE_PROCESSING_SECRET}`
+					},
+					body: JSON.stringify({
+						originalUrl: blob.url,
+						altText: altText
+					})
+				}).catch((error) => {
+					console.error('Failed to trigger image processing:', error);
+				});
 			}
 		});
 
 		return json(jsonResponse);
 	} catch (error) {
-		return json(
-			{ error: (error).message },
-			{ status: 400 } // The webhook will request status 400 for bad requests
-		);
+		return json({ error: error.message }, { status: 400 });
 	}
 }

@@ -130,4 +130,12 @@
     transform: scale(1.15);
     filter: var(--drop-shadow-accent-glow);
   }
+
+  /* Reusable Button Component Styles */
+  .btn-secondary {
+    @apply rounded-md bg-main px-4 py-2 text-sm font-bold text-light transition hover:bg-main/90;
+  }
+  .btn-danger {
+    @apply rounded-md bg-red-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-600;
+  }
 }

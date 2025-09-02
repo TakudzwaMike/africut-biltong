@@ -1,46 +1,69 @@
 <script>
+	import MediaLibraryModal from '$lib/components/MediaLibraryModal.svelte';
+
 	let {
 		mediaItems = [],
 		selectedMediaId = $bindable(),
 		currentImageUrl = undefined,
-		currentImageAlt = undefined
+		currentImageAlt = undefined,
+		label = 'Featured Image'
 	} = $props();
+
+	let showModal = $state(false);
 
 	let selectedImage = $derived(mediaItems.find((item) => item.id === selectedMediaId));
 
-	// Create a derived value for the image to show.
-	// It prefers the newly selected image, but falls back to the initial/current one if nothing is selected.
 	let imageToShow = $derived(
 		selectedImage || (currentImageUrl ? { url: currentImageUrl, altText: currentImageAlt } : null)
 	);
+
+	function handleSelect(event) {
+		selectedMediaId = event.detail.id;
+		showModal = false;
+	}
+
+	function clearSelection() {
+		selectedMediaId = null;
+	}
 </script>
 
 <div>
-	<label for="mediaId" class="mb-1 block font-medium text-main/80"
-		>Select an Image from the Media Library</label
-	>
-	<select
-		id="mediaId"
-		name="mediaId"
-		bind:value={selectedMediaId}
-		class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-	>
-		<option value={null}>-- No Image --</option>
-		{#each mediaItems as media}
-			<option value={media.id}>
-				{media.altText}
-			</option>
-		{/each}
-	</select>
+	<label class="mb-1 block font-medium text-main/80">{label}</label>
 
-	{#if imageToShow}
-		<div class="mt-4">
-			<p class="text-sm text-main/80">Current Image:</p>
-			<img
-				src={imageToShow.url}
-				alt={imageToShow.altText}
-				class="mt-1 h-24 w-auto rounded-md bg-main/5 object-contain"
-			/>
+	<div class="flex items-center gap-4">
+		{#if imageToShow}
+			<div class="relative h-24 w-auto flex-shrink-0">
+				<img
+					src={imageToShow.thumbnailUrl || imageToShow.url}
+					alt={imageToShow.altText}
+					class="h-full w-auto rounded-md bg-main/5 object-contain"
+				/>
+			</div>
+		{/if}
+
+		<div class="flex-grow">
+			<div class="flex gap-2">
+				<button type="button" onclick={() => (showModal = true)} class="btn-secondary">
+					{#if imageToShow}Change Image{:else}Select Image{/if}
+				</button>
+				{#if imageToShow}
+					<button type="button" onclick={clearSelection} class="btn-danger"> Remove </button>
+				{/if}
+			</div>
+			<p class="mt-2 text-xs text-main/60">
+				Select an image from the <a href="/admin/media" class="text-accent underline">Media Library</a
+				>.
+			</p>
 		</div>
-	{/if}
+	</div>
+
+	<!-- Hidden input to hold the value for the form -->
+	<input type="hidden" name="mediaId" value={selectedMediaId ?? ''} />
 </div>
+
+<MediaLibraryModal
+	{mediaItems}
+	show={showModal}
+	on:select={handleSelect}
+	on:close={() => (showModal = false)}
+/>

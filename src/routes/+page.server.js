@@ -28,10 +28,13 @@ export async function load() {
 	});
 
 	const clients = await db.query.client.findMany({
-		where: isNotNull(client.logoUrl),
-		orderBy: desc(client.id)
+		where: isNotNull(client.mediaId),
+		orderBy: desc(client.id),
+		with: {
+			logo: true
+		}
 	});
-	
+
 	const contentList = await db.query.pageContent.findMany({
 		where: eq(pageContent.page, 'homepage'),
 		with: {
@@ -46,7 +49,10 @@ export async function load() {
 
 	const solutions = await db.query.solution.findMany({
 		orderBy: desc(solution.id),
-		limit: 3
+		limit: 3,
+		with: {
+			featuredImage: true
+		}
 	});
 
 	return {

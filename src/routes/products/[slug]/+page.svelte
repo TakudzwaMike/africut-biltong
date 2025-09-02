@@ -1,13 +1,26 @@
 <script>
+	import Image from '$lib/components/Image.svelte';
+	import JsonLD from '$lib/components/JsonLD.svelte';
 	let { data } = $props();
 	const { product } = data;
 
+	const productSchema = {
+		'@context': 'https://schema.org',
+		'@type': 'Product',
+		name: product.name,
+		description: product.shortDescription,
+		image: product.featuredImage?.url,
+		// If you had a brand and offers (price), you would add them here.
+		// "brand": { "@type": "Brand", "name": "Vision AI Tech" },
+		// "offers": {
+		//   "@type": "Offer",
+		//   "priceCurrency": "USD",
+		//   "price": "Contact for price"
+		// }
+	};
+
 	/**
 	 * Renders TipTap's JSON output to a basic HTML string.
-	 * NOTE: This is a simplified renderer. For a production app, you might use a more robust
-	 * library or extend this function to handle all desired node types (lists, blockquotes, etc.).
-	 * @param {object | null | undefined} richText
-	 * @returns {string}
 	 */
 	function renderRichTextToHtml(richText) {
 		if (!richText?.content) return '';
@@ -36,6 +49,8 @@
 	}
 </script>
 
+<JsonLD data={productSchema} />
+
 <svelte:head>
 	<title>{product.name} | Vision AI Tech Products</title>
 	<meta name="description" content={product.shortDescription} />
@@ -50,12 +65,14 @@
 			</p>
 		</div>
 
-		{#if product.imageUrl}
-			<img
-				src={product.imageUrl}
-				alt={product.name}
-				class="mt-16 aspect-video w-full rounded-xl bg-main/5 object-cover shadow-lg"
-			/>
+		{#if product.featuredImage}
+			<div class="mt-16">
+				<Image
+					src={product.featuredImage.url}
+					alt={product.featuredImage.altText}
+					class="aspect-video w-full rounded-xl shadow-lg"
+				/>
+			</div>
 		{/if}
 
 		<article class="prose prose-lg mx-auto mt-16 text-main/80">

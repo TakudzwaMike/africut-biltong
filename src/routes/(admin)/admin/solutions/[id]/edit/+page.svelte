@@ -1,4 +1,5 @@
 <script>
+	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
 	let { data, form } = $props();
 
 	let solutionData = $state(data.solution);
@@ -39,27 +40,13 @@
 				/>
 			</div>
 			<div>
-				<label for="image" class="mb-1 block font-medium text-main/80">Header Image</label>
-				{#if solutionData.imageUrl}
-					<div class="mb-2">
-						<p class="text-sm text-main/80">Current Image:</p>
-						<img
-							src={solutionData.imageUrl}
-							alt="Current header"
-							class="mt-1 max-h-32 rounded-md bg-main/5 object-contain p-1"
-						/>
-					</div>
-				{/if}
-				<input
-					type="file"
-					id="image"
-					name="image"
-					accept="image/png, image/jpeg, image/webp"
-					class="w-full rounded-md border border-main/10 bg-main/5 text-sm text-main/80 file:mr-4 file:border-0 file:bg-main/10 file:px-4 file:py-2 file:font-bold"
+				<h3 class="text-lg font-bold">Featured Image</h3>
+				<FeaturedImagePicker
+					mediaItems={data.mediaItems}
+					bind:selectedMediaId={solutionData.mediaId}
+					currentImageUrl={solutionData.featuredImage?.url}
+					currentImageAlt={solutionData.featuredImage?.altText}
 				/>
-				<p class="mt-1 text-xs text-main/60">
-					Optional. Uploading a new file will replace the current image.
-				</p>
 			</div>
 			<div>
 				<label for="shortDescription" class="mb-1 block font-medium text-main/80"

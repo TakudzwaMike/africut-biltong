@@ -1,4 +1,5 @@
 <script>
+	import Image from '$lib/components/Image.svelte';
 	export let data;
 </script>
 
@@ -13,11 +14,12 @@
 		<div class="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2">
 			{#each data.products as product}
 				<a href={`/products/${product.slug}`} class="corner-border group block">
-					{#if product.imageUrl}
-						<img
-							src={product.imageUrl}
-							alt={product.name}
-							class="mb-6 aspect-video w-full rounded-md object-cover transition-transform duration-300 group-hover:scale-105"
+					{#if product.featuredImage}
+						<Image
+							src={product.featuredImage.url}
+							alt={product.featuredImage.altText}
+							aspectRatio="16/9"
+							class="mb-6 rounded-md transition-transform duration-300 group-hover:scale-105"
 						/>
 					{/if}
 					<h3 class="text-2xl font-bold text-main">{product.name}</h3>

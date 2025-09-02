@@ -1,4 +1,5 @@
 <script>
+	import Image from '$lib/components/Image.svelte';
 	let { data } = $props();
 	const { solution } = data;
 
@@ -30,6 +31,16 @@
 				{solution.shortDescription}
 			</p>
 		</div>
+
+		{#if solution.featuredImage}
+			<div class="mt-16">
+				<Image
+					src={solution.featuredImage.url}
+					alt={solution.featuredImage.altText}
+					class="aspect-video w-full rounded-xl shadow-lg"
+				/>
+			</div>
+		{/if}
 
 		<div class="prose prose-lg break-words mx-auto mt-16 text-main/80">
 			{@html renderRichText(solution.longDescription)}
