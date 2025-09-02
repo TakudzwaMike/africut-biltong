@@ -86,6 +86,7 @@ This command will apply the Drizzle schema to your new database
 npm run db:migrate
 ```
 ### 6. (Optional) Seed the Database
+Data is outdated and needs an update
 To populate your database with initial sample data (including an admin user), run the seed script.
 ```bash
 npm run db:seed
