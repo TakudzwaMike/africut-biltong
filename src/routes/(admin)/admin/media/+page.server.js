@@ -43,8 +43,8 @@ export const actions = {
 
 				// 3. Upload optimized versions
 				const [displayBlob, thumbnailBlob] = await Promise.all([
-					put(`display-${file.name}`, displayBuffer, { access: 'public', contentType: 'image/webp' }),
-					put(`thumb-${file.name}`, thumbnailBuffer, { access: 'public', contentType: 'image/webp' })
+					put(`display/${file.name}`, displayBuffer, { access: 'public', contentType: 'image/webp' }),
+					put(`thumb/${file.name}`, thumbnailBuffer, { access: 'public', contentType: 'image/webp' })
 				]);
 				
 				// 4. Delete the original now that we have optimized versions
