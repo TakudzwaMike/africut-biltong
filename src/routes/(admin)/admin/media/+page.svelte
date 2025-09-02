@@ -3,83 +3,38 @@
 	import { toast } from '$lib/toast-service';
 	import { invalidateAll } from '$app/navigation';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
-	import { upload } from '@vercel/blob/client';
 
 	let { data, form } = $props();
 
 	let fileInputEl = $state();
-	let uploads = $state([]); // Store info about current uploads
+	let isUploading = $state(false);
 
-	function handleDelete() {
-		return ({ result }) => {
-			if (result.type === 'success') {
-				toast.success(result.data?.message);
-				invalidateAll();
-			} else if (result.type === 'failure') {
-				toast.error(result.data?.message);
-			}
-		};
+	$effect(() => {
+		// This effect handles the form submission result for BOTH upload and delete
+		if (form?.success) {
+			toast.success(form.message);
+			invalidateAll();
+		} else if (form?.message) {
+			toast.error(form.message);
+		}
+	});
+
+	function handleDelete(event) {
+		if (!confirm('Are you sure you want to delete this image? This also deletes it from storage.')) {
+			event.preventDefault();
+		}
 	}
 
-	async function handleFileSelect(event) {
-		const files = event.currentTarget.files;
-		if (!files || files.length === 0) return;
-
-		// Create an initial state for each file
-		const newUploads = Array.from(files).map((file) => ({
-			file,
-			id: Math.random().toString(36).slice(2),
-			progress: 0,
-			url: null,
-			error: null
-		}));
-		uploads = [...newUploads, ...uploads];
-
-		// Process each upload
-		for (const uploadItem of newUploads) {
-			try {
-				const newBlob = await upload(uploadItem.file.name, uploadItem.file, {
-					access: 'public',
-					handleUploadUrl: '/api/upload',
-					onUploadProgress: ({ progress }) => {
-						const u = uploads.find((u) => u.id === uploadItem.id);
-						if (u) u.progress = progress;
-					}
-				});
-
-				// Once uploaded to Vercel, save reference to our DB
-				const formData = new FormData();
-				formData.append('url', newBlob.url);
-				// Default alt text to filename without extension
-				const altText = uploadItem.file.name.split('.').slice(0, -1).join(' ');
-				formData.append('altText', altText);
-
-				const response = await fetch('?/addReference', {
-					method: 'POST',
-					body: formData
-				});
-				if (!response.ok) {
-					// Handle HTTP errors like 500 Internal Server Error
-					throw new Error(`Failed to save to database (status: ${response.status})`);
-				}
-				
-				const result = await response.json();
-
-				if (result.success) {
-					// Add the new media item to the top of the list for immediate feedback
-					data.mediaItems.unshift(result.newMedia);
-					// Mark local upload item as complete
-					const u = uploads.find((u) => u.id === uploadItem.id);
-					if (u) u.url = newBlob.url;
-				} else {
-					throw new Error(result.message || 'Failed to save to database.');
-				}
-			} catch (error) {
-				const u = uploads.find((u) => u.id === uploadItem.id);
-				if (u) u.error = error.message;
-				toast.error(`Upload failed for ${uploadItem.file.name}: ${error.message}`);
+	function handleSubmit() {
+		isUploading = true;
+		return ({ result, update }) => {
+			isUploading = false;
+			if (result.type === 'success') {
+				// Clear the file input after successful upload
+				if (fileInputEl) fileInputEl.value = '';
 			}
-		}
+			update();
+		};
 	}
 </script>
 
@@ -89,45 +44,40 @@
 			<h1 class="text-3xl font-bold tracking-tight text-main">Media Library</h1>
 			<p class="mt-2 text-base text-main/70">Manage all images for the website.</p>
 		</div>
-		<button
-			onclick={() => fileInputEl?.click()}
-			class="rounded-md bg-accent px-4 py-2 font-bold text-main shadow-sm transition hover:-translate-y-0.5"
-		>
-			+ Upload New
-		</button>
-		<input
-			bind:this={fileInputEl}
-			type="file"
-			multiple
-			onchange={handleFileSelect}
-			accept="image/png, image/jpeg, image/svg+xml, image/webp"
-			class="hidden"
-		/>
 	</div>
 
-	<!-- Current Uploads -->
-	{#if uploads.some((u) => !u.url && !u.error)}
-		<div class="mt-8">
-			<h3 class="text-lg font-bold">Current Uploads</h3>
-			<div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-				{#each uploads.filter((u) => !u.url && !u.error) as uploadItem (uploadItem.id)}
-					<div class="relative aspect-square">
-						<div class="flex h-full w-full items-center justify-center rounded-md bg-main/5 p-2">
-							<div class="w-full">
-								<p class="truncate text-center text-xs text-main/80">{uploadItem.file.name}</p>
-								<div class="mt-2 h-2 w-full rounded-full bg-main/10">
-									<div
-										class="h-2 rounded-full bg-accent transition-all"
-										style:width="{uploadItem.progress}%"
-									></div>
-								</div>
-							</div>
-						</div>
-					</div>
-				{/each}
+	<!-- Upload Form -->
+	<div class="mt-8 max-w-2xl">
+		<form
+			method="POST"
+			action="?/upload"
+			enctype="multipart/form-data"
+			class="rounded-xl border border-main/10 p-6"
+			use:enhance={handleSubmit}
+		>
+			<h3 class="text-lg font-bold">Upload New Images</h3>
+			<div class="mt-4 space-y-4">
+				<div>
+					<label for="images" class="mb-1 block font-medium text-main/80">Image File(s)</label>
+					<input
+						bind:this={fileInputEl}
+						type="file"
+						id="images"
+						name="images"
+						required
+						multiple
+						accept="image/png, image/jpeg, image/svg+xml, image/webp"
+						class="w-full rounded-md border border-main/10 bg-main/5 text-sm text-main/80 file:mr-4 file:border-0 file:bg-main/10 file:px-4 file:py-2 file:font-bold"
+					/>
+				</div>
 			</div>
-		</div>
-	{/if}
+			<div class="mt-6">
+				<SubmitButton type="submit" loading={isUploading} class="bg-accent px-6 py-2">
+					Upload
+				</SubmitButton>
+			</div>
+		</form>
+	</div>
 
 	<!-- Image Grid -->
 	<div class="mt-12">
@@ -141,7 +91,7 @@
 				{#each data.mediaItems as item (item.id)}
 					<div class="group relative aspect-square">
 						<img
-							src={item.url}
+							src={item.thumbnailUrl || item.originalUrl}
 							alt={item.altText}
 							class="h-full w-full rounded-md bg-main/5 object-cover"
 						/>
