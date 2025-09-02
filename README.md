@@ -1,4 +1,4 @@
-# Vision AI Tech Website & CMS
+# Vision AI Tech Website
 
 A modern, performant corporate website and headless CMS built with SvelteKit, Drizzle ORM, and PostgreSQL. The project features a fully dynamic public-facing site and a comprehensive, secure admin panel for content management.
 
