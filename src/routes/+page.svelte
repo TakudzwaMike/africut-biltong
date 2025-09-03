@@ -39,7 +39,7 @@
 				{#each data.clients as client}
 					{#if client.logo}
 						<img
-							src={client.logo.url}
+							src={client.logo.thumbnailUrl || client.logo.originalUrl}
 							alt={client.logo.altText}
 							title={client.name}
 							class="h-10 w-auto object-contain opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0 sm:h-12"
