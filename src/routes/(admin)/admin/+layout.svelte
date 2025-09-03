@@ -39,8 +39,8 @@
 		class="hidden w-64 flex-shrink-0 flex-col border-r border-main/10 bg-main/5 lg:flex"
 	>
 		<div class="flex h-full flex-col p-6">
+			{@const logo = $page.data.mediaItems?.find(m => m.id == $page.data.settings?.siteLogoMediaId)}
 			<a href="/admin" class="flex items-center gap-3 text-xl font-bold">
-				{@const logo = $page.data.mediaItems.find(m => m.id == $page.data.settings?.siteLogoMediaId)}
 				{#if logo}
 					<img
 						src={logo.thumbnailUrl || logo.originalUrl}
@@ -140,9 +140,9 @@
 		<div
 			class="fixed inset-0 z-40 flex flex-col bg-light/95 p-6 backdrop-blur-lg lg:hidden"
 		>
+			{@const logo = $page.data.mediaItems?.find(m => m.id == $page.data.settings?.siteLogoMediaId)}
 			<div class="flex items-center justify-between">
 				<a href="/admin" class="flex items-center gap-3 text-xl font-bold">
-					{@const logo = $page.data.mediaItems.find(m => m.id == $page.data.settings?.siteLogoMediaId)}
 					{#if logo}
 						<img
 							src={logo.thumbnailUrl || logo.originalUrl}

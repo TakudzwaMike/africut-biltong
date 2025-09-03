@@ -1,13 +1,16 @@
 <script>
-	import { page } from '$app/stores';
 	import { afterNavigate } from '$app/navigation';
 
 	/** @type {import('../../routes/$types').PageData} */
-	let {data} = $props()
-
-	let logo = $derived(data.mediaItems?.find(m => m.id == data.settings?.siteLogoMediaId));
+	let { data } = $props();
 
 	let isMenuOpen = $state(false);
+
+	// Use $derived for reactivity in Svelte 5.
+	// It will automatically re-calculate when `data.settings` or `data.mediaItems` changes.
+	let logo = $derived(
+		data.mediaItems?.find((m) => m.id == data.settings?.siteLogoMediaId)
+	);
 
 	function toggleMenu() {
 		isMenuOpen = !isMenuOpen;
@@ -53,6 +56,13 @@
 					href="/case-studies"
 					class="font-medium transition hover:text-accent hover:drop-shadow-accent-glow"
 					>Case Studies</a
+				>
+			</li>
+			<li>
+				<a
+					href="/resources"
+					class="font-medium transition hover:text-accent hover:drop-shadow-accent-glow"
+					>Resources</a
 				>
 			</li>
 			<li>
@@ -117,20 +127,23 @@
 	</nav>
 </header>
 
-	<!-- Mobile Menu Overlay -->
-	{#if isMenuOpen}
-		<div
-			class="fixed inset-0 z-[55] flex flex-col items-center justify-center bg-light/90 pt-20 text-center backdrop-blur-lg"
-		>
-			<ul class="flex flex-col gap-8">
-				<li>
-					<a href="/products" class="text-2xl font-bold text-main">Products</a>
-				</li>
-				<li>
-					<a href="/solutions" class="text-2xl font-bold text-main">Solutions</a>
-				</li>
-				<li>
-					<a href="/case-studies" class="text-2xl font-bold text-main">Case Studies</a>
+<!-- Mobile Menu Overlay -->
+{#if isMenuOpen}
+	<div
+		class="fixed inset-0 z-[55] flex flex-col items-center justify-center bg-light/90 pt-20 text-center backdrop-blur-lg"
+	>
+		<ul class="flex flex-col gap-8">
+			<li>
+				<a href="/products" class="text-2xl font-bold text-main">Products</a>
+			</li>
+			<li>
+				<a href="/solutions" class="text-2xl font-bold text-main">Solutions</a>
+			</li>
+			<li>
+				<a href="/case-studies" class="text-2xl font-bold text-main">Case Studies</a>
+			</li>
+			<li>
+				<a href="/resources" class="text-2xl font-bold text-main">Resources</a>
 			</li>
 			<li>
 				<a href="/about" class="text-2xl font-bold text-main">About Us</a>
