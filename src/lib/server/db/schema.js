@@ -183,6 +183,16 @@ export const teamMember = pgTable('team_member', {
 	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' })
 });
 
+// --- DOCUMENTS / RESOURCES ---
+export const document = pgTable('document', {
+	id: serial('id').primaryKey(),
+	title: varchar('title', { length: 255 }).notNull(),
+	description: text('description'),
+	fileUrl: text('file_url').notNull(),
+	thumbnailMediaId: integer('thumbnail_media_id').references(() => media.id, { onDelete: 'set null' }),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
+});
+
 // --- QR CODE ANALYTICS ---
 export const trackedLink = pgTable('tracked_link', {
 	id: serial('id').primaryKey(),
@@ -229,6 +239,13 @@ export const pageContentRelations = relations(pageContent, ({ one }) => ({
 export const teamMemberRelations = relations(teamMember, ({ one }) => ({
 	photo: one(media, {
 		fields: [teamMember.mediaId],
+		references: [media.id]
+	})
+}));
+
+export const documentRelations = relations(document, ({ one }) => ({
+	thumbnail: one(media, {
+		fields: [document.thumbnailMediaId],
 		references: [media.id]
 	})
 }));
