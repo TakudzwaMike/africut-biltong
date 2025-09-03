@@ -21,6 +21,12 @@
 		{ href: '/admin/audit-log', label: 'Audit Log' }
 	];
 
+	// Reactive variable for the logo, derived from page data.
+	// This will automatically update when the underlying data changes.
+	let logo = $derived(
+		$page.data.mediaItems?.find((m) => m.id == $page.data.settings?.siteLogoMediaId)
+	);
+
 	function toggleMenu() {
 		isMenuOpen = !isMenuOpen;
 	}
@@ -31,15 +37,25 @@
 	});
 </script>
 
+<svelte:head>
+	<style>
+		@media (min-width: 1024px) {
+			.admin-grid {
+				display: grid;
+				grid-template-columns: 260px 1fr;
+			}
+		}
+	</style>
+</svelte:head>
+
 <svelte:body class:overflow-hidden={isMenuOpen} />
 
-<div class="flex h-screen bg-light">
-	<!-- Desktop-Only Sidebar -->
+<div class="admin-grid" style="min-height: 100vh;">
+	<!-- Desktop-Only Fixed Sidebar -->
 	<aside
 		class="hidden w-64 flex-shrink-0 flex-col border-r border-main/10 bg-main/5 lg:flex"
 	>
 		<div class="flex h-full flex-col p-6">
-			{@const logo = $page.data.mediaItems?.find(m => m.id == $page.data.settings?.siteLogoMediaId)}
 			<a href="/admin" class="flex items-center gap-3 text-xl font-bold">
 				{#if logo}
 					<img
@@ -135,23 +151,28 @@
 	</div>
 </div>
 
-	<!-- Mobile Fullscreen Menu -->
-	{#if isMenuOpen}
-		<div
-			class="fixed inset-0 z-40 flex flex-col bg-light/95 p-6 backdrop-blur-lg lg:hidden"
-		>
-			{@const logo = $page.data.mediaItems?.find(m => m.id == $page.data.settings?.siteLogoMediaId)}
-			<div class="flex items-center justify-between">
-				<a href="/admin" class="flex items-center gap-3 text-xl font-bold">
-					{#if logo}
-						<img
-							src={logo.thumbnailUrl || logo.originalUrl}
-							alt={logo.altText}
-							class="h-8 w-8 rounded-md object-contain"
-						/>
-					{/if}
-					<span>{$page.data.settings?.siteName || 'Vision AI'} Dashboard</span>
-				</a>
+<!-- Mobile Fullscreen Menu -->
+{#if isMenuOpen}
+	<button
+		onclick={toggleMenu}
+		aria-label="Close menu"
+		class="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm lg:hidden"
+	></button>
+
+	<div
+		class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-light/95 p-6 backdrop-blur-lg lg:hidden"
+	>
+		<div class="flex items-center justify-between">
+			<a href="/admin" class="flex items-center gap-3 text-xl font-bold">
+				{#if logo}
+					<img
+						src={logo.thumbnailUrl || logo.originalUrl}
+						alt={logo.altText}
+						class="h-8 w-8 rounded-md object-contain"
+					/>
+				{/if}
+				<span>{$page.data.settings?.siteName || 'Vision AI'}</span>
+			</a>
 			<button onclick={toggleMenu} aria-label="Close menu" class="rounded-md p-2">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

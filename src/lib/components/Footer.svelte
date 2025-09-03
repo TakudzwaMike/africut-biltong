@@ -1,5 +1,13 @@
 <script>
 	import { page } from '$app/stores';
+
+	// Use $derived for reactivity. This will automatically update when the underlying page data changes.
+	let settings = $derived($page.data.settings);
+	let locations = $derived($page.data.locations);
+	let userCountryCode = $derived($page.data.userCountryCode);
+	let mediaItems = $derived($page.data.mediaItems);
+
+	let logo = $derived(mediaItems?.find((m) => m.id == settings?.siteLogoMediaId));
 </script>
 
 <footer class="relative z-10 border-t border-main/10 bg-light">
@@ -7,7 +15,6 @@
 		<div class="grid grid-cols-1 gap-12 text-center sm:grid-cols-2 lg:grid-cols-4 sm:text-left">
 			<!-- Column 1: Branding -->
 			<div class="flex flex-col items-center sm:items-start">
-				{@const logo = $page.data.mediaItems?.find(m => m.id == $page.data.settings?.siteLogoMediaId)}
 				<a href="/" class="text-xl font-bold">
 					{#if logo}
 						<img
@@ -16,7 +23,7 @@
 							class="h-8 object-contain"
 						/>
 					{:else}
-						{$page.data.settings?.siteName || 'Vision AI Tech'}
+						{settings?.siteName || 'Vision AI Tech'}
 					{/if}
 				</a>
 				<p class="mt-2 text-main/70">Smart, Simple AI Solutions.</p>
@@ -46,7 +53,7 @@
 							class="text-main/80 transition hover:text-accent hover:drop-shadow-accent-glow"
 							>Resources</a
 						>
-					</li>	
+					</li>
 					<li>
 						<a
 							href="/about"
@@ -61,10 +68,10 @@
 							>Contact</a
 						>
 					</li>
-					{#if $page.data.settings?.brochureUrl}
+					{#if settings?.brochureUrl}
 						<li>
 							<a
-								href={$page.data.settings.brochureUrl}
+								href={settings.brochureUrl}
 								target="_blank"
 								class="font-bold text-accent transition hover:drop-shadow-accent-glow"
 								>Download Brochure</a
@@ -80,15 +87,15 @@
 				<ul class="mt-4 space-y-2">
 					<li>
 						<a
-							href="mailto:hello@vision-ai.tech"
+							href="mailto:contact@vision-ai.tech"
 							class="text-main/80 transition hover:text-accent hover:drop-shadow-accent-glow"
-							>hello@vision-ai.tech</a
+							>contact@vision-ai.tech</a
 						>
 					</li>
-					{#if $page.data.locations?.length > 0}
-						{#each $page.data.locations as loc}
+					{#if locations?.length > 0}
+						{#each locations as loc}
 							<li
-								class="transition {$page.data.userCountryCode === loc.countryCode
+								class="transition {userCountryCode === loc.countryCode
 									? 'text-accent font-bold'
 									: 'text-main/80'}"
 							>
@@ -109,9 +116,9 @@
 			<div>
 				<h3 class="font-bold uppercase tracking-wider text-main/60">Follow Us</h3>
 				<div class="mt-4 flex justify-center gap-6 sm:justify-start">
-					{#if $page.data.settings?.socialLinkedIn}
+					{#if settings?.socialLinkedIn}
 						<a
-							href={$page.data.settings.socialLinkedIn}
+							href={settings.socialLinkedIn}
 							target="_blank"
 							rel="noopener noreferrer"
 							class="text-main/70 hover:text-accent"
@@ -133,9 +140,9 @@
 							>
 						</a>
 					{/if}
-					{#if $page.data.settings?.socialX}
+					{#if settings?.socialX}
 						<a
-							href={$page.data.settings.socialX}
+							href={settings.socialX}
 							target="_blank"
 							rel="noopener noreferrer"
 							class="text-main/70 hover:text-accent"
@@ -156,9 +163,9 @@
 							>
 						</a>
 					{/if}
-					{#if $page.data.settings?.socialFacebook}
+					{#if settings?.socialFacebook}
 						<a
-							href={$page.data.settings.socialFacebook}
+							href={settings.socialFacebook}
 							target="_blank"
 							rel="noopener noreferrer"
 							class="text-main/70 hover:text-accent"
@@ -187,8 +194,7 @@
 			class="mt-12 flex flex-col items-center border-t border-main/10 pt-8 sm:flex-row sm:justify-between"
 		>
 			<p class="text-sm text-main/60">
-				© {new Date().getFullYear()} {$page.data.settings?.siteName || 'Vision AI Tech'}. All
-				Rights Reserved.
+				© {new Date().getFullYear()} {settings?.siteName || 'Vision AI Tech'}. All Rights Reserved.
 			</p>
 			<a href="#hero" class="mt-4 text-sm font-bold text-main/60 transition hover:text-accent sm:mt-0">
 				Back to Top ↑
