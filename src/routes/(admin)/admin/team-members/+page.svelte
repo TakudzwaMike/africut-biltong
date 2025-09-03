@@ -7,26 +7,43 @@
 
 	let { data, form } = $props();
 
-	let editingMember = $state(null); // null for new, or the member object for editing
+	let editingMember = $state(null);
 	let isSubmitting = $state(false);
+	let isSuccess = $state(false);
+	let isError = $state(false);
 
-	$effect(() => {
-		if (form?.success) {
-			toast.success(form.message);
-			invalidateAll();
-			// If we were creating a new member, reset the form
-			if (editingMember === null) {
-				const formEl = document.querySelector('form');
-				formEl?.reset();
-			}
-			editingMember = null; // Close the form
-		} else if (form?.message) {
-			toast.error(form.message);
-		}
+	const handleSubmit = $(() => {
+		return ({ form, data, action, cancel }) => {
+			isSubmitting = true;
+			isSuccess = false;
+			isError = false;
+
+			return async ({ result, update }) => {
+				isSubmitting = false;
+				if (result.type === 'success') {
+					isSuccess = true;
+					toast.success(result.data?.message);
+					if (result.action.pathname.includes('?/save')) {
+						editingMember = null;
+					}
+					await invalidateAll();
+				} else if (result.type === 'failure') {
+					isError = true;
+					toast.error(result.data?.message);
+				}
+
+				update({ reset: false });
+
+				setTimeout(() => {
+					isSuccess = false;
+					isError = false;
+				}, 2000);
+			};
+		};
 	});
 
 	function startEditing(member) {
-		editingMember = { ...member }; // Create a copy to avoid mutating the original object
+		editingMember = { ...member };
 	}
 
 	function startCreating() {
@@ -59,12 +76,7 @@
 				method="POST"
 				action="?/save"
 				class="rounded-xl border border-main/10 p-6"
-				use:enhance={() => {
-					isSubmitting = true;
-					return () => {
-						isSubmitting = false;
-					};
-				}}
+				use:enhance={handleSubmit}
 			>
 				<input type="hidden" name="id" value={editingMember.id} />
 				<h3 class="text-lg font-bold">{editingMember.id ? 'Edit' : 'Add'} Team Member</h3>
@@ -116,7 +128,13 @@
 
 				<div class="mt-6 flex items-center justify-end gap-4">
 					<button type="button" onclick={cancelEditing} class="font-medium text-main/70">Cancel</button>
-					<SubmitButton type="submit" loading={isSubmitting} class="bg-accent px-6 py-2">
+					<SubmitButton
+						type="submit"
+						loading={isSubmitting}
+						success={isSuccess}
+						error={isError}
+						class="bg-accent px-6 py-2"
+					>
 						Save Member
 					</SubmitButton>
 				</div>
@@ -189,7 +207,7 @@
 								/></svg
 							>
 						</button>
-						<form method="POST" action="?/delete&id={member.id}" use:enhance>
+						<form method="POST" action="?/delete&id={member.id}" use:enhance={handleSubmit}>
 							<button class="rounded-md bg-red-500 p-1.5 text-white">
 								<svg
 									xmlns="http://www.w3.org/2000/svg"

@@ -19,9 +19,8 @@ export async function load() {
 }
 
 export const actions = {
-	save: async ({ request, locals }) => {
+	create: async ({ request, locals }) => {
 		const formData = await request.formData();
-		const id = Number(formData.get('id'));
 		const title = formData.get('title');
 		const description = formData.get('description');
 		const thumbnailMediaId = formData.get('thumbnailMediaId');
@@ -30,13 +29,48 @@ export const actions = {
 		if (!title || typeof title !== 'string') {
 			return fail(400, { message: 'Title is required.' });
 		}
-
-		if (isNaN(id) && (!(file instanceof File) || file.size === 0)) {
-			return fail(400, { message: 'A document file (e.g., PDF) is required.' });
+		if (!(file instanceof File) || file.size === 0) {
+			return fail(400, { message: 'A document file is required.' });
 		}
 
 		try {
+			const buffer = Buffer.from(await file.arrayBuffer());
+			const fileUrl = await uploadFile(buffer, file.name, file.type);
+
 			const dataToSave = {
+				title: String(title),
+				description: String(description),
+				thumbnailMediaId: thumbnailMediaId ? Number(thumbnailMediaId) : null,
+				fileUrl
+			};
+
+			const [newDoc] = await db.insert(document).values(dataToSave).returning();
+			await log(locals.user?.id, 'create_document', { targetId: newDoc.id, data: newDoc });
+
+			return { success: true, message: 'Document created successfully.' };
+		} catch (error) {
+			console.error('Error creating document:', error);
+			return fail(500, { message: 'Could not create document.' });
+		}
+	},
+
+	update: async ({ request, locals }) => {
+		const formData = await request.formData();
+		const id = Number(formData.get('id'));
+		const title = formData.get('title');
+		const description = formData.get('description');
+		const thumbnailMediaId = formData.get('thumbnailMediaId');
+		const file = formData.get('file');
+
+		if (isNaN(id)) {
+			return fail(400, { message: 'Invalid ID.' });
+		}
+		if (!title || typeof title !== 'string') {
+			return fail(400, { message: 'Title is required.' });
+		}
+
+		try {
+			const dataToUpdate = {
 				title: String(title),
 				description: String(description),
 				thumbnailMediaId: thumbnailMediaId ? Number(thumbnailMediaId) : null
@@ -44,23 +78,16 @@ export const actions = {
 
 			if (file instanceof File && file.size > 0) {
 				const buffer = Buffer.from(await file.arrayBuffer());
-				dataToSave.fileUrl = await uploadFile(buffer, file.name, file.type);
+				dataToUpdate.fileUrl = await uploadFile(buffer, file.name, file.type);
 			}
 
-			if (isNaN(id)) {
-				const [newDoc] = await db.insert(document).values(dataToSave).returning();
-				await log(locals.user?.id, 'create_document', {
-					targetId: newDoc.id,
-					data: newDoc
-				});
-			} else {
-				await db.update(document).set(dataToSave).where(eq(document.id, id));
-				await log(locals.user?.id, 'update_document', { targetId: id, data: dataToSave });
-			}
-			return { success: true, message: 'Document saved successfully.' };
+			await db.update(document).set(dataToUpdate).where(eq(document.id, id));
+			await log(locals.user?.id, 'update_document', { targetId: id, data: dataToUpdate });
+
+			return { success: true, message: 'Document updated successfully.' };
 		} catch (error) {
-			console.error('Error saving document:', error);
-			return fail(500, { message: 'Could not save the document.' });
+			console.error('Error updating document:', error);
+			return fail(500, { message: 'Could not update document.' });
 		}
 	},
 
@@ -79,12 +106,7 @@ export const actions = {
 			}
 			// Note: This does not delete the file from Blob storage.
 			await db.delete(document).where(eq(document.id, Number(id)));
-
-			await log(locals.user?.id, 'delete_document', {
-				targetId: id,
-				data: docToDelete
-			});
-			
+			await log(locals.user?.id, 'delete_document', { targetId: id, data: docToDelete });
 			return { success: true, message: 'Document deleted successfully.' };
 		} catch (error) {
 			console.error('Error deleting document:', error);

@@ -11,42 +11,17 @@
 	let editingDocument = $state(null);
 	let linkableDocument = $state(null);
 	let isSubmitting = $state(false);
-	let isSuccess = $state(false);
-	let isError = $state(false);
 
-	function handleSubmit() {
-		isSubmitting = true;
-		isSuccess = false;
-		isError = false;
-
-		return async ({ result, update }) => {
-			isSubmitting = false;
-
-			if (result.type === 'success') {
-				isSuccess = true;
-				toast.success(result.data?.message);
-				
-				// Close the edit/create form if a save action was successful
-				if (result.action?.pathname.includes('?/save')) {
-					editingDocument = null; 
-				}
-				
-				await invalidateAll();
-
-			} else if (result.type === 'failure') {
-				isError = true;
-				toast.error(result.data?.message);
-			}
-
-			update({ reset: false }); // Always prevent form reset to avoid data loss
-
-			// Reset button visual state
-			setTimeout(() => {
-				isSuccess = false;
-				isError = false;
-			}, 2000);
-		};
-	}
+	// This single effect handles all form action results on the page.
+	$effect(() => {
+		if (form?.success) {
+			toast.success(form.message);
+			invalidateAll();
+			editingDocument = null; // Close form on success
+		} else if (form?.message) {
+			toast.error(form.message);
+		}
+	});
 
 	function startEditing(doc) {
 		editingDocument = { ...doc };
@@ -90,12 +65,20 @@
 		<div class="mt-8 max-w-2xl">
 			<form
 				method="POST"
-				action="?/save"
+				action={editingDocument.id ? '?/update' : '?/create'}
 				enctype="multipart/form-data"
 				class="space-y-6 rounded-xl border border-main/10 p-6"
-				use:enhance={handleSubmit}
+				use:enhance={() => {
+					isSubmitting = true;
+					return () => {
+						isSubmitting = false;
+					};
+				}}
 			>
-				<input type="hidden" name="id" value={editingDocument.id} />
+				{#if editingDocument.id}
+					<input type="hidden" name="id" value={editingDocument.id} />
+				{/if}
+
 				<h3 class="text-lg font-bold">{editingDocument.id ? 'Edit' : 'Add New'} Document</h3>
 
 				<div>
@@ -161,13 +144,7 @@
 					<button type="button" onclick={cancelEditing} class="font-medium text-main/70"
 						>Cancel</button
 					>
-					<SubmitButton
-						type="submit"
-						loading={isSubmitting}
-						success={isSuccess}
-						error={isError}
-						class="bg-accent px-6 py-2"
-					>
+					<SubmitButton type="submit" loading={isSubmitting} class="bg-accent px-6 py-2">
 						Save Document
 					</SubmitButton>
 				</div>
@@ -251,11 +228,7 @@
 										/></svg
 									>
 								</button>
-								<form
-									method="POST"
-									action="?/delete&id={doc.id}"
-									use:enhance={handleSubmit}
-								>
+								<form method="POST" action="?/delete&id={doc.id}" use:enhance>
 									<button class="rounded-md bg-red-500 p-1.5 text-white">
 										<!-- Delete Icon -->
 										<svg

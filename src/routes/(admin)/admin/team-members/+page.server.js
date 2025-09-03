@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { teamMember, media } from '$lib/server/db/schema.js';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { desc, eq } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
 
@@ -80,7 +80,7 @@ export const actions = {
 				targetId: id,
 				data: memberToDelete
 			});
-			
+
 			return { success: true, message: 'Team member deleted.' };
 		} catch (error) {
 			console.error('Error deleting team member:', error);
