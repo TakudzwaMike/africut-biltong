@@ -24,11 +24,14 @@ export async function load({ locals, request }) {
 		logo = await db.query.media.findFirst({ where: eq(media.id, logoId) });
 	}
 
+	const mediaItems = await db.query.media.findMany({ orderBy: desc(media.uploadedAt) });
+
 	return {
 		user: locals.user,
 		settings: {
 			siteName: settings.site_name || 'Vision AI Tech',
-			logo: logo,
+			logo: logo, // Keep for initial load
+			siteLogoMediaId: settings.site_logo_media_id || null,
 			brochureUrl: settings.brochure_url || null,
 			heroVideoUrl: settings.hero_video_url || null,
 			whatsappNumber: settings.whatsapp_number || null,
@@ -37,6 +40,7 @@ export async function load({ locals, request }) {
 			socialFacebook: settings.social_facebook || null
 		},
 		locations,
-		userCountryCode
+		userCountryCode,
+		mediaItems // Pass all media items to the client
 	};
 }

@@ -5,6 +5,8 @@
 	/** @type {import('../../routes/$types').PageData} */
 	let {data} = $props()
 
+	let logo = $derived(data.mediaItems?.find(m => m.id == data.settings?.siteLogoMediaId));
+
 	let isMenuOpen = $state(false);
 
 	function toggleMenu() {
@@ -23,8 +25,8 @@
 <header class="sticky top-0 z-50 border-b border-main/10 bg-light/80 px-8 backdrop-blur-md">
 	<nav class="mx-auto flex max-w-6xl items-center justify-between py-4">
 		<a href="/" class="z-[60] text-xl font-bold">
-			{#if data.settings?.logoUrl}
-				<img src={data.settings.logoUrl} alt={data.settings.siteName} class="h-8 object-contain" />
+			{#if logo}
+				<img src={logo.displayUrl || logo.originalUrl} alt={logo.altText} class="h-8 object-contain" />
 			{:else}
 				{data.settings?.siteName || 'Vision AI Tech'}
 			{/if}

@@ -7,11 +7,12 @@
 		<div class="grid grid-cols-1 gap-12 text-center sm:grid-cols-2 lg:grid-cols-4 sm:text-left">
 			<!-- Column 1: Branding -->
 			<div class="flex flex-col items-center sm:items-start">
+				{@const logo = $page.data.mediaItems?.find(m => m.id == $page.data.settings?.siteLogoMediaId)}
 				<a href="/" class="text-xl font-bold">
-					{#if $page.data.settings?.logoUrl}
+					{#if logo}
 						<img
-							src={$page.data.settings.logoUrl}
-							alt={$page.data.settings.siteName}
+							src={logo.displayUrl || logo.originalUrl}
+							alt={logo.altText}
 							class="h-8 object-contain"
 						/>
 					{:else}
