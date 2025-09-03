@@ -2,36 +2,49 @@
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/toast-service';
 	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
-	import { invalidateAll, applyAction } from '$app/navigation';
+	import { invalidateAll } from '$app/navigation';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 
 	let { data, form } = $props();
 
-	// Use $state for local form bindings, initialized from loaded data.
-	let formState = $state({
-		siteName: data.settings.siteName,
-		siteLogoMediaId: data.settings.siteLogoMediaId,
-		heroVideoUrl: data.settings.heroVideoUrl,
-		whatsappNumber: data.settings.whatsappNumber,
-		socialLinkedIn: data.settings.socialLinkedIn,
-		socialX: data.settings.socialX,
-		socialFacebook: data.settings.socialFacebook
-	});
+	// Use $state for local form bindings, initialized from the loaded data.
+	let formState = $state({ ...data.settings });
 
 	let isSubmitting = $state(false);
+	let isSuccess = $state(false);
+	let isError = $state(false);
+
+	// A derived value to check if the form has been changed from its initial state
+	let isDirty = $derived(JSON.stringify(formState) !== JSON.stringify(data.settings));
 
 	function handleSubmit() {
 		isSubmitting = true;
-		return ({ result, update }) => {
+		isSuccess = false;
+		isError = false;
+
+		// The `update` function is provided by `enhance`.
+		return async ({ result, update }) => {
 			isSubmitting = false;
+
 			if (result.type === 'success') {
+				isSuccess = true;
 				toast.success(result.data?.message);
-				// Invalidate all data to ensure we get fresh state from the server,
-				// including potentially the new logo object.
-				invalidateAll();
+				// Invalidate all data to get fresh state from the server for layouts, etc.
+				await invalidateAll();
 			} else if (result.type === 'failure') {
+				isError = true;
 				toast.error(result.data?.message);
 			}
+
+			// Tell SvelteKit to apply the form result but NOT reset the form inputs.
+			// This preserves the user's current view of the form.
+			update({ reset: false });
+
+			// Reset the button's visual state after a couple of seconds
+			setTimeout(() => {
+				isSuccess = false;
+				isError = false;
+			}, 2000);
 		};
 	}
 </script>
@@ -68,7 +81,6 @@
 						currentImageUrl={data.logo?.thumbnailUrl || data.logo?.originalUrl}
 						currentImageAlt={data.logo?.altText}
 					/>
-					<input type="hidden" name="siteLogoMediaId" value={formState.siteLogoMediaId ?? ''} />
 				</div>
 			</div>
 		</div>
@@ -190,7 +202,14 @@
 		{/if}
 
 		<div class="text-left">
-			<SubmitButton type="submit" loading={isSubmitting} class="bg-accent px-6 py-2">
+			<SubmitButton
+				type="submit"
+				loading={isSubmitting}
+				success={isSuccess}
+				error={isError}
+				disabled={!isDirty || isSubmitting}
+				class="bg-accent px-6 py-2"
+			>
 				Save Settings
 			</SubmitButton>
 		</div>

@@ -11,7 +11,7 @@
 		<div
 			class="fade-in"
 			class:is-visible={isVisible}
-			use:viewport={{ threshold: 0.1, onEnter: () => (isVisible = true) }}
+			use:viewport={{ onEnter: () => (isVisible = true), threshold: 0.1 }}
 		>
 			{#if content}
 				<h2 class="text-center text-3xl font-bold tracking-tight text-main sm:text-4xl">
@@ -26,10 +26,10 @@
 				<div class="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
 					{#each solutions as solution}
 						<a href={`/solutions/${solution.slug}`} class="corner-border group block">
-							{#if solution.imageUrl}
+							{#if solution.featuredImage}
 								<Image
-									src={solution.imageUrl}
-									alt={solution.solutionName}
+									src={solution.featuredImage.displayUrl || solution.featuredImage.originalUrl}
+									alt={solution.featuredImage.altText}
 									aspectRatio="16/9"
 									class="mb-6 rounded-md transition-transform duration-300 group-hover:scale-105"
 								/>
