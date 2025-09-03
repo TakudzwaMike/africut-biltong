@@ -35,7 +35,7 @@
 		{#if solution.featuredImage}
 			<div class="mt-16">
 				<Image
-					src={solution.featuredImage.url}
+					src={solution.featuredImage.displayUrl || solution.featuredImage.originalUrl}
 					alt={solution.featuredImage.altText}
 					class="aspect-video w-full rounded-xl shadow-lg"
 				/>

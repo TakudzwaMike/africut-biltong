@@ -79,7 +79,7 @@
 				</div>
 				{#if technology.media}
 					<Image
-						src={technology.media.url}
+						src={technology.media.displayUrl || technology.media.originalUrl}
 						alt={technology.media.altText}
 						aspectRatio="1/1"
 						class="rounded-xl"
@@ -104,7 +104,7 @@
 				<a href={`/blog/${post.slug}`} class="corner-border group block">
 					{#if post.featuredImage}
 						<Image
-							src={post.featuredImage.url}
+							src={post.featuredImage.displayUrl || post.featuredImage.originalUrl}
 							alt={post.featuredImage.altText}
 							aspectRatio="16/9"
 							class="mb-6 rounded-md transition-transform duration-300 group-hover:scale-105"

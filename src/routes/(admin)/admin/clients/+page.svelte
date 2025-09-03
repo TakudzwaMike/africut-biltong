@@ -121,7 +121,7 @@
 						<td class="p-4">
 							{#if client.logo}
 								<img
-									src={client.logo.url}
+									src={client.logo.thumbnailUrl || client.logo.originalUrl}
 									alt={client.logo.altText}
 									class="h-10 w-20 rounded-md bg-main/5 object-contain p-1"
 								/>

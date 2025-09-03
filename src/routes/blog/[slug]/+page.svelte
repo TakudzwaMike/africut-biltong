@@ -65,7 +65,7 @@
 		{#if post.featuredImage}
 			<div class="mt-16">
 				<Image
-					src={post.featuredImage.url}
+					src={post.featuredImage.displayUrl || post.featuredImage.originalUrl}
 					alt={post.featuredImage.altText}
 					class="aspect-video w-full rounded-xl shadow-lg"
 				/>

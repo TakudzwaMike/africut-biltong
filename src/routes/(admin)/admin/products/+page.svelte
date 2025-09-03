@@ -205,7 +205,7 @@
 						<td class="p-4">
 							{#if p.featuredImage}
 								<img
-									src={p.featuredImage.url}
+									src={p.featuredImage.thumbnailUrl || p.featuredImage.originalUrl}
 									alt={p.featuredImage.altText}
 									class="h-10 w-16 rounded-md bg-main/5 object-cover"
 								/>

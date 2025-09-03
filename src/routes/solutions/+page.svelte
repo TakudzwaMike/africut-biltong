@@ -16,7 +16,7 @@
 				<a href={`/solutions/${solution.slug}`} class="corner-border group block">
 					{#if solution.featuredImage}
 						<Image
-							src={solution.featuredImage.url}
+							src={solution.featuredImage.displayUrl || solution.featuredImage.originalUrl}
 							alt={solution.featuredImage.altText}
 							aspectRatio="16/9"
 							class="mb-6 rounded-md transition-transform duration-300 group-hover:scale-105"

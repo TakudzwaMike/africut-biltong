@@ -89,7 +89,7 @@
 			<!-- Fallback Image while video loads -->
 			{#if content.media}
 				<Image
-					src={content.media.url}
+					src={content.media.displayUrl || content.media.originalUrl}
 					alt={content.media.altText}
 					aspectRatio="auto"
 					class="h-full w-full transition-opacity duration-500 {showVideo ? 'opacity-0' : ''}"
@@ -98,7 +98,7 @@
 		{:else if content.media}
 			<!-- Static Image Background -->
 			<Image
-				src={content.media.url}
+				src={content.media.displayUrl || content.media.originalUrl}
 				alt={content.media.altText}
 				aspectRatio="auto"
 				class="h-full w-full"

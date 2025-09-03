@@ -17,7 +17,7 @@
 				<div class="corner-border text-center">
 					{#if member.photo}
 						<Image
-							src={member.photo.url}
+							src={member.photo.thumbnailUrl || member.photo.originalUrl}
 							alt={member.photo.altText}
 							aspectRatio="1/1"
 							class="mx-auto h-32 w-32 rounded-full"
