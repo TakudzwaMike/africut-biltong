@@ -25,16 +25,19 @@ export async function load() {
 	}
 
 	return {
-		siteName: settings.site_name || 'Vision AI Tech',
+		settings: {
+			siteName: settings.site_name || 'Vision AI Tech',
+			brochureUrl: settings.brochure_url || null,
+			heroVideoUrl: settings.hero_video_url || '',
+			whatsappNumber: settings.whatsapp_number || '',
+			siteLogoMediaId: settings.site_logo_media_id || null,
+			// Pass social links as part of the settings object for consistency
+			socialLinkedIn: settings.social_linkedin || '',
+			socialX: settings.social_x || '',
+			socialFacebook: settings.social_facebook || ''
+		},
 		logo,
-		brochureUrl: settings.brochure_url || null,
-		heroVideoUrl: settings.hero_video_url || '',
-		whatsappNumber: settings.whatsapp_number || '',
-		mediaItems,
-		siteLogoMediaId: settings.site_logo_media_id || null,
-		socialLinkedIn: settings.social_linkedin || '',
-		socialX: settings.social_x || '',
-		socialFacebook: settings.social_facebook || ''
+		mediaItems
 	};
 }
 

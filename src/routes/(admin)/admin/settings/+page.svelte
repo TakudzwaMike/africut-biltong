@@ -2,16 +2,38 @@
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/toast-service';
 	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
+	import { invalidateAll, applyAction } from '$app/navigation';
+	import SubmitButton from '$lib/components/SubmitButton.svelte';
 
 	let { data, form } = $props();
 
-	let siteSettings = $state(data);
-
-	$effect(() => {
-		if (form?.success) {
-			toast.success(form.message);
-		}
+	// Use $state for local form bindings, initialized from loaded data.
+	let formState = $state({
+		siteName: data.settings.siteName,
+		siteLogoMediaId: data.settings.siteLogoMediaId,
+		heroVideoUrl: data.settings.heroVideoUrl,
+		whatsappNumber: data.settings.whatsappNumber,
+		socialLinkedIn: data.settings.socialLinkedIn,
+		socialX: data.settings.socialX,
+		socialFacebook: data.settings.socialFacebook
 	});
+
+	let isSubmitting = $state(false);
+
+	function handleSubmit() {
+		isSubmitting = true;
+		return ({ result, update }) => {
+			isSubmitting = false;
+			if (result.type === 'success') {
+				toast.success(result.data?.message);
+				// Invalidate all data to ensure we get fresh state from the server,
+				// including potentially the new logo object.
+				invalidateAll();
+			} else if (result.type === 'failure') {
+				toast.error(result.data?.message);
+			}
+		};
+	}
 </script>
 
 <div class="p-8">
@@ -21,17 +43,7 @@
 	<form
 		method="POST"
 		enctype="multipart/form-data"
-		use:enhance={() => {
-			return ({ result }) => {
-				if (result.type === 'success' && result.data) {
-					// We can't update the data store directly after a successful form post
-					// without a full page reload or more complex state management.
-					// A toast notification is the simplest feedback.
-					toast.success('Settings saved! Reloading page to see changes.');
-					setTimeout(() => window.location.reload(), 1500);
-				}
-			};
-		}}
+		use:enhance={handleSubmit}
 		class="mt-8 max-w-2xl space-y-6"
 	>
 		<div class="rounded-xl border border-main/10 p-6">
@@ -44,7 +56,7 @@
 						id="siteName"
 						name="siteName"
 						required
-						bind:value={siteSettings.siteName}
+						bind:value={formState.siteName}
 						class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 					/>
 				</div>
@@ -52,10 +64,11 @@
 				<div>
 					<FeaturedImagePicker
 						mediaItems={data.mediaItems}
-						bind:selectedMediaId={siteSettings.siteLogoMediaId}
-						currentImageUrl={data.logo?.url}
+						bind:selectedMediaId={formState.siteLogoMediaId}
+						currentImageUrl={data.logo?.thumbnailUrl || data.logo?.originalUrl}
 						currentImageAlt={data.logo?.altText}
 					/>
+					<input type="hidden" name="siteLogoMediaId" value={formState.siteLogoMediaId ?? ''} />
 				</div>
 			</div>
 		</div>
@@ -63,12 +76,14 @@
 		<div class="rounded-xl border border-main/10 p-6">
 			<h3 class="text-lg font-bold">Company Brochure</h3>
 			<div class="mt-4">
-				<label for="brochure" class="mb-1 block font-medium text-main/80">Upload Brochure (PDF)</label>
-				{#if siteSettings.brochureUrl}
+				<label for="brochure" class="mb-1 block font-medium text-main/80"
+					>Upload Brochure (PDF)</label
+				>
+				{#if data.settings.brochureUrl}
 					<div class="mb-2">
 						<p class="text-sm text-main/80">Current Brochure:</p>
 						<a
-							href={siteSettings.brochureUrl}
+							href={data.settings.brochureUrl}
 							target="_blank"
 							class="mt-1 block text-accent underline"
 						>
@@ -99,7 +114,7 @@
 					type="url"
 					id="heroVideoUrl"
 					name="heroVideoUrl"
-					bind:value={siteSettings.heroVideoUrl}
+					bind:value={formState.heroVideoUrl}
 					placeholder="e.g., https://www.youtube.com/watch?v=..."
 					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 				/>
@@ -110,9 +125,9 @@
 			</div>
 		</div>
 
-		<div class="rounded-xl border border-main/10 p-6">
+		<div class="rounded-xl border border-main/10 p-6 space-y-4">
 			<h3 class="text-lg font-bold">Contact & Social</h3>
-			<div class="mt-4">
+			<div>
 				<label for="whatsappNumber" class="mb-1 block font-medium text-main/80"
 					>WhatsApp Number for Quick Chat</label
 				>
@@ -120,7 +135,7 @@
 					type="tel"
 					id="whatsappNumber"
 					name="whatsappNumber"
-					bind:value={siteSettings.whatsappNumber}
+					bind:value={formState.whatsappNumber}
 					placeholder="e.g., 263771234567 (include country code)"
 					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 				/>
@@ -137,7 +152,7 @@
 					type="url"
 					id="socialLinkedIn"
 					name="socialLinkedIn"
-					bind:value={siteSettings.socialLinkedIn}
+					bind:value={formState.socialLinkedIn}
 					placeholder="https://www.linkedin.com/company/..."
 					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 				/>
@@ -150,7 +165,7 @@
 					type="url"
 					id="socialX"
 					name="socialX"
-					bind:value={siteSettings.socialX}
+					bind:value={formState.socialX}
 					placeholder="https://x.com/..."
 					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 				/>
@@ -163,7 +178,7 @@
 					type="url"
 					id="socialFacebook"
 					name="socialFacebook"
-					bind:value={siteSettings.socialFacebook}
+					bind:value={formState.socialFacebook}
 					placeholder="https://www.facebook.com/..."
 					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 				/>
@@ -175,12 +190,9 @@
 		{/if}
 
 		<div class="text-left">
-			<button
-				type="submit"
-				class="rounded-md bg-accent px-6 py-2 font-bold text-main shadow-lg shadow-accent/30 transition hover:-translate-y-0.5"
-			>
+			<SubmitButton type="submit" loading={isSubmitting} class="bg-accent px-6 py-2">
 				Save Settings
-			</button>
+			</SubmitButton>
 		</div>
 	</form>
 </div>
