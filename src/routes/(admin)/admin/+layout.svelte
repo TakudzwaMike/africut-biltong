@@ -8,6 +8,7 @@
 		{ href: '/admin/page-content', label: 'Page Content' },
 		{ href: '/admin/products', label: 'Products' },
 		{ href: '/admin/solutions', label: 'Solutions' },
+		{ href: '/admin/documents', label: 'Documents' },
 		{ href: '/admin/clients', label: 'Clients' },
 		{ href: '/admin/case-studies', label: 'Case Studies' },
 		{ href: '/admin/team-members', label: 'Team Members' },
@@ -20,7 +21,6 @@
 		{ href: '/admin/locations', label: 'Office Locations' },
 		{ href: '/admin/audit-log', label: 'Audit Log' }
 	];
-
 	// Reactive variable for the logo, derived from page data.
 	// This will automatically update when the underlying data changes.
 	let logo = $derived(
