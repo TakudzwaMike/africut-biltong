@@ -36,7 +36,7 @@ A modern, performant corporate website and headless CMS built with SvelteKit, Dr
 -   **Automatic Image Optimization:** On upload, a serverless function creates and saves optimized thumbnail and display versions of each image.
 -   **Rich Text Editor:** WYSIWYG editor for blog posts and detailed descriptions.
 -   **QR Code Analytics:** Generate tracked short links and QR codes, and view click analytics by country.
--   **Audit Log:** Records all administrative actions (create, update, delete) for accountability.
+-   **Audit Log:** Records all administrative actions (create, update, delete) for accountability
 -   **Site-Wide Settings:** Manage global branding, logo, social media links, and more from a single page
 
 ---
