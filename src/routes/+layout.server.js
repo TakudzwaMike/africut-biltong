@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
-import { desc } from 'drizzle-orm';
-import { location } from '$lib/server/db/schema.js';
+import { desc, eq } from 'drizzle-orm';
+import { location, media, siteSettings } from '$lib/server/db/schema.js';
 
 /** @type {import('./$types').LayoutServerLoad} */
 export async function load({ locals, request }) {
