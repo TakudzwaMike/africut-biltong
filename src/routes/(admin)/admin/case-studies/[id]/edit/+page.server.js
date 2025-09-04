@@ -4,16 +4,6 @@ import { fail, redirect, error } from '@sveltejs/kit';
 import { eq, desc } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
 
-const toRichText = (text) => {
-	if (!text) return [];
-	return [{ type: 'paragraph', children: [{ text: String(text) }] }];
-};
-
-const fromRichText = (richText) => {
-	if (!richText || !Array.isArray(richText) || richText.length === 0) return '';
-	return richText.map((p) => p.children.map((c) => c.text).join('')).join('\n\n');
-};
-
 export async function load({ params }) {
 	const id = Number(params.id);
 	if (isNaN(id)) {
@@ -35,14 +25,7 @@ export async function load({ params }) {
 		orderBy: desc(client.name)
 	});
 
-	return {
-		caseStudy: {
-			...cs,
-			challenge: fromRichText(cs.challenge),
-			solution: fromRichText(cs.solution)
-		},
-		clients
-	};
+	return { caseStudy: cs, clients };
 }
 
 export const actions = {
@@ -50,10 +33,18 @@ export const actions = {
 		const id = Number(params.id);
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { title, slug, clientId, challenge, solution } = data;
+		const { title, slug, clientId, challenge: challengeJson, solution: solutionJson } = data;
 
 		if (!title || !slug) {
 			return fail(400, { data, message: 'Title and Slug are required.' });
+		}
+
+		let challenge, solution;
+		try {
+			challenge = challengeJson ? JSON.parse(String(challengeJson)) : null;
+			solution = solutionJson ? JSON.parse(String(solutionJson)) : null;
+		} catch (e) {
+			return fail(400, { data, message: 'Invalid rich text format for challenge or solution.' });
 		}
 
 		try {
@@ -62,8 +53,8 @@ export const actions = {
 				title: String(title),
 				slug: String(slug),
 				clientId: clientId ? Number(clientId) : null,
-				challenge: toRichText(challenge),
-				solution: toRichText(solution)
+				challenge,
+				solution
 			};
 
 			await db.transaction(async (tx) => {

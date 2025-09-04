@@ -25,7 +25,7 @@
 		{:else}
 			<div class="mt-4 grid max-h-[60vh] grid-cols-3 gap-4 overflow-y-auto pr-2 sm:grid-cols-4 md:grid-cols-5">
 				{#each mediaItems as item (item.id)}
-					<button
+					<button type='button'
 						onclick={() => selectImage(item)}
 						class="group relative aspect-square rounded-md ring-accent transition focus:outline-none focus:ring-2"
 					>

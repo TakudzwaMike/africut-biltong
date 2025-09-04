@@ -11,20 +11,29 @@ export async function load() {
 	return { mediaItems };
 }
 
-const toRichText = (text) => {
-	if (!text) return [];
-	return [{ type: 'paragraph', children: [{ text: String(text) }] }];
-};
-
 export const actions = {
 	default: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { solutionName, slug, shortDescription, longDescription, ctaText, ctaLink, mediaId } =
-			data;
+		const {
+			solutionName,
+			slug,
+			shortDescription,
+			longDescription: longDescriptionJson,
+			ctaText,
+			ctaLink,
+			mediaId
+		} = data;
 
 		if (!solutionName || !slug) {
 			return fail(400, { data, message: 'Solution Name and Slug are required.' });
+		}
+
+		let longDescription;
+		try {
+			longDescription = longDescriptionJson ? JSON.parse(String(longDescriptionJson)) : null;
+		} catch (e) {
+			return fail(400, { data, message: 'Invalid rich text format for long description.' });
 		}
 
 		try {
@@ -32,7 +41,7 @@ export const actions = {
 				solutionName: String(solutionName),
 				slug: String(slug),
 				shortDescription: String(shortDescription),
-				longDescription: toRichText(longDescription),
+				longDescription,
 				mediaId: mediaId ? Number(mediaId) : null,
 				ctaText: String(ctaText),
 				ctaLink: String(ctaLink)

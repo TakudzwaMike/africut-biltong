@@ -34,7 +34,7 @@
 		{#if imageToShow}
 			<div class="relative h-24 w-auto flex-shrink-0">
 				<img
-					src={imageToShow.thumbnailUrl || imageToShow.url || imageToShow.originalUrl}
+					src={imageToShow.thumbnailUrl || imageToShow.url}
 					alt={imageToShow.altText}
 					class="h-full w-auto rounded-md bg-main/5 object-contain"
 				/>

@@ -5,28 +5,52 @@
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
 	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
+	import { slugify } from '$lib/utils.js';
 
 	let { data, form } = $props();
 
 	let editingProduct = $state(null);
 	let isSubmitting = $state(false);
-
-	// Rich text content needs its own state variable
 	let contentJson = $state(null);
+	let manualSlug = $state(false);
 
 	$effect(() => {
-		if (form?.success) {
-			toast.success(form.message);
-			invalidateAll();
-			editingProduct = null;
-		} else if (form?.message && form?.status !== 200) {
-			toast.error(form.message);
+		if (editingProduct && !manualSlug) {
+			editingProduct.slug = slugify(editingProduct.name);
 		}
 	});
+
+	function handleSave() {
+		isSubmitting = true;
+		return async ({ result, update }) => {
+			if (result.type === 'success' && result.data?.success) {
+				toast.success(result.data.message);
+				editingProduct = null;
+				await invalidateAll();
+			} else if (result.type === 'failure') {
+				toast.error(result.data?.message);
+			}
+			isSubmitting = false;
+			update({ reset: false });
+		};
+	}
+
+	function handleDelete() {
+		return async ({ result, update }) => {
+			if (result.type === 'success' && result.data?.status === 200) {
+				toast.success(result.data.message);
+				await invalidateAll();
+			} else if (result.type === 'failure') {
+				toast.error(result.data.message);
+			}
+			update();
+		};
+	}
 
 	function startEditing(product) {
 		editingProduct = { ...product };
 		contentJson = product.longDescription;
+		manualSlug = true; // Existing products should have manual slug control
 	}
 
 	function startCreating() {
@@ -41,21 +65,11 @@
 			ctaLink: ''
 		};
 		contentJson = null;
+		manualSlug = false; // New products get automatic slugs
 	}
 
 	function cancelEditing() {
 		editingProduct = null;
-	}
-
-	function handleDelete() {
-		return ({ result }) => {
-			if (result.type === 'success' && result.data?.status === 200) {
-				toast.success(result.data.message);
-				invalidateAll();
-			} else if (result.type === 'failure') {
-				toast.error(result.data.message);
-			}
-		};
 	}
 </script>
 
@@ -77,31 +91,16 @@
 
 	<!-- Add/Edit Form -->
 	{#if editingProduct}
+		{@const selectedImage = data.mediaItems.find((m) => m.id === editingProduct.mediaId)}
 		<div class="mt-8 max-w-4xl">
-			<form
-				method="POST"
-				action="?/save"
-				class="space-y-8"
-				use:enhance={() => {
-					isSubmitting = true;
-					return () => (isSubmitting = false);
-				}}
-			>
+			<form method="POST" action="?/save" class="space-y-8" use:enhance={handleSave}>
 				<input type="hidden" name="id" value={editingProduct.id} />
 				<input type="hidden" name="longDescription" value={JSON.stringify(contentJson)} />
 
-				<div class="flex items-center justify-between">
+				<div class="flex items-center justify-between border-b border-main/10 pb-4">
 					<h2 class="text-2xl font-bold">
 						{editingProduct.id ? 'Edit Product' : 'Create New Product'}
 					</h2>
-					<div class="flex items-center gap-4">
-						<button type="button" onclick={cancelEditing} class="font-medium text-main/70"
-							>Cancel</button
-						>
-						<SubmitButton type="submit" loading={isSubmitting} class="bg-accent">
-							Save Product
-						</SubmitButton>
-					</div>
 				</div>
 
 				<!-- Core Details -->
@@ -119,14 +118,26 @@
 						/>
 					</div>
 					<div>
-						<label for="slug" class="mb-1 block font-medium text-main/80">Slug</label>
+						<div class="mb-1 flex items-center justify-between">
+							<label for="slug" class="font-medium text-main/80">Slug</label>
+							{#if !manualSlug}
+								<button
+									type="button"
+									onclick={() => (manualSlug = true)}
+									class="text-sm text-accent"
+								>
+									Edit
+								</button>
+							{/if}
+						</div>
 						<input
 							type="text"
 							id="slug"
 							name="slug"
 							required
+							readonly={!manualSlug}
 							bind:value={editingProduct.slug}
-							class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+							class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 read-only:bg-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 						/>
 					</div>
 					<div>
@@ -149,15 +160,18 @@
 					<FeaturedImagePicker
 						mediaItems={data.mediaItems}
 						bind:selectedMediaId={editingProduct.mediaId}
-						currentImageUrl={editingProduct.featuredImage?.url}
-						currentImageAlt={editingProduct.featuredImage?.altText}
+						currentImageUrl={selectedImage?.thumbnailUrl || selectedImage?.originalUrl}
+						currentImageAlt={selectedImage?.altText}
 					/>
 				</div>
 
 				<!-- Long Description -->
 				<div class="space-y-4 rounded-xl border border-main/10 p-6">
 					<h3 class="text-lg font-bold">Long Description (Content)</h3>
-					<RichTextEditor bind:content={contentJson} initialContent={editingProduct.longDescription} />
+					<RichTextEditor
+						bind:content={contentJson}
+						initialContent={editingProduct.longDescription}
+					/>
 				</div>
 
 				<!-- Call to Action -->
@@ -183,6 +197,14 @@
 							class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 						/>
 					</div>
+				</div>
+
+				<!-- Form Actions -->
+				<div class="flex items-center justify-end gap-4">
+					<button type="button" onclick={cancelEditing} class="font-medium text-main/70">Cancel</button>
+					<SubmitButton type="submit" loading={isSubmitting} class="bg-accent px-6 py-2">
+						Save Product
+					</SubmitButton>
 				</div>
 			</form>
 		</div>

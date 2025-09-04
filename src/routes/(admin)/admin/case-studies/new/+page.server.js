@@ -4,11 +4,6 @@ import { fail, redirect } from '@sveltejs/kit';
 import { desc } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
 
-const toRichText = (text) => {
-	if (!text) return [];
-	return [{ type: 'paragraph', children: [{ text: String(text) }] }];
-};
-
 export async function load() {
 	const clients = await db.query.client.findMany({
 		orderBy: desc(client.name)
@@ -21,10 +16,18 @@ export const actions = {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 
-		const { title, slug, clientId, challenge, solution } = data;
+		const { title, slug, clientId, challenge: challengeJson, solution: solutionJson } = data;
 
 		if (!title || !slug) {
 			return fail(400, { data, message: 'Title and Slug are required.' });
+		}
+
+		let challenge, solution;
+		try {
+			challenge = challengeJson ? JSON.parse(String(challengeJson)) : null;
+			solution = solutionJson ? JSON.parse(String(solutionJson)) : null;
+		} catch (e) {
+			return fail(400, { data, message: 'Invalid rich text format for challenge or solution.' });
 		}
 
 		try {
@@ -34,8 +37,8 @@ export const actions = {
 					title: String(title),
 					slug: String(slug),
 					clientId: clientId ? Number(clientId) : null,
-					challenge: toRichText(challenge),
-					solution: toRichText(solution)
+					challenge,
+					solution
 				})
 				.returning();
 
@@ -60,12 +63,11 @@ export const actions = {
 					await db.insert(caseStudyResult).values(resultsToInsert);
 				}
 			}
-			
+
 			await log(locals.user?.id, 'create_case_study', {
 				targetId: newCaseStudy.id,
 				data: { ...newCaseStudy, results: resultsToInsert }
 			});
-
 		} catch (error) {
 			console.error('Error creating case study:', error);
 			if (error.message.includes('duplicate key value violates unique constraint')) {

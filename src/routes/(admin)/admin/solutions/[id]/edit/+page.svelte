@@ -1,8 +1,11 @@
 <script>
 	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
+	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
+
 	let { data, form } = $props();
 
 	let solutionData = $state(data.solution);
+	let longDescriptionJson = $state(data.solution.longDescription);
 </script>
 
 <div class="relative z-10">
@@ -14,32 +17,50 @@
 			>
 		</div>
 
-		<form method="POST" enctype="multipart/form-data" class="mt-12 space-y-6">
-			<div>
-				<label for="solutionName" class="mb-1 block font-medium text-main/80"
-					>Solution Name</label
-				>
-				<input
-					type="text"
-					id="solutionName"
-					name="solutionName"
-					required
-					bind:value={solutionData.solutionName}
-					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-				/>
+		<form method="POST" enctype="multipart/form-data" class="mt-12 space-y-8">
+			<input type="hidden" name="longDescription" value={JSON.stringify(longDescriptionJson)} />
+
+			<div class="space-y-4 rounded-xl border border-main/10 p-6">
+				<h3 class="text-lg font-bold">Core Details</h3>
+				<div>
+					<label for="solutionName" class="mb-1 block font-medium text-main/80"
+						>Solution Name</label
+					>
+					<input
+						type="text"
+						id="solutionName"
+						name="solutionName"
+						required
+						bind:value={solutionData.solutionName}
+						class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+					/>
+				</div>
+				<div>
+					<label for="slug" class="mb-1 block font-medium text-main/80">Slug</label>
+					<input
+						type="text"
+						id="slug"
+						name="slug"
+						required
+						bind:value={solutionData.slug}
+						class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+					/>
+				</div>
+				<div>
+					<label for="shortDescription" class="mb-1 block font-medium text-main/80"
+						>Short Description</label
+					>
+					<textarea
+						id="shortDescription"
+						name="shortDescription"
+						rows="3"
+						bind:value={solutionData.shortDescription}
+						class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+					></textarea>
+				</div>
 			</div>
-			<div>
-				<label for="slug" class="mb-1 block font-medium text-main/80">Slug</label>
-				<input
-					type="text"
-					id="slug"
-					name="slug"
-					required
-					bind:value={solutionData.slug}
-					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-				/>
-			</div>
-			<div>
+
+			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Featured Image</h3>
 				<FeaturedImagePicker
 					mediaItems={data.mediaItems}
@@ -48,29 +69,13 @@
 					currentImageAlt={solutionData.featuredImage?.altText}
 				/>
 			</div>
-			<div>
-				<label for="shortDescription" class="mb-1 block font-medium text-main/80"
-					>Short Description</label
-				>
-				<textarea
-					id="shortDescription"
-					name="shortDescription"
-					rows="3"
-					bind:value={solutionData.shortDescription}
-					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-				></textarea>
-			</div>
-			<div>
-				<label for="longDescription" class="mb-1 block font-medium text-main/80"
-					>Long Description (Content)</label
-				>
-				<textarea
-					id="longDescription"
-					name="longDescription"
-					rows="8"
-					bind:value={solutionData.longDescription}
-					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-				></textarea>
+
+			<div class="space-y-4 rounded-xl border border-main/10 p-6">
+				<h3 class="text-lg font-bold">Long Description (Content)</h3>
+				<RichTextEditor
+					bind:content={longDescriptionJson}
+					initialContent={solutionData.longDescription}
+				/>
 			</div>
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">

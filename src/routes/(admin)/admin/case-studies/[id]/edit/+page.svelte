@@ -1,8 +1,12 @@
 <script>
+	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
+
 	let { data, form } = $props();
 
 	let caseStudyData = $state(data.caseStudy);
 	let kpiResults = $state(data.caseStudy.results.map((r) => ({ ...r, id: Math.random() })) || []);
+	let challengeJson = $state(data.caseStudy.challenge);
+	let solutionJson = $state(data.caseStudy.solution);
 
 	function addKpi() {
 		kpiResults.push({ id: Math.random(), kpiName: '', kpiValue: '' });
@@ -17,12 +21,17 @@
 	<div class="mx-auto max-w-4xl px-8 py-20 sm:py-24">
 		<div class="flex items-center justify-between">
 			<h1 class="text-4xl font-bold tracking-tight text-main sm:text-5xl">Edit Case Study</h1>
-			<a href="/admin/case-studies" class="font-bold text-accent transition hover:drop-shadow-accent-glow"
+			<a
+				href="/admin/case-studies"
+				class="font-bold text-accent transition hover:drop-shadow-accent-glow"
 				>← Back to List</a
 			>
 		</div>
 
 		<form method="POST" class="mt-12 space-y-8">
+			<input type="hidden" name="challenge" value={JSON.stringify(challengeJson)} />
+			<input type="hidden" name="solution" value={JSON.stringify(solutionJson)} />
+
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Core Details</h3>
 				<div>
@@ -69,23 +78,11 @@
 				<h3 class="text-lg font-bold">Content</h3>
 				<div>
 					<label for="challenge" class="mb-1 block font-medium text-main/80">Challenge</label>
-					<textarea
-						id="challenge"
-						name="challenge"
-						rows="5"
-						bind:value={caseStudyData.challenge}
-						class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-					></textarea>
+					<RichTextEditor bind:content={challengeJson} initialContent={caseStudyData.challenge} />
 				</div>
 				<div>
 					<label for="solution" class="mb-1 block font-medium text-main/80">Solution</label>
-					<textarea
-						id="solution"
-						name="solution"
-						rows="5"
-						bind:value={caseStudyData.solution}
-						class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-					></textarea>
+					<RichTextEditor bind:content={solutionJson} initialContent={caseStudyData.solution} />
 				</div>
 			</div>
 

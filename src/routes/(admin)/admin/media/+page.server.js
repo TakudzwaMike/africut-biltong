@@ -74,15 +74,15 @@ export const actions = {
 	},
 
 	delete: async ({ url, locals }) => {
-		// ... delete logic remains the same
 		const id = url.searchParams.get('id');
 		if (!id) return fail(400, { message: 'Invalid request' });
 		try {
 			const mediaToDelete = await db.query.media.findFirst({ where: eq(media.id, Number(id)) });
 			if (!mediaToDelete) return fail(404, { message: 'Media not found.' });
-			
+
+			// The originalUrl is deleted immediately after upload/processing
+			// Only the display and thumbnail URLs need to be deleted from blob storage
 			await Promise.allSettled([
-				del(mediaToDelete.originalUrl),
 				mediaToDelete.displayUrl ? del(mediaToDelete.displayUrl) : Promise.resolve(),
 				mediaToDelete.thumbnailUrl ? del(mediaToDelete.thumbnailUrl) : Promise.resolve()
 			]);
@@ -93,5 +93,4 @@ export const actions = {
 			console.error('Error deleting media:', error);
 			return fail(500, { message: 'Could not delete media item.' });
 		}
-	}
-};
+	} };

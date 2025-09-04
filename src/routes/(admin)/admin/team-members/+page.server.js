@@ -20,37 +20,40 @@ export async function load() {
 export const actions = {
 	save: async ({ request, locals }) => {
 		const formData = await request.formData();
-		const id = Number(formData.get('id'));
+		const idRaw = formData.get('id');
+		const id = idRaw ? parseInt(String(idRaw), 10) : null; // Correctly parse ID
 		const name = formData.get('name');
 		const title = formData.get('title');
 		const bio = formData.get('bio');
-		const mediaId = formData.get('mediaId');
+		const mediaIdRaw = formData.get('mediaId');
 
 		if (!name || !title) {
 			return fail(400, { message: 'Name and Title are required.' });
 		}
 
+		const parsedMediaId = mediaIdRaw ? parseInt(String(mediaIdRaw), 10) : NaN;
+
 		const dataToSave = {
 			name: String(name),
 			title: String(title),
 			bio: String(bio),
-			mediaId: mediaId ? Number(mediaId) : null
+			mediaId: !isNaN(parsedMediaId) ? parsedMediaId : null
 		};
 
 		try {
-			if (isNaN(id)) {
+			if (id) {
+				// Update existing: if ID is a truthy value (i.e., not null, not 0)
+				await db.update(teamMember).set(dataToSave).where(eq(teamMember.id, id));
+				await log(locals.user?.id, 'update_team_member', {
+					targetId: id,
+					data: dataToSave
+				});
+			} else {
 				// Create new
 				const [newMember] = await db.insert(teamMember).values(dataToSave).returning();
 				await log(locals.user?.id, 'create_team_member', {
 					targetId: newMember.id,
 					data: newMember
-				});
-			} else {
-				// Update existing
-				await db.update(teamMember).set(dataToSave).where(eq(teamMember.id, id));
-				await log(locals.user?.id, 'update_team_member', {
-					targetId: id,
-					data: dataToSave
 				});
 			}
 			return { success: true, message: 'Team member saved.' };

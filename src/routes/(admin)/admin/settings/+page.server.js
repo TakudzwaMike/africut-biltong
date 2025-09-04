@@ -74,7 +74,7 @@ export const actions = {
 				.onConflictDoUpdate({ target: siteSettings.key, set: { value: String(siteLogoMediaId) } });
 			dataToLog.site_logo_media_id = siteLogoMediaId;
 
-			// Handle brochure upload (still a direct upload for now)
+			// Handle brochure upload
 			if (brochureFile instanceof File && brochureFile.size > 0) {
 				const { uploadFile } = await import('$lib/server/blob');
 				const buffer = Buffer.from(await brochureFile.arrayBuffer());
@@ -83,22 +83,6 @@ export const actions = {
 					.insert(siteSettings)
 					.values({ key: 'brochure_url', value: brochureUrl })
 					.onConflictDoUpdate({ target: siteSettings.key, set: { value: brochureUrl } });
-				dataToLog.brochure_url = brochureUrl;
-			}
-			// Handle brochure upload
-			if (brochureFile instanceof File && brochureFile.size > 0) {
-				const buffer = Buffer.from(await brochureFile.arrayBuffer());
-				// Use the original filename for the brochure
-				const brochureUrl = await uploadFile(buffer, brochureFile.name, brochureFile.type);
-
-				// Upsert brochure URL
-				await db
-					.insert(siteSettings)
-					.values({ key: 'brochure_url', value: brochureUrl })
-					.onConflictDoUpdate({
-						target: siteSettings.key,
-						set: { value: brochureUrl }
-					});
 				dataToLog.brochure_url = brochureUrl;
 			}
 

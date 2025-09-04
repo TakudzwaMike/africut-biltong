@@ -10,15 +10,32 @@
 	let editingClient = $state(null);
 	let isSubmitting = $state(false);
 
-	$effect(() => {
-		if (form?.success) {
-			toast.success(form.message);
-			invalidateAll();
-			editingClient = null;
-		} else if (form?.message && form?.status !== 200) {
-			toast.error(form.message);
-		}
-	});
+	function handleSave() {
+		isSubmitting = true;
+		return async ({ result, update }) => {
+			if (result.type === 'success' && result.data?.success) {
+				toast.success(result.data.message);
+				editingClient = null; // Close form
+				await invalidateAll(); // Refresh data
+			} else if (result.type === 'failure') {
+				toast.error(result.data?.message);
+			}
+			isSubmitting = false;
+			update({ reset: false });
+		};
+	}
+
+	function handleDelete() {
+		return async ({ result, update }) => {
+			if (result.type === 'success' && result.data?.status === 200) {
+				toast.success(result.data.message);
+				await invalidateAll();
+			} else if (result.type === 'failure') {
+				toast.error(result.data?.message);
+			}
+			update();
+		};
+	}
 
 	function startEditing(client) {
 		editingClient = { ...client };
@@ -30,17 +47,6 @@
 
 	function cancelEditing() {
 		editingClient = null;
-	}
-
-	function handleDelete() {
-		return ({ result }) => {
-			if (result.type === 'success' && result.data?.status === 200) {
-				toast.success(result.data.message);
-				invalidateAll();
-			} else if (result.type === 'failure') {
-				toast.error(result.data.message);
-			}
-		};
 	}
 </script>
 
@@ -62,15 +68,13 @@
 
 	<!-- Add/Edit Form -->
 	{#if editingClient}
+		{@const selectedLogo = data.mediaItems.find((m) => m.id === editingClient.mediaId)}
 		<div class="mt-8 max-w-2xl">
 			<form
 				method="POST"
 				action="?/save"
 				class="space-y-6 rounded-xl border border-main/10 p-6"
-				use:enhance={() => {
-					isSubmitting = true;
-					return () => (isSubmitting = false);
-				}}
+				use:enhance={handleSave}
 			>
 				<input type="hidden" name="id" value={editingClient.id} />
 				<h3 class="text-lg font-bold">{editingClient.id ? 'Edit' : 'Add New'} Client</h3>
@@ -90,8 +94,8 @@
 					<FeaturedImagePicker
 						mediaItems={data.mediaItems}
 						bind:selectedMediaId={editingClient.mediaId}
-						currentImageUrl={editingClient.logo?.url}
-						currentImageAlt={editingClient.logo?.altText}
+						currentImageUrl={selectedLogo?.thumbnailUrl || selectedLogo?.originalUrl}
+						currentImageAlt={selectedLogo?.altText}
 					/>
 				</div>
 
@@ -141,7 +145,7 @@
 									class="rounded-md bg-main/80 p-1.5 text-light backdrop-blur-sm"
 								>
 									<svg
-										xmlns="http://www.w.org/2000/svg"
+										xmlns="http://www.w3.org/2000/svg"
 										width="16"
 										height="16"
 										viewBox="0 0 24 24"

@@ -4,16 +4,6 @@ import { fail, redirect, error } from '@sveltejs/kit';
 import { eq, desc } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
 
-const toRichText = (text) => {
-	if (!text) return [];
-	return [{ type: 'paragraph', children: [{ text: String(text) }] }];
-};
-
-const fromRichText = (richText) => {
-	if (!richText || !Array.isArray(richText) || richText.length === 0) return '';
-	return richText.map((p) => p.children.map((c) => c.text).join('')).join('\n\n');
-};
-
 export async function load({ params }) {
 	const id = Number(params.id);
 	if (isNaN(id)) {
@@ -36,10 +26,7 @@ export async function load({ params }) {
 	});
 
 	return {
-		solution: {
-			...sol,
-			longDescription: fromRichText(sol.longDescription)
-		},
+		solution: sol,
 		mediaItems
 	};
 }
@@ -49,18 +36,32 @@ export const actions = {
 		const id = Number(params.id);
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { solutionName, slug, shortDescription, longDescription, ctaText, ctaLink, mediaId } =
-			data;
+		const {
+			solutionName,
+			slug,
+			shortDescription,
+			longDescription: longDescriptionJson,
+			ctaText,
+			ctaLink,
+			mediaId
+		} = data;
 
 		if (!solutionName || !slug) {
 			return fail(400, { data, message: 'Solution Name and Slug are required.' });
+		}
+
+		let longDescription;
+		try {
+			longDescription = longDescriptionJson ? JSON.parse(String(longDescriptionJson)) : null;
+		} catch (e) {
+			return fail(400, { data, message: 'Invalid rich text format for long description.' });
 		}
 
 		const dataToUpdate = {
 			solutionName: String(solutionName),
 			slug: String(slug),
 			shortDescription: String(shortDescription),
-			longDescription: toRichText(longDescription),
+			longDescription,
 			ctaText: String(ctaText),
 			ctaLink: String(ctaLink),
 			mediaId: mediaId ? Number(mediaId) : null

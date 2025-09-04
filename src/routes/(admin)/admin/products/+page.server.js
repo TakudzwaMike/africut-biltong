@@ -20,7 +20,8 @@ export async function load() {
 export const actions = {
 	save: async ({ request, locals }) => {
 		const formData = await request.formData();
-		const id = Number(formData.get('id'));
+		const idRaw = formData.get('id');
+		const id = idRaw ? parseInt(String(idRaw), 10) : null;
 		const {
 			name,
 			slug,
@@ -53,17 +54,17 @@ export const actions = {
 		};
 
 		try {
-			if (isNaN(id)) {
+			if (id) {
+				// Update existing product
+				await db.update(product).set(dataToSave).where(eq(product.id, id));
+				await log(locals.user?.id, 'update_product', { targetId: id, data: dataToSave });
+			} else {
 				// Create new product
 				const [newProduct] = await db.insert(product).values(dataToSave).returning();
 				await log(locals.user?.id, 'create_product', {
 					targetId: newProduct.id,
 					data: newProduct
 				});
-			} else {
-				// Update existing product
-				await db.update(product).set(dataToSave).where(eq(product.id, id));
-				await log(locals.user?.id, 'update_product', { targetId: id, data: dataToSave });
 			}
 			return { success: true, message: 'Product saved successfully.' };
 		} catch (error) {
