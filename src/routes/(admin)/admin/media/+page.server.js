@@ -20,57 +20,86 @@ export const actions = {
 	upload: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const files = formData.getAll('images');
-		
-		for (const file of files) {
+
+		if (files.length === 0 || (files.length === 1 && files[0].size === 0)) {
+			return fail(400, { message: 'No files were selected for upload.' });
+		}
+
+		const uploadPromises = files.map(async (file) => {
 			if (!(file instanceof File) || file.size === 0) {
-				continue; // Skip empty files
+				return { status: 'skipped', name: 'empty file' };
 			}
 
 			try {
 				const buffer = Buffer.from(await file.arrayBuffer());
 
-				// 1. Upload the original file FIRST
 				const originalBlob = await put(file.name, buffer, { access: 'public' });
 
-				// 2. Process with sharp
 				const sharpInstance = sharp(buffer);
 				const metadata = await sharpInstance.metadata();
 
-				const displayBuffer = await sharpInstance.clone().resize({ width: MAX_DISPLAY_WIDTH, withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
-				const thumbnailBuffer = await sharpInstance.clone().resize({ width: MAX_THUMBNAIL_WIDTH, withoutEnlargement: true }).webp({ quality: 60 }).toBuffer();
-				const blurBuffer = await sharpInstance.clone().resize(20).blur(1.5).webp({ quality: 50 }).toBuffer();
+				const displayBuffer = await sharpInstance
+					.clone()
+					.resize({ width: MAX_DISPLAY_WIDTH, withoutEnlargement: true })
+					.webp({ quality: 80 })
+					.toBuffer();
+				const thumbnailBuffer = await sharpInstance
+					.clone()
+					.resize({ width: MAX_THUMBNAIL_WIDTH, withoutEnlargement: true })
+					.webp({ quality: 60 })
+					.toBuffer();
+				const blurBuffer = await sharpInstance
+					.clone()
+					.resize(20)
+					.blur(1.5)
+					.webp({ quality: 50 })
+					.toBuffer();
 				const blurDataUrl = `data:image/webp;base64,${blurBuffer.toString('base64')}`;
 
-				// 3. Upload optimized versions
 				const [displayBlob, thumbnailBlob] = await Promise.all([
 					put(`display/${file.name}`, displayBuffer, { access: 'public', contentType: 'image/webp' }),
 					put(`thumb/${file.name}`, thumbnailBuffer, { access: 'public', contentType: 'image/webp' })
 				]);
-				
-				// 4. Delete the original now that we have optimized versions
-				await del(originalBlob.url);
-				
-				// 5. Save to database
-				const altText = file.name.split('.').slice(0, -1).join(' ');
-				const [newMedia] = await db.insert(media).values({
-					altText,
-					originalUrl: originalBlob.url, // Still log original URL for reference
-					width: metadata.width || 0,
-					height: metadata.height || 0,
-					displayUrl: displayBlob.url,
-					thumbnailUrl: thumbnailBlob.url,
-					blurDataUrl
-				}).returning();
-				
-				await log(locals.user?.id, 'upload_media', { targetId: newMedia.id, data: newMedia });
 
+				await del(originalBlob.url);
+
+				const altText = file.name.split('.').slice(0, -1).join(' ');
+				const [newMedia] = await db
+					.insert(media)
+					.values({
+						altText,
+						originalUrl: originalBlob.url,
+						width: metadata.width || 0,
+						height: metadata.height || 0,
+						displayUrl: displayBlob.url,
+						thumbnailUrl: thumbnailBlob.url,
+						blurDataUrl
+					})
+					.returning();
+
+				await log(locals.user?.id, 'upload_media', { targetId: newMedia.id, data: newMedia });
+				return { status: 'fulfilled', name: file.name };
 			} catch (error) {
-				console.error('Upload and processing failed for file:', file.name, error);
-				return fail(500, { message: `Upload failed for ${file.name}` });
+				console.error(`Upload and processing failed for file: ${file.name}`, error);
+				return { status: 'rejected', name: file.name, reason: error.message };
+			}
+		});
+
+		const results = await Promise.allSettled(uploadPromises);
+		
+		const successfulUploads = results.filter(r => r.status === 'fulfilled' && r.value.status === 'fulfilled');
+		const failedUploads = results.filter(r => r.status === 'rejected' || r.value.status === 'rejected');
+
+		if (failedUploads.length > 0) {
+			const failedNames = failedUploads.map(r => r.status === 'fulfilled' ? r.value.name : 'a file').join(', ');
+			if (successfulUploads.length > 0) {
+				return fail(500, { message: `Successfully uploaded ${successfulUploads.length} image(s), but failed on: ${failedNames}.` });
+			} else {
+				return fail(500, { message: `All uploads failed. Please check file sizes and formats.` });
 			}
 		}
 
-		return { success: true, message: 'Upload(s) complete.' };
+		return { success: true, message: `Successfully uploaded ${successfulUploads.length} image(s).` };
 	},
 
 	delete: async ({ url, locals }) => {
@@ -80,8 +109,6 @@ export const actions = {
 			const mediaToDelete = await db.query.media.findFirst({ where: eq(media.id, Number(id)) });
 			if (!mediaToDelete) return fail(404, { message: 'Media not found.' });
 
-			// The originalUrl is deleted immediately after upload/processing
-			// Only the display and thumbnail URLs need to be deleted from blob storage
 			await Promise.allSettled([
 				mediaToDelete.displayUrl ? del(mediaToDelete.displayUrl) : Promise.resolve(),
 				mediaToDelete.thumbnailUrl ? del(mediaToDelete.thumbnailUrl) : Promise.resolve()
@@ -93,4 +120,5 @@ export const actions = {
 			console.error('Error deleting media:', error);
 			return fail(500, { message: 'Could not delete media item.' });
 		}
-	} };
+	}
+};
