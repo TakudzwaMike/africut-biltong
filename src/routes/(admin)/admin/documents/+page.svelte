@@ -12,16 +12,32 @@
 	let linkableDocument = $state(null);
 	let isSubmitting = $state(false);
 
-	// This single effect handles all form action results on the page.
-	$effect(() => {
-		if (form?.success) {
-			toast.success(form.message);
-			invalidateAll();
-			editingDocument = null; // Close form on success
-		} else if (form?.message) {
-			toast.error(form.message);
-		}
-	});
+	function handleSave() {
+		isSubmitting = true;
+		return async ({ result, update }) => {
+			if (result.type === 'success' && result.data?.success) {
+				toast.success(result.data.message);
+				editingDocument = null; // Close form on success
+				await invalidateAll(); // Refresh data without full reload
+			} else if (result.type === 'failure') {
+				toast.error(result.data?.message);
+			}
+			isSubmitting = false;
+			update({ reset: false });
+		};
+	}
+
+	function handleDelete() {
+		return async ({ result, update }) => {
+			if (result.type === 'success' && result.data?.success) {
+				toast.success(result.data.message);
+				await invalidateAll();
+			} else if (result.type === 'failure') {
+				toast.error(result.data?.message);
+			}
+			update();
+		};
+	}
 
 	function startEditing(doc) {
 		editingDocument = { ...doc };
@@ -68,12 +84,7 @@
 				action={editingDocument.id ? '?/update' : '?/create'}
 				enctype="multipart/form-data"
 				class="space-y-6 rounded-xl border border-main/10 p-6"
-				use:enhance={() => {
-					isSubmitting = true;
-					return () => {
-						isSubmitting = false;
-					};
-				}}
+				use:enhance={handleSave}
 			>
 				{#if editingDocument.id}
 					<input type="hidden" name="id" value={editingDocument.id} />
@@ -135,7 +146,7 @@
 						label="Thumbnail Image (Optional)"
 						mediaItems={data.mediaItems}
 						bind:selectedMediaId={editingDocument.thumbnailMediaId}
-						currentImageUrl={editingDocument.thumbnail?.url}
+						currentImageUrl={editingDocument.thumbnail?.thumbnailUrl || editingDocument.thumbnail?.originalUrl}
 						currentImageAlt={editingDocument.thumbnail?.altText}
 					/>
 				</div>
@@ -228,7 +239,7 @@
 										/></svg
 									>
 								</button>
-								<form method="POST" action="?/delete&id={doc.id}" use:enhance>
+								<form method="POST" action="?/delete&id={doc.id}" use:enhance={handleDelete}>
 									<button class="rounded-md bg-red-500 p-1.5 text-white">
 										<!-- Delete Icon -->
 										<svg
