@@ -93,7 +93,7 @@ npm run db:seed
 ```
   Default Admin Credentials:
   Username: admin
-  Password: password7. 
+  Password: password
   
 ## Run the Development Server
   You're all set! 
