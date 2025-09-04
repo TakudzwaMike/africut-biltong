@@ -49,7 +49,8 @@
 			title: '',
 			description: '',
 			fileUrl: null,
-			thumbnailMediaId: null
+			thumbnailMediaId: null,
+			isGated: false
 		};
 	}
 
@@ -78,6 +79,9 @@
 
 	<!-- Add/Edit Form -->
 	{#if editingDocument}
+		{@const selectedThumbnail = data.mediaItems.find(
+			(m) => m.id === editingDocument.thumbnailMediaId
+		)}
 		<div class="mt-8 max-w-2xl">
 			<form
 				method="POST"
@@ -89,6 +93,9 @@
 				{#if editingDocument.id}
 					<input type="hidden" name="id" value={editingDocument.id} />
 				{/if}
+
+				<!-- This hidden input is the key to fixing the bug -->
+				<input type="hidden" name="thumbnailMediaId" value={editingDocument.thumbnailMediaId ?? ''} />
 
 				<h3 class="text-lg font-bold">{editingDocument.id ? 'Edit' : 'Add New'} Document</h3>
 
@@ -146,9 +153,26 @@
 						label="Thumbnail Image (Optional)"
 						mediaItems={data.mediaItems}
 						bind:selectedMediaId={editingDocument.thumbnailMediaId}
-						currentImageUrl={editingDocument.thumbnail?.thumbnailUrl || editingDocument.thumbnail?.originalUrl}
-						currentImageAlt={editingDocument.thumbnail?.altText}
+						currentImageUrl={selectedThumbnail?.thumbnailUrl || selectedThumbnail?.originalUrl}
+						currentImageAlt={selectedThumbnail?.altText}
 					/>
+				</div>
+				<div>
+					<label class="relative inline-flex cursor-pointer items-center">
+						<input
+							type="checkbox"
+							name="isGated"
+							class="peer sr-only"
+							bind:checked={editingDocument.isGated}
+						/>
+						<div
+							class="h-7 w-12 rounded-full bg-main/20 after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-md after:transition-all after:duration-300 after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent/50"
+						></div>
+						<span class="ml-3 text-sm font-medium text-main/80">Require Email to Download</span>
+					</label>
+					<p class="mt-1 text-xs text-main/60">
+						If checked, users must enter their email to access this file.
+					</p>
 				</div>
 
 				<div class="mt-6 flex items-center justify-end gap-4">

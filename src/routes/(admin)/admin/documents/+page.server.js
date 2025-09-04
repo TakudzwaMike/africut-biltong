@@ -23,7 +23,8 @@ export const actions = {
 		const formData = await request.formData();
 		const title = formData.get('title');
 		const description = formData.get('description');
-		const thumbnailMediaId = formData.get('thumbnailMediaId');
+		const thumbnailMediaIdRaw = formData.get('thumbnailMediaId');
+		const isGated = formData.get('isGated') === 'on';
 		const file = formData.get('file');
 
 		if (!title || typeof title !== 'string') {
@@ -33,14 +34,16 @@ export const actions = {
 			return fail(400, { message: 'A document file is required.' });
 		}
 
-		try {
+try {
 			const buffer = Buffer.from(await file.arrayBuffer());
 			const fileUrl = await uploadFile(buffer, file.name, file.type);
+			const parsedMediaId = thumbnailMediaIdRaw ? parseInt(String(thumbnailMediaIdRaw), 10) : NaN;
 
 			const dataToSave = {
 				title: String(title),
 				description: String(description),
-				thumbnailMediaId: thumbnailMediaId ? Number(thumbnailMediaId) : null,
+				thumbnailMediaId: !isNaN(parsedMediaId) ? parsedMediaId : null,
+				isGated: isGated,
 				fileUrl
 			};
 
@@ -52,14 +55,15 @@ export const actions = {
 			console.error('Error creating document:', error);
 			return fail(500, { message: 'Could not create document.' });
 		}
-	},
+},
 
 	update: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const id = Number(formData.get('id'));
 		const title = formData.get('title');
 		const description = formData.get('description');
-		const thumbnailMediaId = formData.get('thumbnailMediaId');
+		const thumbnailMediaIdRaw = formData.get('thumbnailMediaId');
+		const isGated = formData.get('isGated') === 'on';
 		const file = formData.get('file');
 
 		if (isNaN(id)) {
@@ -70,10 +74,13 @@ export const actions = {
 		}
 
 		try {
+			const parsedMediaId = thumbnailMediaIdRaw ? parseInt(String(thumbnailMediaIdRaw), 10) : NaN;
+
 			const dataToUpdate = {
 				title: String(title),
 				description: String(description),
-				thumbnailMediaId: thumbnailMediaId ? Number(thumbnailMediaId) : null
+				thumbnailMediaId: !isNaN(parsedMediaId) ? parsedMediaId : null,
+				isGated: isGated
 			};
 
 			if (file instanceof File && file.size > 0) {

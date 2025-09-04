@@ -184,7 +184,7 @@
 									method="POST"
 									action="?/delete&id={link.id}"
 									use:enhance={handleDelete}
-									on:submit={(e) => {
+									onsubmit={(e) => {
 										if (!confirm('Are you sure you want to permanently delete this link?')) {
 											e.preventDefault();
 										}
