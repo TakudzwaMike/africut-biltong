@@ -20,9 +20,10 @@
 	});
 
 	function handleDelete() {
+		// This is the callback for the use:enhance directive on the delete form
 		return ({ result }) => {
-			if (result.type === 'success') {
-				toast.success(result.data?.message);
+			if (result.type === 'success' && result.data?.success) {
+				toast.success(result.data.message);
 				invalidateAll();
 			} else if (result.type === 'failure') {
 				toast.error(result.data?.message);
@@ -148,11 +149,29 @@
 							>
 						</button>
 					</div>
-					<div class="mt-4 text-sm text-main/60">
-						Created by <span class="font-bold">{link.user.username}</span> on {new Date(
-							link.createdAt
-						).toLocaleDateString()}
-						<a href={`/admin/tracked-links/${link.id}`} class="ml-4 font-bold text-accent underline">{link.visits.length} Clicks</a>
+					<div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-main/60">
+						<span>
+							Created by <span class="font-bold">{link.user.username}</span> on {new Date(
+								link.createdAt
+							).toLocaleDateString()}
+						</span>
+						<a href={`/admin/tracked-links/${link.id}`} class="font-bold text-accent underline"
+							>{link.visits.length} Clicks</a
+						>
+						<form
+							method="POST"
+							action="?/delete&id={link.id}"
+							use:enhance={handleDelete}
+							on:submit={(e) => {
+								if (!confirm('Are you sure you want to permanently delete this link?')) {
+									e.preventDefault();
+								}
+							}}
+						>
+							<button type="submit" class="font-bold text-red-500 transition hover:text-red-400">
+								Delete
+							</button>
+						</form>
 					</div>
 				</div>
 				<div class="text-center">
