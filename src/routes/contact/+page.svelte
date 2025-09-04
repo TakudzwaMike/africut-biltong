@@ -2,16 +2,21 @@
 	//import RegionalMap from '$lib/components/RegionalMap.svelte';
 
 	let { data, form } = $props();
-	const { solution } = data;
+	const { solution, product } = data; // Destructure both product and solution
 
 	// This state will hold the message content.
 	// It defaults to the form data if a submission failed, otherwise it's empty.
 	let message = $state(form?.data?.message ?? '');
 
 	// This effect runs when the component loads.
-	// If there's a solution and the form hasn't been submitted, it pre-fills the message.
+	// It pre-fills the message based on a product or solution query parameter.
 	$effect(() => {
-		if (solution && !form?.data?.message) {
+		if (form?.data?.message) {
+			// If the form failed, keep the user's typed message
+			message = form.data.message;
+		} else if (product) {
+			message = `I'm interested in discussing your "${product.name}" product.`;
+		} else if (solution) {
 			message = `I'm interested in discussing your "${solution.solutionName}" solution.`;
 		}
 	});
@@ -23,14 +28,16 @@
 			<h2 class="text-center text-3xl font-bold tracking-tight text-light sm:text-4xl">
 				{#if solution}
 					Discussing "{solution.solutionName}"
+				{:else if product}
+					Inquiring About "{product.name}"
 				{:else}
 					Ready to Build the Future?
 				{/if}
 			</h2>
 			<p class="mx-auto mt-4 max-w-2xl text-center text-lg text-light/70">
-				{#if solution}
-					Fill out the form below to get in touch with our team about this solution. We'll get back
-					to you as soon as possible.
+				{#if solution || product}
+					Fill out the form below to get in touch with our team. We'll get back to you as soon as
+					possible.
 				{:else}
 					Let's get in touch. Drop us a message below and we'll get back to you as soon as possible
 					to discuss your next project.

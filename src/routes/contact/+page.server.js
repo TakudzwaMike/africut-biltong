@@ -1,25 +1,36 @@
 import { db } from '$lib/server/db';
-import { lead as leadTable, solution as solutionTable, location } from '$lib/server/db/schema';
+import {
+	lead as leadTable,
+	solution as solutionTable,
+	product as productTable,
+	location
+} from '$lib/server/db/schema';
 import { fail } from '@sveltejs/kit';
 import { eq, desc } from 'drizzle-orm';
-import { sendNewLeadNotification } from '$lib/server/email';
 
 export async function load({ url }) {
 	const solutionSlug = url.searchParams.get('solution');
-	
+	const productSlug = url.searchParams.get('product');
+
 	const locations = await db.query.location.findMany({
 		orderBy: desc(location.countryName)
 	});
 
-	if (!solutionSlug) {
-		return { solution: null, locations };
+	let solution = null;
+	if (solutionSlug) {
+		solution = await db.query.solution.findFirst({
+			where: eq(solutionTable.slug, solutionSlug)
+		});
 	}
 
-	const solution = await db.query.solution.findFirst({
-		where: eq(solutionTable.slug, solutionSlug)
-	});
+	let product = null;
+	if (productSlug) {
+		product = await db.query.product.findFirst({
+			where: eq(productTable.slug, productSlug)
+		});
+	}
 
-	return { solution, locations };
+	return { solution, product, locations };
 }
 
 export const actions = {
