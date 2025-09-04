@@ -42,9 +42,9 @@ export const actions = {
 		const id = Number(params.id);
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { title, slug, contentJson, mediaId } = data;
+		const { title, slug, contentJson, mediaId, publishedAt } = data;
 		const categoryIds = formData.getAll('categoryIds').map(Number);
-		const isPublished = data.isPublished === 'on';
+		const publishIntent = data.isPublished === 'on';
 
 		if (!title || !slug) {
 			return fail(400, { data, message: 'Title and Slug are required.' });
@@ -57,20 +57,40 @@ export const actions = {
 			return fail(400, { data, message: 'Invalid content format.' });
 		}
 
-		try {
+try {
 			const currentPost = await db.query.blogPost.findFirst({
 				where: eq(blogPost.id, id),
-				columns: { isPublished: true }
+				columns: { isPublished: true, publishedAt: true }
 			});
 
-			const shouldSetPublishedDate = isPublished && !currentPost?.isPublished;
+			let finalIsPublished = false;
+			let finalPublishedAt = currentPost?.publishedAt || null; // Keep old date by default
+			const now = new Date();
+			const scheduledDate = publishedAt ? new Date(String(publishedAt)) : now;
+
+			if (publishIntent) {
+				if (scheduledDate <= now) {
+					// Publish immediately
+					finalIsPublished = true;
+					// Only update the publish date if it wasn't already published
+					finalPublishedAt = currentPost?.isPublished ? currentPost.publishedAt : scheduledDate;
+				} else {
+					// Schedule for the future
+					finalIsPublished = false;
+					finalPublishedAt = scheduledDate;
+				}
+			} else {
+				// If user unchecks "publish", it becomes a draft
+				finalIsPublished = false;
+				finalPublishedAt = null;
+			}
 
 			const dataToUpdate = {
 				title: String(title),
 				slug: String(slug),
 				contentJson: content,
-				isPublished,
-				publishedAt: shouldSetPublishedDate ? new Date() : null,
+				isPublished: finalIsPublished,
+				publishedAt: finalPublishedAt,
 				mediaId: mediaId ? Number(mediaId) : null
 			};
 

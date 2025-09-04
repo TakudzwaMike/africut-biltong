@@ -1,5 +1,5 @@
 <script>
-	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
+	import BlockEditor from '$lib/components/BlockEditor.svelte';
 	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
 
 	let { data, form } = $props();
@@ -9,6 +9,18 @@
 
 	// Create a reactive Set of the post's current category IDs
 	let postCategoryIds = $derived(new Set(postData.categories.map((c) => c.categoryId)));
+
+	// Helper to format a date for the datetime-local input
+	function formatDateTimeLocal(date) {
+		if (!date) return '';
+		const d = new Date(date);
+		if (isNaN(d.getTime())) return '';
+		// Pad single digits with a leading zero
+		const pad = (num) => num.toString().padStart(2, '0');
+		return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+			d.getHours()
+		)}:${pad(d.getMinutes())}`;
+	}
 </script>
 
 <div class="relative z-10">
@@ -54,14 +66,14 @@
 				<FeaturedImagePicker
 					mediaItems={data.mediaItems}
 					bind:selectedMediaId={postData.mediaId}
-					currentImageUrl={postData.featuredImage?.url}
+					currentImageUrl={postData.featuredImage?.thumbnailUrl || postData.featuredImage?.originalUrl}
 					currentImageAlt={postData.featuredImage?.altText}
 				/>
 			</div>
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Content</h3>
-				<RichTextEditor bind:content={contentJson} initialContent={postData.contentJson} />
+				<BlockEditor bind:content={contentJson} initialContent={postData.contentJson} />
 			</div>
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
@@ -92,21 +104,38 @@
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Publishing</h3>
-				<label class="relative inline-flex cursor-pointer items-center">
+				<div>
+					<label class="relative inline-flex cursor-pointer items-center">
+						<input
+							type="checkbox"
+							name="isPublished"
+							class="peer sr-only"
+							bind:checked={postData.isPublished}
+						/>
+						<div
+							class="h-7 w-12 rounded-full bg-main/20 after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-md after:transition-all after:duration-300 after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent/50"
+						></div>
+						<span class="ml-3 text-sm font-medium text-main/80">Publish this post</span>
+					</label>
+					<p class="mt-2 text-xs text-main/60">
+						If unchecked, the post will be saved as a draft regardless of the date.
+					</p>
+				</div>
+				<div>
+					<label for="publishedAt" class="mb-1 block font-medium text-main/80"
+						>Publish Date (Optional)</label
+					>
 					<input
-						type="checkbox"
-						name="isPublished"
-						class="peer sr-only"
-						bind:checked={postData.isPublished}
+						type="datetime-local"
+						id="publishedAt"
+						name="publishedAt"
+						value={formatDateTimeLocal(postData.publishedAt)}
+						class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 					/>
-					<div
-						class="h-7 w-12 rounded-full bg-main/20 after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-md after:transition-all after:duration-300 after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent/50"
-					></div>
-					<span class="ml-3 text-sm font-medium text-main/80">Publish this post</span>
-				</label>
-				<p class="text-xs text-main/60">
-					If unchecked, the post will be saved as a draft.
-				</p>
+					<p class="mt-1 text-xs text-main/60">
+						Leave blank to publish immediately. Select a future date to schedule the post.
+					</p>
+				</div>
 			</div>
 
 			{#if form?.message}

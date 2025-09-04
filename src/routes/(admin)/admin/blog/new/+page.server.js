@@ -18,9 +18,9 @@ export const actions = {
 	default: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
-		const { title, slug, contentJson, mediaId } = data;
+		const { title, slug, contentJson, mediaId, publishedAt } = data;
 		const categoryIds = formData.getAll('categoryIds').map(Number);
-		const isPublished = data.isPublished === 'on';
+		const publishIntent = data.isPublished === 'on';
 
 		if (!locals.user?.id) {
 			return fail(401, { data, message: 'You must be logged in to create a post.' });
@@ -38,13 +38,30 @@ export const actions = {
 		}
 
 		try {
+			let finalIsPublished = false;
+			let finalPublishedAt = null;
+			const now = new Date();
+			const scheduledDate = publishedAt ? new Date(String(publishedAt)) : now;
+
+			if (publishIntent) {
+				if (scheduledDate <= now) {
+					// Publish immediately
+					finalIsPublished = true;
+					finalPublishedAt = scheduledDate;
+				} else {
+					// Schedule for the future, save as draft for now
+					finalIsPublished = false;
+					finalPublishedAt = scheduledDate;
+				}
+			}
+
 			const valuesToInsert = {
 				authorId: locals.user.id,
 				title: String(title),
 				slug: String(slug),
 				contentJson: content,
-				isPublished,
-				publishedAt: isPublished ? new Date() : null,
+				isPublished: finalIsPublished,
+				publishedAt: finalPublishedAt,
 				mediaId: mediaId ? Number(mediaId) : null
 			};
 			const [newPost] = await db.insert(blogPost).values(valuesToInsert).returning();

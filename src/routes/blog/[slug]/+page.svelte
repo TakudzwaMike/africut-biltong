@@ -1,38 +1,21 @@
 <script>
+	import edjsHTML from 'editorjs-html';
+	import Image from '$lib/components/Image.svelte';
+
 	let { data } = $props();
 	const { post } = data;
 
+	const edjsParser = edjsHTML();
+
 	/**
-	 * Renders TipTap's JSON output to a basic HTML string.
-	 * NOTE: This is a simplified renderer. For a production app, you might use a more robust
-	 * library or extend this function to handle all desired node types (lists, blockquotes, etc.).
+	 * Renders Editor.js's JSON output to an HTML string.
 	 * @param {object | null | undefined} richText
 	 * @returns {string}
 	 */
 	function renderRichTextToHtml(richText) {
-		if (!richText?.content) return '';
-
-		const renderNode = (node) => {
-			let textContent = node.content?.map(renderNode).join('') || '';
-
-			switch (node.type) {
-				case 'paragraph':
-					return `<p>${textContent || '<br>'}</p>`;
-				case 'heading':
-					const level = node.attrs?.level || 1;
-					return `<h${level}>${textContent}</h${level}>`;
-				case 'bold':
-					return `<strong>${textContent}</strong>`;
-				case 'italic':
-					return `<em>${textContent}</em>`;
-				case 'text':
-					return node.text;
-				default:
-					return textContent;
-			}
-		};
-
-		return richText.content.map(renderNode).join('');
+		if (!richText?.blocks) return '';
+		const htmlParts = edjsParser.parse(richText);
+		return htmlParts.join('');
 	}
 </script>
 
