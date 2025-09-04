@@ -3,18 +3,36 @@
 	import { toast } from '$lib/toast-service';
 	import { invalidateAll } from '$app/navigation';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import { page } from '$app/stores';
 
 	let { data, form } = $props();
 
-	let isSubmitting = $state(false);
+	let isSubmittingCreate = $state(false);
+	let isSubmittingInvite = $state(false);
+	let generatedToken = $state(null);
 
 	$effect(() => {
-		// This handles the successful "create" action from the form below
-		if (form?.success && form.form?.action.includes('?/create')) {
-			toast.success(form.message);
-			invalidateAll();
-		} else if (form?.message && form.form?.action.includes('?/create')) {
-			toast.error(form.message);
+		if (!form) return;
+
+		// Handle create action
+		if (form.form?.action.includes('?/create')) {
+			if (form.success) {
+				toast.success(form.message);
+				invalidateAll();
+				document.querySelector('form[action="?/create"]')?.reset();
+			} else if (form.message) {
+				toast.error(form.message);
+			}
+		}
+
+		// Handle generateInvite action
+		if (form.form?.action.includes('?/generateInvite')) {
+			if (form.success) {
+				generatedToken = form.token;
+				toast.success('Invite link generated!');
+			} else if (form.message) {
+				toast.error(form.message);
+			}
 		}
 	});
 
@@ -23,11 +41,11 @@
 			event.preventDefault();
 		}
 		return ({ result }) => {
-			if (result.type === 'success') {
-				toast.success(result.data?.message);
+			if (result.type === 'success' && result.data?.status === 200) {
+				toast.success(result.data.message);
 				invalidateAll();
 			} else if (result.type === 'failure') {
-				toast.error(result.data?.message);
+				toast.error(result.data.message);
 			}
 		};
 	}
@@ -44,14 +62,8 @@
 			action="?/create"
 			class="rounded-xl border border-main/10 p-6"
 			use:enhance={() => {
-				isSubmitting = true;
-				return ({ result }) => {
-					isSubmitting = false;
-					if (result.type === 'success') {
-						const formEl = document.querySelector('form[action="?/create"]');
-						formEl?.reset();
-					}
-				};
+				isSubmittingCreate = true;
+				return () => (isSubmittingCreate = false);
 			}}
 		>
 			<h3 class="text-lg font-bold">Add New User</h3>
@@ -78,11 +90,50 @@
 				</div>
 			</div>
 			<div class="mt-6">
-				<SubmitButton type="submit" loading={isSubmitting} class="bg-accent px-6 py-2">
+				<SubmitButton type="submit" loading={isSubmittingCreate} class="bg-accent px-6 py-2">
 					Create User
 				</SubmitButton>
 			</div>
 		</form>
+	</div>
+
+	<!-- Invite Link Generator -->
+	<div class="mt-12">
+		<h3 class="text-lg font-bold">Invite New User</h3>
+		<p class="mt-1 text-sm text-main/70">
+			Generate a secure, one-time link to invite a new user to create an account.
+		</p>
+		<form
+			method="POST"
+			action="?/generateInvite"
+			use:enhance={() => {
+				isSubmittingInvite = true;
+				return ({ result }) => {
+					isSubmittingInvite = false;
+					if (result.type === 'success') {
+						generatedToken = result.data?.token;
+						toast.success('Invite link generated!');
+					} else if (result.type === 'failure') {
+						toast.error(result.data?.message);
+					}
+				};
+			}}
+			class="mt-4"
+		>
+			<SubmitButton loading={isSubmittingInvite} class="bg-accent px-6 py-2"
+				>Generate Invite Link</SubmitButton
+			>
+		</form>
+
+		{#if generatedToken}
+			{@const inviteUrl = `${$page.url.origin}/_/create-account/${generatedToken}`}
+			<div class="mt-4 max-w-lg rounded-md bg-accent/10 p-4">
+				<p class="font-medium text-main">Share this link with your new team member:</p>
+				<p class="mt-2 break-all font-mono text-sm text-accent">
+					<a href={inviteUrl} target="_blank" class="underline">{inviteUrl}</a>
+				</p>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Existing Users Table -->

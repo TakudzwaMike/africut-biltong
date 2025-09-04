@@ -1,10 +1,11 @@
 import { db } from '$lib/server/db';
-import { userTable } from '$lib/server/db/schema.js';
+import { userTable, userInvite } from '$lib/server/db/schema.js';
 import { fail, redirect } from '@sveltejs/kit';
 import { desc, eq, ne } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
 import { Argon2id } from 'oslo/password';
 import { generateId } from 'lucia';
+import crypto from 'crypto';
 
 export async function load({ locals }) {
 	// Load all users EXCEPT the currently logged-in one for safety
@@ -82,6 +83,32 @@ export const actions = {
 		} catch (error) {
 			console.error('Error deleting user:', error);
 			return fail(500, { message: 'Could not delete user.' });
+		}
+	},
+	
+	generateInvite: async ({ locals }) => {
+		try {
+			const token = crypto.randomBytes(32).toString('hex');
+			const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days from now
+
+			const [newInvite] = await db
+				.insert(userInvite)
+				.values({
+					token,
+					expiresAt,
+					createdBy: locals.user.id
+				})
+				.returning();
+
+			await log(locals.user?.id, 'generate_user_invite', {
+				targetId: newInvite.id,
+				data: { token: 'REDACTED' }
+			});
+			
+			return { success: true, token };
+		} catch (error) {
+			console.error('Error generating invite link:', error);
+			return fail(500, { message: 'Could not generate invite link.' });
 		}
 	}
 };

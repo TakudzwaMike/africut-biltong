@@ -174,6 +174,16 @@ export const pageContent = pgTable('page_content', {
 	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' })
 });
 
+
+// --- USER INVITES ---
+export const userInvite = pgTable('user_invite', {
+	id: serial('id').primaryKey(),
+	token: text('token').notNull().unique(),
+	expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
+	usedAt: timestamp('used_at', { withTimezone: true, mode: 'date' }),
+	createdBy: text('created_by').references(() => userTable.id, { onDelete: 'set null' })
+});
+
 // --- TEAM MEMBERS ---
 export const teamMember = pgTable('team_member', {
 	id: serial('id').primaryKey(),
@@ -353,5 +363,13 @@ export const linkVisitRelations = relations(linkVisit, ({ one }) => ({
 	link: one(trackedLink, {
 		fields: [linkVisit.linkId],
 		references: [trackedLink.id]
+	})
+
+}));
+
+export const userInviteRelations = relations(userInvite, ({ one }) => ({
+	creator: one(userTable, {
+		fields: [userInvite.createdBy],
+		references: [userTable.id]
 	})
 }));
