@@ -59,6 +59,9 @@
 		use:enhance={handleSubmit}
 		class="mt-8 max-w-2xl space-y-6"
 	>
+		<!-- This hidden input ensures the selected logo ID is always sent with the form -->
+		<input type="hidden" name="siteLogoMediaId" value={formState.siteLogoMediaId ?? ''} />
+
 		<div class="rounded-xl border border-main/10 p-6">
 			<h3 class="text-lg font-bold">Branding</h3>
 			<div class="mt-4 space-y-6">
