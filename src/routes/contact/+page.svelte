@@ -128,3 +128,37 @@
 	<RegionalMap locations={data.locations} />
 </div>
 -->
+
+{#if data.locations && data.locations.length > 0}
+	<section class="relative z-10">
+		<div class="mx-auto max-w-6xl px-8 pb-20 sm:pb-24">
+			<div class="text-center">
+				<h2 class="text-3xl font-bold tracking-tight text-main sm:text-4xl">Our Offices</h2>
+				<p class="mx-auto mt-4 max-w-2xl text-lg leading-8 text-main/70">
+					Find our teams across the region. We're ready to assist you.
+				</p>
+			</div>
+
+			<div
+				class="mt-16 grid grid-cols-1 gap-8 text-center sm:grid-cols-2 lg:grid-cols-3 sm:text-left"
+			>
+				{#each data.locations as location}
+					<div class="corner-border">
+						<h3 class="text-xl font-bold text-accent">
+							{location.countryName}
+						</h3>
+						<p class="mt-2 text-base text-main/80">{location.address}</p>
+						{#if location.phoneNumber}
+							<a
+								href="tel:{location.phoneNumber.replace(/\s/g, '')}"
+								class="mt-4 inline-block font-bold text-main/90 transition hover:text-accent"
+							>
+								{location.phoneNumber}
+							</a>
+						{/if}
+					</div>
+				{/each}
+			</div>
+		</div>
+	</section>
+{/if}
