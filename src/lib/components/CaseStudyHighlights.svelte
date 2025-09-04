@@ -5,6 +5,7 @@
 	export let caseStudies = [];
 </script>
 
+{#if caseStudies !== []}
 <section id="case-studies" class="relative z-10">
 	<div class="mx-auto max-w-6xl px-8 py-20 sm:py-24">
 		<div>
@@ -29,3 +30,4 @@
 		</div>
 	</div>
 </section>
+{/if}
