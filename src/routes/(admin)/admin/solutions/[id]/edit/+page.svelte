@@ -1,11 +1,11 @@
 <script>
 	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
-	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
+	import BlockEditor from '$lib/components/BlockEditor.svelte';
 
 	let { data, form } = $props();
 
+	// Use a single state object for the entire form, initialized from the loaded data.
 	let solutionData = $state(data.solution);
-	let longDescriptionJson = $state(data.solution.longDescription);
 </script>
 
 <div class="relative z-10">
@@ -17,8 +17,8 @@
 			>
 		</div>
 
-		<form method="POST" enctype="multipart/form-data" class="mt-12 space-y-8">
-			<input type="hidden" name="longDescription" value={JSON.stringify(longDescriptionJson)} />
+		<form method="POST" class="mt-12 space-y-8">
+			<input type="hidden" name="longDescription" value={JSON.stringify(solutionData.longDescription)} />
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Core Details</h3>
@@ -65,16 +65,16 @@
 				<FeaturedImagePicker
 					mediaItems={data.mediaItems}
 					bind:selectedMediaId={solutionData.mediaId}
-					currentImageUrl={solutionData.featuredImage?.url}
-					currentImageAlt={solutionData.featuredImage?.altText}
+					currentImageUrl={data.solution.featuredImage?.thumbnailUrl || data.solution.featuredImage?.originalUrl}
+					currentImageAlt={data.solution.featuredImage?.altText}
 				/>
 			</div>
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Long Description (Content)</h3>
-				<RichTextEditor
-					bind:content={longDescriptionJson}
-					initialContent={solutionData.longDescription}
+				<BlockEditor
+					bind:content={solutionData.longDescription}
+					initialContent={data.solution.longDescription}
 				/>
 			</div>
 
