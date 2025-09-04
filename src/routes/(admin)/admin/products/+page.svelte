@@ -4,7 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
-	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
+	import BlockEditor from '$lib/components/BlockEditor.svelte';
 	import { slugify } from '$lib/utils.js';
 
 	let { data, form } = $props();
@@ -48,9 +48,9 @@
 	}
 
 	function startEditing(product) {
-		editingProduct = { ...product };
-		contentJson = product.longDescription;
-		manualSlug = true; // Existing products should have manual slug control
+		editingProduct = JSON.parse(JSON.stringify(product));
+		contentJson = editingProduct.longDescription;
+		manualSlug = true;
 	}
 
 	function startCreating() {
@@ -65,7 +65,7 @@
 			ctaLink: ''
 		};
 		contentJson = null;
-		manualSlug = false; // New products get automatic slugs
+		manualSlug = false;
 	}
 
 	function cancelEditing() {
@@ -168,7 +168,7 @@
 				<!-- Long Description -->
 				<div class="space-y-4 rounded-xl border border-main/10 p-6">
 					<h3 class="text-lg font-bold">Long Description (Content)</h3>
-					<RichTextEditor
+					<BlockEditor
 						bind:content={contentJson}
 						initialContent={editingProduct.longDescription}
 					/>

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+
+Sitemap: https://vision-ai.tech/sitemap.xml

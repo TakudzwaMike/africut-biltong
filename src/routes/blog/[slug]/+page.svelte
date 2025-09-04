@@ -1,6 +1,7 @@
 <script>
 	import edjsHTML from 'editorjs-html';
 	import Image from '$lib/components/Image.svelte';
+	import Seo from '$lib/components/Seo.svelte';
 
 	let { data } = $props();
 	const { post } = data;
@@ -8,21 +9,26 @@
 	const edjsParser = edjsHTML();
 
 	/**
-	 * Renders Editor.js's JSON output to an HTML string.
+	 * Extracts the first paragraph of text from Editor.js JSON to use as a meta description.
 	 * @param {object | null | undefined} richText
 	 * @returns {string}
 	 */
-	function renderRichTextToHtml(richText) {
+	function getExcerpt(richText) {
 		if (!richText?.blocks) return '';
-		const htmlParts = edjsParser.parse(richText);
-		return htmlParts.join('');
+		const firstParagraph = richText.blocks.find((block) => block.type === 'paragraph');
+		return firstParagraph?.data?.text?.substring(0, 155) || ''; // Truncate to standard meta description length
 	}
+
+	const seoDescription = getExcerpt(post.contentJson);
+	const seoImageUrl = post.featuredImage?.displayUrl || post.featuredImage?.originalUrl;
 </script>
 
-<svelte:head>
-	<title>{post.title} | Vision AI Tech Blog</title>
-	<!--todo: add seo optimisation function -->
-</svelte:head>
+<Seo
+	title={`${post.title} | Vision AI Tech Blog`}
+	description={seoDescription}
+	imageUrl={seoImageUrl}
+	ogType="article"
+/>
 
 <div class="relative z-10">
 	<div class="mx-auto max-w-4xl px-8 py-20 sm:py-24">

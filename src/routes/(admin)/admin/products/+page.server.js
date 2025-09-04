@@ -38,7 +38,13 @@ export const actions = {
 
 		let longDescription;
 		try {
-			longDescription = longDescriptionJson ? JSON.parse(String(longDescriptionJson)) : null;
+			const parsedJson = longDescriptionJson ? JSON.parse(String(longDescriptionJson)) : null;
+			// Editor.js returns an object with a 'blocks' array. We save the whole object.
+			if (parsedJson && Array.isArray(parsedJson.blocks)) {
+				longDescription = parsedJson;
+			} else {
+				longDescription = null;
+			}
 		} catch (e) {
 			return fail(400, { message: 'Invalid rich text format.' });
 		}

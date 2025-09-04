@@ -1,60 +1,42 @@
 <script>
 	import Image from '$lib/components/Image.svelte';
 	import JsonLD from '$lib/components/JsonLD.svelte';
+	import Seo from '$lib/components/Seo.svelte';
+	import edjsHTML from 'editorjs-html';
+
 	let { data } = $props();
 	const { product } = data;
+
+	const edjsParser = edjsHTML();
 
 	const productSchema = {
 		'@context': 'https://schema.org',
 		'@type': 'Product',
 		name: product.name,
 		description: product.shortDescription,
-		image: product.featuredImage?.url,
-		// If you had a brand and offers (price), you would add them here.
-		// "brand": { "@type": "Brand", "name": "Vision AI Tech" },
-		// "offers": {
-		//   "@type": "Offer",
-		//   "priceCurrency": "USD",
-		//   "price": "Contact for price"
-		// }
+		image: product.featuredImage?.displayUrl || product.featuredImage?.originalUrl
 	};
 
 	/**
-	 * Renders TipTap's JSON output to a basic HTML string.
+	 * Renders Editor.js's JSON output to an HTML string.
+	 * @param {object | null | undefined} richText
+	 * @returns {string}
 	 */
 	function renderRichTextToHtml(richText) {
-		if (!richText?.content) return '';
-
-		const renderNode = (node) => {
-			let textContent = node.content?.map(renderNode).join('') || '';
-
-			switch (node.type) {
-				case 'paragraph':
-					return `<p>${textContent || '<br>'}</p>`;
-				case 'heading':
-					const level = node.attrs?.level || 1;
-					return `<h${level}>${textContent}</h${level}>`;
-				case 'bold':
-					return `<strong>${textContent}</strong>`;
-				case 'italic':
-					return `<em>${textContent}</em>`;
-				case 'text':
-					return node.text;
-				default:
-					return textContent;
-			}
-		};
-
-		return richText.content.map(renderNode).join('');
+		if (!richText?.blocks) return '';
+		const htmlParts = edjsParser.parse(richText);
+		return htmlParts.join('');
 	}
 </script>
 
 <JsonLD data={productSchema} />
 
-<svelte:head>
-	<title>{product.name} | Vision AI Tech Products</title>
-	<meta name="description" content={product.shortDescription} />
-</svelte:head>
+<Seo
+	title={`${product.name} | Vision AI Tech Products`}
+	description={product.shortDescription}
+	imageUrl={product.featuredImage?.displayUrl || product.featuredImage?.originalUrl}
+	ogType="product"
+/>
 
 <div class="relative z-10">
 	<div class="mx-auto max-w-4xl px-8 py-20 sm:py-24">
