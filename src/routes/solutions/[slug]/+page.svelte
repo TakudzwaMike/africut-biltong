@@ -1,18 +1,16 @@
 <script>
 	import Image from '$lib/components/Image.svelte';
+	import edjsHTML from 'editorjs-html';
+
 	let { data } = $props();
 	const { solution } = data;
 
-	function renderRichText(richTextArray) {
-		if (!Array.isArray(richTextArray)) return '';
-		return richTextArray
-			.map((element) => {
-				if (element.type === 'paragraph') {
-					return `<p>${element.children.map((child) => child.text).join('')}</p>`;
-				}
-				return '';
-			})
-			.join('');
+	const edjsParser = edjsHTML();
+
+	function renderRichText(richText) {
+		if (!richText?.blocks) return '';
+		const htmlParts = edjsParser.parse(richText);
+		return htmlParts.join('');
 	}
 </script>
 
