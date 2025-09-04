@@ -189,8 +189,20 @@ export const document = pgTable('document', {
 	title: varchar('title', { length: 255 }).notNull(),
 	description: text('description'),
 	fileUrl: text('file_url').notNull(),
-	thumbnailMediaId: integer('thumbnail_media_id').references(() => media.id, { onDelete: 'set null' }),
-	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
+	isGated: boolean('is_gated').default(false).notNull(),
+	thumbnailMediaId: integer('thumbnail_media_id').references(() => media.id, {
+		onDelete: 'set null'
+	}),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+export const gatedDocumentLead = pgTable('gated_document_lead', {
+	id: serial('id').primaryKey(),
+	documentId: integer('document_id')
+		.notNull()
+		.references(() => document.id, { onDelete: 'cascade' }),
+	email: varchar('email', { length: 255 }).notNull(),
+	submittedAt: timestamp('submitted_at').defaultNow().notNull()
 });
 
 // --- QR CODE ANALYTICS ---

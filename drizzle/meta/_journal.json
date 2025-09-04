@@ -155,6 +155,13 @@
       "when": 1756892449274,
       "tag": "0021_familiar_weapon_omega",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1756981702376,
+      "tag": "0022_lame_iron_man",
+      "breakpoints": true
     }
   ]
 }
