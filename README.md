@@ -23,8 +23,8 @@ A modern, performant corporate website and headless CMS built with SvelteKit, Dr
 -   **Fully Responsive Design:** Mobile-first components and navigation
 -   **Dynamic Content:** All major sections (Hero, Solutions, Products, About Us, Blog, etc.) are managed through the CMS.
 -   **Dynamic SEO:** Includes JSON-LD structured data for `Organization` and `Product` schemas.
--   **Blog with Categories:** A complete blogging system with featured images and category filtering.
--   **Resources Page:** Centralized location for case studies and downloadable brochures.
+-   **Blog with Categories:** A complete blogging system with featured images and category filtering
+-   **Resources Page:** Centralized location for case studies and downloadable brochures
 -   **Geo-aware Footer:** Highlights the user's nearest office location based on their IP (on Vercel)
 -   **Quick Chat:** A floating WhatsApp button for instant user engagement.
 
