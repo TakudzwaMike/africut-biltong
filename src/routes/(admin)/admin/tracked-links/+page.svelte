@@ -4,13 +4,14 @@
 	import { invalidateAll } from '$app/navigation';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import QRCode from 'qrcode';
+	import Icon from '@iconify/svelte';
 
 	let { data, form } = $props();
 
 	let isSubmitting = $state(false);
+	let showingQrCodeForLink = $state(null);
 
 	$effect(() => {
-		// This handles the successful "create" action from the form below
 		if (form?.success && form.form?.action.includes('?/create')) {
 			toast.success(form.message);
 			invalidateAll();
@@ -20,7 +21,6 @@
 	});
 
 	function handleDelete() {
-		// This is the callback for the use:enhance directive on the delete form
 		return ({ result }) => {
 			if (result.type === 'success' && result.data?.success) {
 				toast.success(result.data.message);
@@ -69,7 +69,8 @@
 				return ({ result }) => {
 					isSubmitting = false;
 					if (result.type === 'success') {
-						document.querySelector('form[action="?/create"]')?.reset();
+						const formEl = document.querySelector('form[action="?/create"]');
+						formEl?.reset();
 					}
 				};
 			}}
@@ -111,75 +112,143 @@
 		</form>
 	</div>
 
-	<!-- Existing Links -->
-	<div class="mt-12 space-y-6">
-		{#each data.links as link (link.id)}
-			{@const fullUrl = `https://vision-ai.tech/r/${link.shortCode}`}
-			<div class="grid gap-6 rounded-xl border border-main/10 p-6 md:grid-cols-[1fr,auto]">
-				<div>
-					<p class="text-sm text-main/60">Description</p>
-					<h3 class="font-bold">{link.description}</h3>
-					<p class="mt-4 text-sm text-main/60">Destination</p>
-					<a
-						href={link.destinationUrl}
-						target="_blank"
-						class="truncate font-mono text-sm text-accent underline"
-						>{link.destinationUrl}</a
-					>
-					<p class="mt-4 text-sm text-main/60">Tracked Link</p>
-					<div class="flex items-center gap-2">
-						<a href={fullUrl} target="_blank" class="font-mono text-sm text-accent underline"
-							>{fullUrl}</a
-						>
-						<button title="Copy link" onclick={() => copyToClipboard(fullUrl)}>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								class="text-main/60 hover:text-main"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path
-									d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
-								/></svg
+	<!-- Existing Links Table -->
+	<div class="mt-12 overflow-x-auto">
+		<table class="w-full min-w-max text-left">
+			<thead class="border-b border-main/10">
+				<tr>
+					<th class="p-4">Description</th>
+					<th class="p-4">Tracked Link</th>
+					<th class="p-4">Destination</th>
+					<th class="p-4">Clicks</th>
+					<th class="p-4 text-right">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				{#each data.links as link (link.id)}
+					{@const fullUrl = `https://vision-ai.tech/r/${link.shortCode}`}
+					<tr class="border-b border-main/10">
+						<td class="p-4 align-top">
+							<p class="font-bold">{link.description}</p>
+							<p class="text-xs text-main/60">
+								By {link.user.username} on {new Date(link.createdAt).toLocaleDateString()}
+							</p>
+						</td>
+						<td class="p-4 align-top">
+							<div class="flex items-center gap-2">
+								<a
+									href={fullUrl}
+									target="_blank"
+									class="font-mono text-sm text-accent underline"
+									>{fullUrl}</a
+								>
+								<button
+									type="button"
+									title="Copy link"
+									onclick={() => copyToClipboard(fullUrl)}
+									class="text-main/60 transition hover:text-main"
+								>
+									<Icon icon="mdi:content-copy" />
+								</button>
+							</div>
+						</td>
+						<td class="p-4 align-top">
+							<a
+								href={link.destinationUrl}
+								target="_blank"
+								class="block max-w-xs truncate font-mono text-sm text-main/70 underline"
+								title={link.destinationUrl}
 							>
-						</button>
-					</div>
-					<div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-main/60">
-						<span>
-							Created by <span class="font-bold">{link.user.username}</span> on {new Date(
-								link.createdAt
-							).toLocaleDateString()}
-						</span>
-						<a href={`/admin/tracked-links/${link.id}`} class="font-bold text-accent underline"
-							>{link.visits.length} Clicks</a
-						>
-						<form
-							method="POST"
-							action="?/delete&id={link.id}"
-							use:enhance={handleDelete}
-							onsubmit={(e) => {
-								if (!confirm('Are you sure you want to permanently delete this link?')) {
-									e.preventDefault();
-								}
-							}}
-						>
-							<button type="submit" class="font-bold text-red-500 transition hover:text-red-400">
-								Delete
-							</button>
-						</form>
-					</div>
-				</div>
-				<div class="text-center">
-					{#await generateQrCode(fullUrl) then qrCodeDataUrl}
-						<img src={qrCodeDataUrl} alt="QR Code" class="mx-auto rounded-lg" />
-					{/await}
-				</div>
+								{link.destinationUrl}
+							</a>
+						</td>
+						<td class="p-4 align-top">
+							<a
+								href={`/admin/tracked-links/${link.id}`}
+								class="font-bold text-accent underline"
+							>
+								{link.visits.length}
+							</a>
+						</td>
+						<td class="p-4 align-top">
+							<div class="flex items-center justify-end gap-2">
+								<button
+									type="button"
+									onclick={() => (showingQrCodeForLink = link)}
+									class="rounded-md bg-main/80 p-1.5 text-light"
+									aria-label="Show QR Code"
+								>
+									<Icon icon="mdi:qrcode" width="16" height="16" />
+								</button>
+								<form
+									method="POST"
+									action="?/delete&id={link.id}"
+									use:enhance={handleDelete}
+									on:submit={(e) => {
+										if (!confirm('Are you sure you want to permanently delete this link?')) {
+											e.preventDefault();
+										}
+									}}
+								>
+									<button
+										type="submit"
+										class="rounded-md bg-red-500 p-1.5 text-white"
+										aria-label="Delete link"
+									>
+										<Icon icon="mdi:trash-can-outline" width="16" height="16" />
+									</button>
+								</form>
+							</div>
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+		{#if (data.links?.length ?? 0) === 0}
+			<div class="mt-8 rounded-xl border border-dashed border-main/20 p-12 text-center">
+				<p class="text-main/70">No tracked links found. Create your first one!</p>
 			</div>
-		{/each}
+		{/if}
 	</div>
 </div>
+
+<!-- QR Code Modal -->
+{#if showingQrCodeForLink}
+	{@const fullUrl = `https://vision-ai.tech/r/${showingQrCodeForLink.shortCode}`}
+	<div
+		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+		role="dialog"
+		aria-modal="true"
+		onclick={() => (showingQrCodeForLink = null)}
+	>
+		<div
+			class="w-full max-w-sm rounded-xl bg-light p-6 text-center shadow-2xl"
+			onclick={(e) => e.stopPropagation()}
+		>
+			<h3 class="text-lg font-bold">{showingQrCodeForLink.description}</h3>
+			{#await generateQrCode(fullUrl) then qrCodeDataUrl}
+				<img src={qrCodeDataUrl} alt="QR Code" class="mx-auto my-4 rounded-lg" />
+			{/await}
+			<div
+				class="flex items-center justify-center gap-2 rounded-md bg-main/5 p-2 font-mono text-sm"
+			>
+				<span class="truncate">{fullUrl}</span>
+				<button
+					type="button"
+					title="Copy link"
+					onclick={() => copyToClipboard(fullUrl)}
+					class="flex-shrink-0 text-main/60 transition hover:text-main"
+				>
+					<Icon icon="mdi:content-copy" />
+				</button>
+			</div>
+			<button
+				type="button"
+				class="mt-6 rounded-md bg-main px-6 py-2 font-bold text-light"
+				onclick={() => (showingQrCodeForLink = null)}
+			>
+				Close
+			</button>
+		</div>
+	</div>
+{/if}
