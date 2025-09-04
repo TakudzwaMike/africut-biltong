@@ -107,7 +107,7 @@ npm run dev
 This project is configured for deployment on Vercel
 Push your code to a GitHub repository.
 Create a new project on Vercel and link it to your repository.
-Add all the environment variables from your .env file to the Environment Variables section in your Vercel project settings.
+Add all the environment variables from your .env file to the Environment Variables section in your Vercel project settings
 Deploy! 
 Migrations will be run automatically by the run-migrations.yml GitHub Action upon pushing changes to the drizzle/ folder
   
