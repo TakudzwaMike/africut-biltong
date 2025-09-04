@@ -89,7 +89,7 @@
 						<a
 							href="mailto:contact@vision-ai.tech"
 							class="text-main/80 transition hover:text-accent hover:drop-shadow-accent-glow"
-							>contact@vision-ai.tech</a
+							>hello@vision-ai.tech</a
 						>
 					</li>
 					{#if locations?.length > 0}
@@ -99,7 +99,7 @@
 									? 'text-accent font-bold'
 									: 'text-main/80'}"
 							>
-								{loc.address}
+								{loc.address}, {loc.countryName}
 								{#if loc.phoneNumber}
 									<br />
 									<a href="tel:{loc.phoneNumber.replace(/\s/g, '')}" class="hover:underline"
