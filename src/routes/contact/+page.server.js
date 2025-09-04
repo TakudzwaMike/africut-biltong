@@ -2,6 +2,7 @@ import { db } from '$lib/server/db';
 import { lead as leadTable, solution as solutionTable, location } from '$lib/server/db/schema';
 import { fail } from '@sveltejs/kit';
 import { eq, desc } from 'drizzle-orm';
+import { sendNewLeadNotification } from '$lib/server/email';
 
 export async function load({ url }) {
 	const solutionSlug = url.searchParams.get('solution');
@@ -33,20 +34,28 @@ export const actions = {
 		}
 
 		try {
-			await db.insert(leadTable).values({
+			const valuesToInsert = {
 				firstName: String(firstName),
 				lastName: String(lastName),
 				email: String(email),
 				message: String(message),
 				solutionId: solutionId ? Number(solutionId) : null
-			});
+			};
+
+			// First, save the lead to the database
+			await db.insert(leadTable).values(valuesToInsert);
+
+			// After successfully saving, send the email notification.
+			// We don't await this so the user gets an immediate response.
+			sendNewLeadNotification(valuesToInsert);
 
 			return {
 				success: true,
 				message: "Thank you! We've received your message and will be in touch shortly."
 			};
 		} catch (error) {
-			console.error('Database error:', error);
+			console.error('Database error on lead submission:', error);
+			// For robust error handling, you would log this error to a service like Sentry or Logtail
 			return fail(500, { data, message: 'Could not submit your message due to a server error.' });
 		}
 	}
