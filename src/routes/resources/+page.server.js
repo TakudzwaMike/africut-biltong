@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { document as docTable } from '$lib/server/db/schema.js';
+import { document as docTable, caseStudy as caseStudyTable } from '$lib/server/db/schema.js';
 import { desc } from 'drizzle-orm';
 
 export async function load() {
@@ -11,7 +11,7 @@ export async function load() {
 	});
 
 	const caseStudies = await db.query.caseStudy.findMany({
-		orderBy: desc(db.query.caseStudy.findMany.table.id),
+		orderBy: desc(caseStudyTable.id),
 		with: {
 			client: true,
 			results: true
