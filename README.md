@@ -97,7 +97,7 @@ npm run db:seed
   
 ## Run the Development Server
   You're all set! 
-  Start the SvelteKit development server.
+  Start the SvelteKit development server
   ```bash
 npm run dev
 ```
