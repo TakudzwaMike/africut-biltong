@@ -17,6 +17,7 @@ A modern, performant corporate website and headless CMS built with SvelteKit, Dr
 ---
 
 ## 🚀 Core Features
+### Store
 
 ### Public-Facing Website
 
