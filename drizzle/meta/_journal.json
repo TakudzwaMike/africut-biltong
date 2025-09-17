@@ -169,6 +169,20 @@
       "when": 1756989091117,
       "tag": "0023_slow_titania",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1758003392986,
+      "tag": "0024_orange_zzzax",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1758083503713,
+      "tag": "0025_stormy_enchantress",
+      "breakpoints": true
     }
   ]
 }
