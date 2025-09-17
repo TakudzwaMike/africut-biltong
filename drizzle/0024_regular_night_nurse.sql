@@ -19,10 +19,17 @@ CREATE TABLE "order_item" (
 	"price_at_purchase" integer NOT NULL
 );
 --> statement-breakpoint
-DROP TABLE "document" CASCADE;--> statement-breakpoint
-DROP TABLE "gated_document_lead" CASCADE;--> statement-breakpoint
+CREATE TABLE "product_image" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"product_id" integer NOT NULL,
+	"media_id" integer NOT NULL,
+	"display_order" integer DEFAULT 0 NOT NULL
+);
+--> statement-breakpoint
 ALTER TABLE "product" ADD COLUMN "type" "product_type" DEFAULT 'physical' NOT NULL;--> statement-breakpoint
 ALTER TABLE "product" ADD COLUMN "prices" jsonb;--> statement-breakpoint
 ALTER TABLE "product" ADD COLUMN "stock_quantity" integer;--> statement-breakpoint
 ALTER TABLE "order_item" ADD CONSTRAINT "order_item_order_id_order_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."order"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "order_item" ADD CONSTRAINT "order_item_product_id_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."product"("id") ON DELETE set null ON UPDATE no action;
+ALTER TABLE "order_item" ADD CONSTRAINT "order_item_product_id_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."product"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "product_image" ADD CONSTRAINT "product_image_product_id_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."product"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "product_image" ADD CONSTRAINT "product_image_media_id_media_id_fk" FOREIGN KEY ("media_id") REFERENCES "public"."media"("id") ON DELETE cascade ON UPDATE no action;
