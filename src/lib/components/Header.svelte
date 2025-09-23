@@ -38,11 +38,13 @@
 
 		<!-- Desktop Menu -->
 		<ul class="hidden items-center gap-6 md:flex">
+		<!--
 			<li>
 				<a href="/store" class="font-medium transition hover:text-accent hover:drop-shadow-accent-glow"
 					>Store</a
 				>
 			</li>
+			-->
 			<li>
 				<a
 					href="/solutions"
@@ -158,9 +160,11 @@
 		class="fixed inset-0 z-[55] flex flex-col items-center justify-center bg-light/90 pt-20 text-center backdrop-blur-lg"
 	>
 		<ul class="flex flex-col gap-8">
+		<!--
 			<li>
 				<a href="/store" class="text-2xl font-bold text-main">Store</a>
 			</li>
+			-->
 			<li>
 				<a href="/solutions" class="text-2xl font-bold text-main">Solutions</a>
 			</li>
