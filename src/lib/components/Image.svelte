@@ -27,7 +27,7 @@
 			style:object-fit={fit}
 			class="absolute inset-0 h-full w-full opacity-0 transition-opacity duration-500"
 			class:opacity-100={loaded}
-			on:load={() => (loaded = true)}
+			onload={() => (loaded = true)}
 		/>
 	{/if}
 </div>
