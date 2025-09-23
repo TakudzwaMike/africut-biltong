@@ -1,23 +1,16 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 
 	/**
-	 * A one-way prop to control the modal's visibility.
+	 * A two-way bindable prop to control the modal's visibility.
 	 * @type {boolean}
 	 */
-	let { show = false } = $props();
-
-	const dispatch = createEventDispatcher();
-
-	function closeModal() {
-		dispatch('close');
-	}
+	let { show = $bindable() } = $props();
 
 	function handleKeydown(event) {
 		if (event.key === 'Escape') {
-			closeModal();
+			show = false;
 		}
 	}
 </script>
@@ -28,10 +21,10 @@
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<div
 		transition:fade={{ duration: 150 }}
-		on:click={closeModal}
+		on:click={() => (show = false)}
 		role="dialog"
 		aria-modal="true"
-		class="fixed inset-0 z-50 flex items-center justify-center bg-main/80 backdrop-blur-sm"
+		class="fixed inset-0 z-[999] flex items-center justify-center bg-main/80 backdrop-blur-sm"
 	>
 		<!-- svelte-ignore a11y-click-events-have-key-events -->
 		<div
@@ -40,12 +33,13 @@
 			class="corner-border relative w-full max-w-2xl"
 		>
 			<button
-				on:click={closeModal}
+				type="button"
+				on:click={() => (show = false)}
 				aria-label="Close modal"
-				class="absolute right-4 top-4 text-main/50 transition hover:text-main"
+				class="absolute right-4 top-4 z-10 text-main/50 transition hover:text-main"
 			>
 				<svg
-					xmlns="http://www.w3.org/2000/svg"
+					xmlns="http://www.w.org/2000/svg"
 					width="24"
 					height="24"
 					viewBox="0 0 24 24"

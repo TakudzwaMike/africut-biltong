@@ -5,8 +5,9 @@
 	let isMenuOpen = $state(false);
 
 	const navItems = [
+		{ href: '/admin/orders', label: 'Orders' },
 		{ href: '/admin/page-content', label: 'Page Content' },
-		{ href: '/admin/products', label: 'Products' },
+		{ href: '/admin/products', label: 'Store Products' },
 		{ href: '/admin/solutions', label: 'Solutions' },
 		{ href: '/admin/documents', label: 'Documents' },
 		{ href: '/admin/clients', label: 'Clients' },

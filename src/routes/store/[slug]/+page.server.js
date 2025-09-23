@@ -8,9 +8,15 @@ export async function load({ params }) {
 
 	const product = await db.query.product.findFirst({
 		where: eq(productTable.slug, slug),
-		with: {
-			featuredImage: true
-		}
+			with: {
+				featuredImage: true,
+				galleryImages: {
+					with: {
+						media: true
+					},
+					orderBy: (images, { asc }) => [asc(images.displayOrder)]
+				}
+			}
 	});
 
 	if (!product) {

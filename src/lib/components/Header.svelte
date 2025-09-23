@@ -1,16 +1,13 @@
 <script>
+	import { page } from '$app/stores';
 	import { afterNavigate } from '$app/navigation';
+	import { cart } from '$lib/cart';
 
-	/** @type {import('../../routes/$types').PageData} */
-	let { data } = $props();
+	let data = $props();
 
 	let isMenuOpen = $state(false);
-
-	// Use $derived for reactivity in Svelte 5.
-	// It will automatically re-calculate when `data.settings` or `data.mediaItems` changes.
-	let logo = $derived(
-		data.mediaItems?.find((m) => m.id == data.settings?.siteLogoMediaId)
-	);
+	const itemCount = $derived($cart.reduce((total, item) => total + item.quantity, 0));
+	const showCart = $derived(itemCount > 0 || $page.url.pathname.startsWith('/store'));
 
 	function toggleMenu() {
 		isMenuOpen = !isMenuOpen;
@@ -28,8 +25,12 @@
 <header class="sticky top-0 z-50 border-b border-main/10 bg-light/80 px-8 backdrop-blur-md">
 	<nav class="mx-auto flex max-w-6xl items-center justify-between py-4">
 		<a href="/" class="z-[60] text-xl font-bold">
-			{#if logo}
-				<img src={logo.displayUrl || logo.originalUrl} alt={logo.altText} class="h-8 object-contain" />
+			{#if data.settings?.logo}
+				<img
+					src={data.settings.logo.url}
+					alt={data.settings.logo.altText}
+					class="h-8 object-contain"
+				/>
 			{:else}
 				{data.settings?.siteName || 'Vision AI Tech'}
 			{/if}
@@ -38,10 +39,8 @@
 		<!-- Desktop Menu -->
 		<ul class="hidden items-center gap-6 md:flex">
 			<li>
-				<a
-					href="/products"
-					class="font-medium transition hover:text-accent hover:drop-shadow-accent-glow"
-					>Products</a
+				<a href="/store" class="font-medium transition hover:text-accent hover:drop-shadow-accent-glow"
+					>Store</a
 				>
 			</li>
 			<li>
@@ -66,9 +65,7 @@
 				>
 			</li>
 			<li>
-				<a
-					href="/about"
-					class="font-medium transition hover:text-accent hover:drop-shadow-accent-glow"
+				<a href="/about" class="font-medium transition hover:text-accent hover:drop-shadow-accent-glow"
 					>About Us</a
 				>
 			</li>
@@ -95,6 +92,34 @@
 						class="rounded-md bg-accent px-4 py-2 font-bold text-main shadow-sm transition hover:-translate-y-0.5"
 						>Request a Demo</a
 					>
+				</li>
+			{/if}
+			{#if showCart}
+				<li>
+					<a href="/cart" class="relative block p-2">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="24"
+							height="24"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="text-main/80 transition hover:text-main"
+							><circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" /><path
+								d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
+							/></svg
+						>
+						{#if itemCount > 0}
+							<span
+								class="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-main"
+							>
+								{itemCount}
+							</span>
+						{/if}
+					</a>
 				</li>
 			{/if}
 		</ul>
@@ -134,7 +159,7 @@
 	>
 		<ul class="flex flex-col gap-8">
 			<li>
-				<a href="/products" class="text-2xl font-bold text-main">Products</a>
+				<a href="/store" class="text-2xl font-bold text-main">Store</a>
 			</li>
 			<li>
 				<a href="/solutions" class="text-2xl font-bold text-main">Solutions</a>

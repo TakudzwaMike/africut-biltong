@@ -19,7 +19,7 @@
 
 		editor = new EditorJS({
 			holder: holder,
-			placeholder: 'Let’s write an awesome story!',
+			placeholder: 'Start Writing...',
 			tools: {
 				paragraph: {
 					class: Paragraph,

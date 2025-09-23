@@ -169,6 +169,13 @@
       "when": 1756989091117,
       "tag": "0023_slow_titania",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1758093093393,
+      "tag": "0024_regular_night_nurse",
+      "breakpoints": true
     }
   ]
 }

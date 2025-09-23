@@ -8,6 +8,7 @@ export const testimonialStatusEnum = pgEnum('testimonial_status', [
 	'published',
 	'rejected'
 ]);
+export const productTypeEnum = pgEnum('product_type', ['physical', 'service', 'digital']);
 
 // --- AUTH (compatible with Lucia-auth) ---
 export const userTable = pgTable('user', {
@@ -142,7 +143,7 @@ export const location = pgTable('location', {
 	longitude: varchar('longitude', { length: 255 })
 });
 
-// --- PRODUCTS ---
+// --- STORE / PRODUCTS ---
 export const product = pgTable('product', {
 	id: serial('id').primaryKey(),
 	slug: varchar('slug', { length: 255 }).notNull().unique(),
@@ -151,7 +152,37 @@ export const product = pgTable('product', {
 	shortDescription: text('short_description'),
 	longDescription: jsonb('long_description'), // For rich text content
 	ctaText: varchar('cta_text', { length: 255 }),
-	ctaLink: varchar('cta_link', { length: 255 })
+	ctaLink: varchar('cta_link', { length: 255 }),
+	// E-commerce fields
+	type: productTypeEnum('type').notNull().default('physical'),
+	prices: jsonb('prices'), // e.g., { "USD": 500, "ZAR": 9500 } in cents
+	stockQuantity: integer('stock_quantity')
+});
+
+export const productImage = pgTable('product_image', {
+	id: serial('id').primaryKey(),
+	productId: integer('product_id').notNull().references(() => product.id, { onDelete: 'cascade' }),
+	mediaId: integer('media_id').notNull().references(() => media.id, { onDelete: 'cascade' }),
+	displayOrder: integer('display_order').notNull().default(0)
+});
+
+export const order = pgTable('order', {
+	id: serial('id').primaryKey(),
+	customerName: varchar('customer_name', { length: 255 }).notNull(),
+	customerEmail: varchar('customer_email', { length: 255 }).notNull(),
+	totalAmount: integer('total_amount').notNull(), // In cents
+	currency: varchar('currency', { length: 3 }).notNull(), // e.g., USD, ZAR
+	status: varchar('status', { length: 50 }).notNull().default('pending'), // e.g., pending, paid, shipped
+	stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }).unique(),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
+});
+
+export const orderItem = pgTable('order_item', {
+	id: serial('id').primaryKey(),
+	orderId: integer('order_id').notNull().references(() => order.id, { onDelete: 'cascade' }),
+	productId: integer('product_id').references(() => product.id, { onDelete: 'set null' }),
+	quantity: integer('quantity').notNull(),
+	priceAtPurchase: integer('price_at_purchase').notNull() // In cents
 });
 
 // --- AUDIT LOG ---
@@ -173,7 +204,6 @@ export const pageContent = pgTable('page_content', {
 	text: text('text'),
 	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' })
 });
-
 
 // --- USER INVITES ---
 export const userInvite = pgTable('user_invite', {
@@ -236,7 +266,6 @@ export const linkVisit = pgTable('link_visit', {
 	visitedAt: timestamp('visited_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
 
-
 // --- RELATIONS for Drizzle Kit ---
 export const userRelations = relations(userTable, ({ many }) => ({
 	blogPosts: many(blogPost),
@@ -272,11 +301,13 @@ export const documentRelations = relations(document, ({ one }) => ({
 	})
 }));
 
-export const productRelations = relations(product, ({ one }) => ({
+export const productRelations = relations(product, ({ one, many }) => ({
 	featuredImage: one(media, {
 		fields: [product.mediaId],
 		references: [media.id]
-	})
+	}),
+	orderItems: many(orderItem),
+	galleryImages: many(productImage)
 }));
 
 export const blogPostRelations = relations(blogPost, ({ one, many }) => ({
@@ -364,12 +395,44 @@ export const linkVisitRelations = relations(linkVisit, ({ one }) => ({
 		fields: [linkVisit.linkId],
 		references: [trackedLink.id]
 	})
-
 }));
 
 export const userInviteRelations = relations(userInvite, ({ one }) => ({
 	creator: one(userTable, {
 		fields: [userInvite.createdBy],
 		references: [userTable.id]
+	})
+}));
+
+export const orderRelations = relations(order, ({ many }) => ({
+	items: many(orderItem)
+}));
+
+export const orderItemRelations = relations(orderItem, ({ one }) => ({
+	order: one(order, {
+		fields: [orderItem.orderId],
+		references: [order.id]
+	}),
+	product: one(product, {
+		fields: [orderItem.productId],
+		references: [product.id]
+	})
+}));
+
+export const productImageRelations = relations(productImage, ({ one }) => ({
+	product: one(product, {
+		fields: [productImage.productId],
+		references: [product.id]
+	}),
+	media: one(media, {
+		fields: [productImage.mediaId],
+		references: [media.id]
+	})
+}));
+
+export const gatedDocumentLeadRelations = relations(gatedDocumentLead, ({ one }) => ({
+	document: one(document, {
+		fields: [gatedDocumentLead.documentId],
+		references: [document.id]
 	})
 }));
