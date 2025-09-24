@@ -102,7 +102,7 @@ npm run db:seed
   ```bash
 npm run dev
 ```
-  The application will be available at http://localhost:5173.🛠️ 
+  The application will be available at http://localhost:5173
   
 ## 🌐 Deployment
 This project is configured for deployment on Vercel
