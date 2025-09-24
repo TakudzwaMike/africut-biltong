@@ -1,13 +1,13 @@
 import { db } from '$lib/server/db';
 import { gatedDocumentLead, document } from '$lib/server/db/schema.js';
 import { json } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request }) {
 	const { documentId, email } = await request.json();
 
-	// Basic validation
+	// Basic vaidation
 	if (!documentId || !email || typeof email !== 'string') {
 		return json({ message: 'Invalid request. Document ID and email are required.' }, { status: 400 });
 	}
