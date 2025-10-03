@@ -3,7 +3,8 @@ import { document, media } from '$lib/server/db/schema.js';
 import { fail } from '@sveltejs/kit';
 import { desc, eq } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
-import { uploadFile } from '$lib/server/blob';
+// We no longer need the server-side upload helper here for these actions
+// import { uploadFile } from '$lib/server/blob';
 
 export async function load() {
 	const documents = await db.query.document.findMany({
@@ -25,18 +26,19 @@ export const actions = {
 		const description = formData.get('description');
 		const thumbnailMediaIdRaw = formData.get('thumbnailMediaId');
 		const isGated = formData.get('isGated') === 'on';
-		const file = formData.get('file');
+		// 1. Get the fileUrl from the hidden input instead of the file itself
+		const fileUrl = formData.get('fileUrl');
 
 		if (!title || typeof title !== 'string') {
 			return fail(400, { message: 'Title is required.' });
 		}
-		if (!(file instanceof File) || file.size === 0) {
-			return fail(400, { message: 'A document file is required.' });
+		// 2. Validate the fileUrl is present
+		if (!fileUrl) {
+			return fail(400, { message: 'A document file must be uploaded.' });
 		}
 
-try {
-			const buffer = Buffer.from(await file.arrayBuffer());
-			const fileUrl = await uploadFile(buffer, file.name, file.type);
+		try {
+			// 3. Remove all file buffer and server-side upload logic
 			const parsedMediaId = thumbnailMediaIdRaw ? parseInt(String(thumbnailMediaIdRaw), 10) : NaN;
 
 			const dataToSave = {
@@ -44,7 +46,7 @@ try {
 				description: String(description),
 				thumbnailMediaId: !isNaN(parsedMediaId) ? parsedMediaId : null,
 				isGated: isGated,
-				fileUrl
+				fileUrl: String(fileUrl) // 4. Use the URL directly
 			};
 
 			const [newDoc] = await db.insert(document).values(dataToSave).returning();
@@ -55,7 +57,7 @@ try {
 			console.error('Error creating document:', error);
 			return fail(500, { message: 'Could not create document.' });
 		}
-},
+	},
 
 	update: async ({ request, locals }) => {
 		const formData = await request.formData();
@@ -64,7 +66,8 @@ try {
 		const description = formData.get('description');
 		const thumbnailMediaIdRaw = formData.get('thumbnailMediaId');
 		const isGated = formData.get('isGated') === 'on';
-		const file = formData.get('file');
+		// 5. Get the fileUrl from the hidden input
+		const fileUrl = formData.get('fileUrl');
 
 		if (isNaN(id)) {
 			return fail(400, { message: 'Invalid ID.' });
@@ -83,9 +86,10 @@ try {
 				isGated: isGated
 			};
 
-			if (file instanceof File && file.size > 0) {
-				const buffer = Buffer.from(await file.arrayBuffer());
-				dataToUpdate.fileUrl = await uploadFile(buffer, file.name, file.type);
+			// 6. Only add the fileUrl to the update if a new one was provided.
+			// The client sends the original URL if no new file is uploaded, so this update is safe.
+			if (fileUrl) {
+				dataToUpdate.fileUrl = String(fileUrl);
 			}
 
 			await db.update(document).set(dataToUpdate).where(eq(document.id, id));
