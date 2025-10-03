@@ -6,7 +6,7 @@ A modern, performant corporate website and headless CMS built with SvelteKit, Dr
 
 ## Tech Stack
 
--   **Framework:** [SvelteKit](https://kit.svelte.dev/) (with Svelte 5 runes)
+-   **Framework:** [SvelteKit](https://kit.svelte.dev/)
 -   **Database:** [PostgreSQL](https://www.postgresql.org/)
 -   **ORM:** [Drizzle ORM](https://orm.drizzle.team/)
 -   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
