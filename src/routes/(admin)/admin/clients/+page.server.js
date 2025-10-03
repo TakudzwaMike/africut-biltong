@@ -1,5 +1,3 @@
-// src/routes/(admin)/admin/clients/+page.server.js
-
 import { db } from '$lib/server/db';
 import { client, media } from '$lib/server/db/schema.js';
 import { desc, eq } from 'drizzle-orm';
@@ -36,17 +34,13 @@ export const actions = {
 		};
 
 		try {
-			// --- THIS IS THE FIX ---
-			// Changed from `isNaN(id)` to `!id` to correctly handle new entries where id is 0.
 			if (!id) {
-				// Create new
 				const [newClient] = await db.insert(client).values(dataToSave).returning();
 				await log(locals.user?.id, 'create_client', {
 					targetId: newClient.id,
 					data: newClient
 				});
 			} else {
-				// Update existing
 				await db.update(client).set(dataToSave).where(eq(client.id, id));
 				await log(locals.user?.id, 'update_client', { targetId: id, data: dataToSave });
 			}
