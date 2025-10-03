@@ -1,6 +1,6 @@
 // src/routes/api/upload/+server.js
 
-import { handleUpload } from '@vercel/blob';
+import { handleUpload } from '@vercel/blob/client';
 import { json } from '@sveltejs/kit';
 
 export async function POST({ request, locals }) {
