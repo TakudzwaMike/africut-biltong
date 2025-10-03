@@ -199,7 +199,7 @@
 							id="file"
 							name="file"
 							required={!editingDocument.id && !editingDocument.fileUrl}
-							on:change={handleFileChange}
+							onchange={handleFileChange}
 							class="w-full rounded-md border border-main/10 bg-main/5 text-sm text-main/80 file:mr-4 file:border-0 file:bg-main/10 file:px-4 file:py-2 file:font-bold disabled:cursor-not-allowed disabled:opacity-50"
 						/>
 						<p class="mt-1 text-xs text-main/60">
@@ -369,6 +369,6 @@
 		show={!!linkableDocument}
 		destinationUrl={linkableDocument.fileUrl}
 		documentTitle={linkableDocument.title}
-		on:close={() => (linkableDocument = null)}
+		onclose={() => (linkableDocument = null)}
 	/>
 {/if}
