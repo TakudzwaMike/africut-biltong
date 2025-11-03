@@ -1,11 +1,10 @@
 <script>
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
-	// Use $derived for reactivity. This will automatically update when the underlying page data changes.
-	let settings = $derived($page.data.settings);
-	let locations = $derived($page.data.locations);
-	let userCountryCode = $derived($page.data.userCountryCode);
-	let mediaItems = $derived($page.data.mediaItems);
+	let settings = $derived(page.data.settings);
+	let locations = $derived(page.data.locations);
+	let userCountryCode = $derived(page.data.userCountryCode);
+	let mediaItems = $derived(page.data.mediaItems);
 
 	let logo = $derived(mediaItems?.find((m) => m.id == settings?.siteLogoMediaId));
 </script>
@@ -13,7 +12,6 @@
 <footer class="relative z-10 border-t border-main/10 bg-light">
 	<div class="mx-auto max-w-6xl px-8 py-12">
 		<div class="grid grid-cols-1 gap-12 text-center sm:grid-cols-2 lg:grid-cols-4 sm:text-left">
-			<!-- Column 1: Branding -->
 			<div class="flex flex-col items-center sm:items-start">
 				<a href="/" class="text-xl font-bold">
 					{#if logo}
@@ -29,7 +27,6 @@
 				<p class="mt-2 text-main/70">Smart, Simple AI Solutions.</p>
 			</div>
 
-			<!-- Column 2: Sitemap Links -->
 			<div>
 				<h3 class="font-bold uppercase tracking-wider text-main/60">Sitemap</h3>
 				<ul class="mt-4 space-y-2">
@@ -68,6 +65,8 @@
 							>Contact</a
 						>
 					</li>
+
+					<!--
 					{#if settings?.brochureUrl}
 						<li>
 							<a
@@ -78,10 +77,10 @@
 							>
 						</li>
 					{/if}
+					-->
 				</ul>
 			</div>
 
-			<!-- Column 3: Contact & Legal -->
 			<div>
 				<h3 class="font-bold uppercase tracking-wider text-main/60">Get In Touch</h3>
 				<ul class="mt-4 space-y-2">
@@ -112,7 +111,6 @@
 				</ul>
 			</div>
 
-			<!-- Column 4: Social Links -->
 			<div>
 				<h3 class="font-bold uppercase tracking-wider text-main/60">Follow Us</h3>
 				<div class="mt-4 flex justify-center gap-6 sm:justify-start">
@@ -189,7 +187,6 @@
 			</div>
 		</div>
 
-		<!-- Bottom Bar -->
 		<div
 			class="mt-12 flex flex-col items-center border-t border-main/10 pt-8 sm:flex-row sm:justify-between"
 		>

@@ -13,6 +13,8 @@
 			class:is-visible={isVisible}
 			use:viewport={{ onEnter: () => (isVisible = true), threshold: 0.1 }}
 		>
+
+			<h2 class="text-3xl font-bold tracking-tight text-main sm:text-4xl">Our Solutions</h2>
 			{#if content}
 				<h2 class="text-center text-3xl font-bold tracking-tight text-main sm:text-4xl">
 					{content.title}

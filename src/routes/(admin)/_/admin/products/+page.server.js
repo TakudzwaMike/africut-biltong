@@ -7,14 +7,14 @@ import { log } from '$lib/server/auditLog.js';
 export async function load() {
 	const products = await db.query.product.findMany({
 		orderBy: desc(product.id),
-													 with: {
-														 featuredImage: true,
-														 galleryImages: {
-															 with: {
-																 media: true
-															 }
-														 }
-													 }
+		with: {
+			featuredImage: true,
+			galleryImages: {
+				with: {
+					media: true
+				}
+			}
+		}
 	});
 	const mediaItems = await db.query.media.findMany({
 		orderBy: desc(media.uploadedAt)

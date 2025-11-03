@@ -2,7 +2,7 @@ import { db } from '$lib/server/db';
 import { blogPost, caseStudy, client, pageContent, solution } from '$lib/server/db/schema.js';
 import { eq, desc, isNotNull } from 'drizzle-orm';
 
-/** @type {import('./$types').PageServerLoad} */
+/** @type {import('../$types').PageServerLoad} */
 export async function load() {
 	const caseStudies = await db.query.caseStudy.findMany({
 		with: {

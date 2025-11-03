@@ -1,6 +1,6 @@
 <script>
-	import { page } from '$app/stores';
-	import '../app.css';
+	import { page } from '$app/state';
+	import '../../app.css';
 	import Canvas from '$lib/components/Canvas.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
@@ -10,22 +10,21 @@
 	import Seo from '$lib/components/Seo.svelte';
 
 	/** @type {import('./$types').LayoutData} */
-	export let data;
+	const { children, data} = $props()
 
-	$: isAdminRoute = $page.url.pathname.startsWith('/admin');
+	let isAdminRoute = $derived(page.url.pathname.startsWith('/admin'))
 
 	const organizationSchema = {
 		'@context': 'https://schema.org',
 		'@type': 'Organization',
 		name: data.settings?.siteName || 'Vision AI Tech',
-		url: 'https://www.vision-ai.tech', // Replace with your actual production domain
+		url: 'https://www.vision-ai.tech',
 		logo: data.settings?.logo?.url,
-		// Dynamically add locations if they exist
 		location: data.locations?.map((loc) => ({
 			'@type': 'Place',
 			address: {
 				'@type': 'PostalAddress',
-				addressLocality: loc.address, // Using address as locality, adjust if needed
+				addressLocality: loc.address,
 				addressCountry: loc.countryCode
 			}
 		})),
@@ -33,12 +32,13 @@
 			'@type': 'GeoCircle',
 			geoMidpoint: {
 				'@type': 'GeoCoordinates',
-				latitude: '-29.0', // Approximate center of Southern Africa
+				latitude: '-29.0',
 				longitude: '24.0'
 			},
-			geoRadius: '1500000' // Radius in meters (1500 km)
+			geoRadius: '1500000'
 		}
 	};
+
 </script>
 
 <JsonLD data={organizationSchema} />
@@ -55,12 +55,12 @@
 </svelte:head>
 
 {#if isAdminRoute}
-	<slot />
+	{@render children?.()}
 {:else}
 	<Canvas />
-	<Header {data} />
+	<Header settings={data.settings} user={data.user}/>
 	<main>
-		<slot />
+		{@render children?.()}
 	</main>
 	<Footer />
 	{#if data.settings?.whatsappNumber}

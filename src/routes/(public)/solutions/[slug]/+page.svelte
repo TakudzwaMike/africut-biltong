@@ -10,7 +10,7 @@
 	function renderRichText(richText) {
 		if (!richText?.blocks) return '';
 		const htmlParts = edjsParser.parse(richText);
-		return htmlParts.join('');
+		return htmlParts
 	}
 </script>
 

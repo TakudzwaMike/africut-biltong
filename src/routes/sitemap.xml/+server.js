@@ -2,7 +2,6 @@ import { db } from '$lib/server/db';
 import { blogPost, caseStudy, product, solution } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
-// IMPORTANT: Replace this with your actual production domain
 const siteUrl = 'https://vision-ai.tech';
 
 export async function GET() {

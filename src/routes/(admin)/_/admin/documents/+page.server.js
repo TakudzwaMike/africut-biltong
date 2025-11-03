@@ -3,8 +3,6 @@ import { document, media } from '$lib/server/db/schema.js';
 import { fail } from '@sveltejs/kit';
 import { desc, eq } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
-// We no longer need the server-side upload helper here for these actions
-// import { uploadFile } from '$lib/server/blob';
 
 export async function load() {
 	const documents = await db.query.document.findMany({

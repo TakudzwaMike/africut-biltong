@@ -6,7 +6,6 @@
 
 	let { data } = $props();
 
-	// Correct Svelte 5 syntax for a derived reactive value
 	let technology = $derived(data.content?.technology);
 	let heroContent = $derived(data.content?.hero);
 
@@ -23,12 +22,10 @@
 	}
 </script>
 
-<!-- Section 1: Hero -->
 {#if heroContent}
 	<Hero content={heroContent} videoUrl={data.settings?.heroVideoUrl} />
 {/if}
 
-<!-- Section 2: Trust Bar (Dynamic) -->
 {#if data.clients.length > 0}
 	<div class="bg-light py-16 text-center">
 		<div class="mx-auto max-w-6xl px-8">
@@ -51,13 +48,10 @@
 	</div>
 {/if}
 
-<!-- Section 3: Solutions Overview -->
 <SolutionsOverview solutions={data.solutions} content={data.content?.solutions_overview} />
 
-<!-- Section 4: Proven Results (Dynamic) -->
 <CaseStudyHighlights caseStudies={data.caseStudies} />
 
-<!-- Section 5: Technology Section -->
 <section class="relative z-10">
 	<div class="mx-auto max-w-6xl px-8 py-20 sm:py-24">
 		{#if technology}
@@ -90,7 +84,6 @@
 	</div>
 </section>
 
-<!-- Section 6: Blog Highlights -->
 <section id="blog-highlights" class="relative z-10">
 	<div class="mx-auto max-w-6xl px-8 py-20 sm:py-24">
 		<div class="text-center">
@@ -128,7 +121,6 @@
 	</div>
 </section>
 
-<!-- Section 7: Final CTA -->
 <section class="relative z-10">
 	<div class="mx-auto max-w-6xl px-8 pb-20 sm:pb-24">
 		<div class="rounded-xl bg-main p-8 text-center sm:p-16">
