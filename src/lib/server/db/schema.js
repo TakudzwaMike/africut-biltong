@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, serial, varchar, jsonb, integer, pgEnum, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, serial, varchar, jsonb, integer, pgEnum, boolean, primaryKey } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // --- ENUMS ---
@@ -9,8 +9,9 @@ export const testimonialStatusEnum = pgEnum('testimonial_status', [
 	'rejected'
 ]);
 export const productTypeEnum = pgEnum('product_type', ['physical', 'service', 'digital']);
+export const leadStatusEnum = pgEnum('lead_status', ['new', 'contacted', 'qualified', 'lost', 'closed']);
 
-// --- AUTH (compatible with Lucia-auth) ---
+// --- AUTH ---
 export const userTable = pgTable('user', {
 	id: text('id').primaryKey(),
 	username: varchar('username', { length: 255 }).notNull().unique(),
@@ -26,6 +27,18 @@ export const sessionTable = pgTable('session', {
 });
 
 // --- CONTENT ---
+export const media = pgTable('media', {
+	id: serial('id').primaryKey(),
+	altText: varchar('alt_text', { length: 255 }).notNull(),
+	originalUrl: text('original_url').notNull(),
+	width: integer('width').notNull(),
+	height: integer('height').notNull(),
+	thumbnailUrl: text('thumbnail_url'),
+	displayUrl: text('display_url'),
+	blurDataUrl: text('blur_data_url'),
+	uploadedAt: timestamp('uploaded_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
+});
+
 export const client = pgTable('client', {
 	id: serial('id').primaryKey(),
 	name: varchar('name', { length: 255 }).notNull().unique(),
@@ -38,7 +51,7 @@ export const solution = pgTable('solution', {
 	solutionName: varchar('solution_name', { length: 255 }).notNull(),
 	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' }),
 	shortDescription: text('short_description'),
-	longDescription: jsonb('long_description'), // For rich text content
+	longDescription: jsonb('long_description'),
 	ctaText: varchar('cta_text', { length: 255 }),
 	ctaLink: varchar('cta_link', { length: 255 })
 });
@@ -74,18 +87,6 @@ export const testimonial = pgTable('testimonial', {
 	tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true, mode: 'date' }).notNull()
 });
 
-export const media = pgTable('media', {
-	id: serial('id').primaryKey(),
-	altText: varchar('alt_text', { length: 255 }).notNull(),
-	originalUrl: text('original_url').notNull(),
-	width: integer('width').notNull(),
-	height: integer('height').notNull(),
-	thumbnailUrl: text('thumbnail_url'),
-	displayUrl: text('display_url'),
-	blurDataUrl: text('blur_data_url'),
-	uploadedAt: timestamp('uploaded_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
-});
-
 export const blogPost = pgTable('blog_post', {
 	id: serial('id').primaryKey(),
 	authorId: text('author_id')
@@ -115,7 +116,7 @@ export const blogPostsToCategories = pgTable('blog_posts_to_categories', {
 		.references(() => blogCategory.id, { onDelete: 'cascade' })
 });
 
-// --- LEADS (from contact form) ---
+// --- LEADS ---
 export const lead = pgTable('lead', {
 	id: serial('id').primaryKey(),
 	solutionId: integer('solution_id').references(() => solution.id, { onDelete: 'set null' }),
@@ -123,6 +124,7 @@ export const lead = pgTable('lead', {
 	lastName: varchar('last_name', { length: 255 }),
 	email: varchar('email', { length: 255 }).notNull(),
 	message: text('message'),
+	status: leadStatusEnum('status').default('new').notNull(),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
 
@@ -136,7 +138,7 @@ export const siteSettings = pgTable('site_setting', {
 export const location = pgTable('location', {
 	id: serial('id').primaryKey(),
 	countryName: varchar('country_name', { length: 255 }).notNull(),
-	countryCode: varchar('country_code', { length: 2 }).notNull(), // For geo-targeting (e.g., ZW, ZA)
+	countryCode: varchar('country_code', { length: 2 }).notNull(),
 	address: text('address').notNull(),
 	phoneNumber: varchar('phone_number', { length: 255 }),
 	latitude: varchar('latitude', { length: 255 }),
@@ -150,14 +152,25 @@ export const product = pgTable('product', {
 	name: varchar('name', { length: 255 }).notNull(),
 	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' }),
 	shortDescription: text('short_description'),
-	longDescription: jsonb('long_description'), // For rich text content
+	longDescription: jsonb('long_description'),
 	ctaText: varchar('cta_text', { length: 255 }),
 	ctaLink: varchar('cta_link', { length: 255 }),
-	// E-commerce fields
 	type: productTypeEnum('type').notNull().default('physical'),
-	prices: jsonb('prices'), // e.g., { "USD": 500, "ZAR": 9500 } in cents
+	prices: jsonb('prices'),
 	stockQuantity: integer('stock_quantity')
 });
+
+// NEW: Many-to-Many Link Table
+export const solutionsToProducts = pgTable('solutions_to_products', {
+	solutionId: integer('solution_id')
+		.notNull()
+		.references(() => solution.id, { onDelete: 'cascade' }),
+	productId: integer('product_id')
+		.notNull()
+		.references(() => product.id, { onDelete: 'cascade' }),
+}, (t) => ({
+	pk: primaryKey({ columns: [t.solutionId, t.productId] }),
+}));
 
 export const productImage = pgTable('product_image', {
 	id: serial('id').primaryKey(),
@@ -170,9 +183,9 @@ export const order = pgTable('order', {
 	id: serial('id').primaryKey(),
 	customerName: varchar('customer_name', { length: 255 }).notNull(),
 	customerEmail: varchar('customer_email', { length: 255 }).notNull(),
-	totalAmount: integer('total_amount').notNull(), // In cents
-	currency: varchar('currency', { length: 3 }).notNull(), // e.g., USD, ZAR
-	status: varchar('status', { length: 50 }).notNull().default('pending'), // e.g., pending, paid, shipped
+	totalAmount: integer('total_amount').notNull(),
+	currency: varchar('currency', { length: 3 }).notNull(),
+	status: varchar('status', { length: 50 }).notNull().default('pending'),
 	stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }).unique(),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
@@ -182,24 +195,24 @@ export const orderItem = pgTable('order_item', {
 	orderId: integer('order_id').notNull().references(() => order.id, { onDelete: 'cascade' }),
 	productId: integer('product_id').references(() => product.id, { onDelete: 'set null' }),
 	quantity: integer('quantity').notNull(),
-	priceAtPurchase: integer('price_at_purchase').notNull() // In cents
+	priceAtPurchase: integer('price_at_purchase').notNull()
 });
 
 // --- AUDIT LOG ---
 export const auditLog = pgTable('audit_log', {
 	id: serial('id').primaryKey(),
 	userId: text('user_id').references(() => userTable.id, { onDelete: 'set null' }),
-	action: varchar('action', { length: 255 }).notNull(), // e.g., 'create_product', 'delete_client'
-	targetId: varchar('target_id', { length: 255 }), // e.g., the ID of the product that was created
-	data: jsonb('data'), // A snapshot of the created/updated/deleted data
+	action: varchar('action', { length: 255 }).notNull(),
+	targetId: varchar('target_id', { length: 255 }),
+	data: jsonb('data'),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
 
 // --- PAGE CONTENT ---
 export const pageContent = pgTable('page_content', {
 	id: serial('id').primaryKey(),
-	page: varchar('page', { length: 255 }).notNull(), // e.g., 'homepage'
-	section: varchar('section', { length: 255 }).notNull().unique(), // e.g., 'technology_teaser'
+	page: varchar('page', { length: 255 }).notNull(),
+	section: varchar('section', { length: 255 }).notNull().unique(),
 	title: varchar('title', { length: 255 }),
 	text: text('text'),
 	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' })
@@ -223,7 +236,7 @@ export const teamMember = pgTable('team_member', {
 	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' })
 });
 
-// --- DOCUMENTS / RESOURCES ---
+// --- DOCUMENTS ---
 export const document = pgTable('document', {
 	id: serial('id').primaryKey(),
 	title: varchar('title', { length: 255 }).notNull(),
@@ -245,12 +258,12 @@ export const gatedDocumentLead = pgTable('gated_document_lead', {
 	submittedAt: timestamp('submitted_at').defaultNow().notNull()
 });
 
-// --- QR CODE ANALYTICS ---
+// --- QR CODES ---
 export const trackedLink = pgTable('tracked_link', {
 	id: serial('id').primaryKey(),
 	shortCode: varchar('short_code', { length: 255 }).notNull().unique(),
 	destinationUrl: text('destination_url').notNull(),
-	description: varchar('description', { length: 255 }), // e.g., "LinkedIn Campaign Q3"
+	description: varchar('description', { length: 255 }),
 	userId: text('user_id')
 		.notNull()
 		.references(() => userTable.id, { onDelete: 'cascade' }),
@@ -262,11 +275,11 @@ export const linkVisit = pgTable('link_visit', {
 	linkId: integer('link_id')
 		.notNull()
 		.references(() => trackedLink.id, { onDelete: 'cascade' }),
-	ipCountry: varchar('ip_country', { length: 2 }), // e.g., ZW, ZA
+	ipCountry: varchar('ip_country', { length: 2 }),
 	visitedAt: timestamp('visited_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
 
-// --- RELATIONS for Drizzle Kit ---
+// --- RELATIONS ---
 export const userRelations = relations(userTable, ({ many }) => ({
 	blogPosts: many(blogPost),
 	auditLogs: many(auditLog),
@@ -301,13 +314,15 @@ export const documentRelations = relations(document, ({ one }) => ({
 	})
 }));
 
+// Updated to include relation to Solutions
 export const productRelations = relations(product, ({ one, many }) => ({
 	featuredImage: one(media, {
 		fields: [product.mediaId],
 		references: [media.id]
 	}),
 	orderItems: many(orderItem),
-	galleryImages: many(productImage)
+	galleryImages: many(productImage),
+	solutions: many(solutionsToProducts)
 }));
 
 export const blogPostRelations = relations(blogPost, ({ one, many }) => ({
@@ -353,11 +368,25 @@ export const leadRelations = relations(lead, ({ one }) => ({
 	})
 }));
 
-export const solutionRelations = relations(solution, ({ one }) => ({
+// Updated to include relation to Products
+export const solutionRelations = relations(solution, ({ one, many }) => ({
 	featuredImage: one(media, {
 		fields: [solution.mediaId],
 		references: [media.id]
-	})
+	}),
+	products: many(solutionsToProducts)
+}));
+
+// NEW Relation Definition
+export const solutionsToProductsRelations = relations(solutionsToProducts, ({ one }) => ({
+	solution: one(solution, {
+		fields: [solutionsToProducts.solutionId],
+		references: [solution.id],
+	}),
+	product: one(product, {
+		fields: [solutionsToProducts.productId],
+		references: [product.id],
+	}),
 }));
 
 export const testimonialRelations = relations(testimonial, ({ one }) => ({
