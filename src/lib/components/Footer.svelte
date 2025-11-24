@@ -107,8 +107,6 @@
 				<a href="/terms" class="text-xs text-light/50 hover:text-light">Terms of Service</a>
 				{#if page.data.user}
 					<a href="/_/admin" class="text-xs font-bold text-accent">Admin Panel</a>
-				{:else}
-					<a href="/login" class="text-xs text-light/30 hover:text-light">Staff Login</a>
 				{/if}
 			</div>
 		</div>
