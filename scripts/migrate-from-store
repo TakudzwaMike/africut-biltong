@@ -1,0 +1,214 @@
+import 'dotenv/config';
+import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import * as schema from '../src/lib/server/db/schema.js';
+import { generateId } from 'lucia';
+import { createId } from '@paralleldrive/cuid2';
+
+// 1. CONFIGURATION
+const STORE_DB_URL = process.env.STORE_DATABASE_URL;
+const LOCAL_DB_URL = process.env.DATABASE_URL;
+
+if (!STORE_DB_URL || !LOCAL_DB_URL) {
+    console.error('❌ Error: Missing STORE_DATABASE_URL or DATABASE_URL in .env');
+    process.exit(1);
+}
+
+// 2. CONNECTIONS
+const sourceSql = postgres(STORE_DB_URL); // Old Store DB
+const destClient = postgres(LOCAL_DB_URL); // New Unified DB
+const db = drizzle(destClient, { schema });
+
+// 3. ID MAPPINGS
+const map = {
+    users: new Map(), // Old ID -> New ID
+    products: new Map(),
+    variants: new Map()
+};
+
+async function main() {
+    console.log('🚀 Starting STORE Data Migration...');
+
+    try {
+        // --- 1. CUSTOMERS ---
+        console.log('👤 Migrating Customers...');
+        const oldUsers = await sourceSql`SELECT * FROM "user"`; // Assuming table is 'user' or 'users'
+
+        for (const u of oldUsers) {
+            // Check if user exists in new DB by email
+            const existing = await db.query.userTable.findFirst({
+                where: (users, { eq }) => eq(users.email, u.email)
+            });
+
+            let newUserId;
+
+            if (existing) {
+                console.log(`   - Merging existing user: ${u.email}`);
+                newUserId = existing.id;
+            } else {
+                newUserId = generateId(15);
+                await db.insert(schema.userTable).values({
+                    id: newUserId,
+                    email: u.email,
+                    username: u.first_name ? `${u.first_name} ${u.last_name}` : u.email.split('@')[0],
+                    firstName: u.first_name,
+                    lastName: u.last_name,
+                    passwordHash: u.hashed_password || 'migrated_placeholder',
+                    role: 'customer',
+                    status: 'active'
+                });
+            }
+            map.users.set(u.id, newUserId);
+
+            // Migrate Addresses
+            const oldAddresses = await sourceSql`SELECT * FROM user_address WHERE user_id = ${u.id}`;
+            for (const addr of oldAddresses) {
+                await db.insert(schema.userAddress).values({
+                    userId: newUserId,
+                    label: addr.label || 'Home',
+                    firstName: addr.first_name,
+                    lastName: addr.last_name,
+                    address: addr.address,
+                    city: addr.city,
+                    state: addr.state,
+                    zipCode: addr.zip_code,
+                    country: addr.country,
+                    isDefault: addr.is_default
+                });
+            }
+        }
+        console.log(`✅ Processed ${oldUsers.length} Customers.`);
+
+        // --- 2. PRODUCTS ---
+        console.log('📦 Migrating Products...');
+        const oldProducts = await sourceSql`SELECT * FROM product`;
+
+        for (const p of oldProducts) {
+            // Insert Product Parent
+            const [newP] = await db.insert(schema.product).values({
+                name: p.name,
+                slug: p.slug || p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                shortDescription: p.description ? p.description.substring(0, 255) : '',
+                longDescription: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: p.description || '' }] }] }, // Simple conversion
+                type: p.type || 'physical',
+                tags: p.tags || []
+            }).returning();
+
+            map.products.set(p.id, newP.id);
+
+            // Handle Variants (Check if old DB has variant table or just product columns)
+            // Assuming Old DB had a 'product_variant' table. If not, we create a default.
+            const oldVariants = await sourceSql`SELECT * FROM product_variant WHERE product_id = ${p.id}`;
+            
+            if (oldVariants.length > 0) {
+                for (const v of oldVariants) {
+                    const varId = createId();
+                    await db.insert(schema.productVariant).values({
+                        id: varId,
+                        productId: newP.id,
+                        name: v.name,
+                        sku: v.sku,
+                        priceUsd: v.price_usd ? Math.round(v.price_usd * 100) : null, // Convert to cents
+                        priceZar: v.price_zar ? Math.round(v.price_zar * 100) : null,
+                        stock: v.stock,
+                        isDefault: v.is_default
+                    });
+                    map.variants.set(v.id, varId);
+                }
+            } else {
+                // Create Default Variant from Product columns if no variant table existed
+                const varId = createId();
+                await db.insert(schema.productVariant).values({
+                    id: varId,
+                    productId: newP.id,
+                    name: 'Default',
+                    sku: p.slug,
+                    priceUsd: p.price_usd ? Math.round(p.price_usd * 100) : 0,
+                    stock: p.stock || 0,
+                    isDefault: true
+                });
+                // Map the PRODUCT ID to this variant ID for order mapping later (if orders referenced product directly)
+                map.variants.set(p.id, varId); 
+            }
+
+            // Handle Images
+            // Note: Old store likely had direct URLs. We need to register them in Media.
+            const oldImages = await sourceSql`SELECT * FROM product_image WHERE product_id = ${p.id}`;
+            for (const img of oldImages) {
+                // 1. Create Media Record
+                const [newMedia] = await db.insert(schema.media).values({
+                    altText: img.alt_text || p.name,
+                    originalUrl: img.url,
+                    displayUrl: img.url,
+                    thumbnailUrl: img.url,
+                    width: 1000, height: 1000 // Unknown dimensions
+                }).returning();
+
+                // 2. Link to Product
+                await db.insert(schema.productImage).values({
+                    productId: newP.id,
+                    mediaId: newMedia.id,
+                    displayOrder: img.display_order || 0
+                });
+
+                // If it was featured (is_featured), set it on the product parent
+                if (img.is_featured) {
+                    await db.update(schema.product).set({ mediaId: newMedia.id }).where({ id: newP.id });
+                }
+            }
+        }
+        console.log(`✅ Migrated ${oldProducts.length} Products.`);
+
+        // --- 3. ORDERS ---
+        console.log('🛒 Migrating Orders...');
+        const oldOrders = await sourceSql`SELECT * FROM "order"`;
+
+        for (const o of oldOrders) {
+            const newUserId = map.users.get(o.user_id);
+            
+            if (!newUserId) {
+                console.warn(`⚠️ Skipping Order #${o.public_id} - User not found.`);
+                continue;
+            }
+
+            // Create Order
+            const newOrderId = createId();
+            await db.insert(schema.order).values({
+                id: newOrderId,
+                publicId: o.public_id, // Keep old ID numbers if possible, otherwise let serial auto-inc
+                userId: newUserId,
+                status: o.status,
+                total: Math.round(o.total * 100), // Convert to cents
+                currency: o.currency || 'USD',
+                createdAt: o.created_at
+            }).onConflictDoNothing(); // Skip if ID collision
+
+            // Create Order Items
+            const oldItems = await sourceSql`SELECT * FROM order_item WHERE order_id = ${o.id}`;
+            for (const item of oldItems) {
+                // Map variant. If old DB used product_id, use our fallback map. If variant_id, use that.
+                const mappedVariantId = map.variants.get(item.product_variant_id) || map.variants.get(item.product_id);
+
+                if (mappedVariantId) {
+                    await db.insert(schema.orderItem).values({
+                        orderId: newOrderId,
+                        productVariantId: mappedVariantId,
+                        quantity: item.quantity,
+                        priceAtPurchase: Math.round(item.price_at_purchase * 100)
+                    });
+                }
+            }
+        }
+        console.log(`✅ Migrated ${oldOrders.length} Orders.`);
+
+        console.log('\n🎉 STORE MIGRATION COMPLETE!');
+
+    } catch (e) {
+        console.error('\n❌ MIGRATION FAILED:', e);
+    } finally {
+        await sourceSql.end();
+        await destClient.end();
+    }
+}
+
+main();

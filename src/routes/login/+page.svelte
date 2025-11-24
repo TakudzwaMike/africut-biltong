@@ -1,60 +1,65 @@
 <script>
-	/** @type {import('./$types').ActionData} */
-	export let form;
+    import PageHeader from '$lib/components/PageHeader.svelte';
+    import Icon from '@iconify/svelte';
+
+	let { form } = $props();
+    let isSubmitting = $state(false);
 </script>
 
-<div class="relative z-10">
-	<div class="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-8 py-20 sm:py-24">
-		<div class="text-center">
-			<h1 class="text-4xl font-bold tracking-tight text-main sm:text-5xl">Admin Login</h1>
-			<p class="mt-4 text-lg leading-8 text-main/70">
-				Access the content management dashboard.
-			</p>
-		</div>
+<PageHeader 
+    title="Sign In" 
+    subtitle="Access your dashboard, track orders, and manage your account."
+/>
 
-		<form method="POST" class="mt-12 space-y-6">
-			<div>
-				<label for="username" class="block text-sm font-medium leading-6 text-main/80"
-					>Username</label
-				>
-				<div class="mt-2">
-					<input
-						id="username"
-						name="username"
-						type="text"
-						required
-						class="block w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 placeholder:text-main/50 focus:ring-2 focus:ring-inset focus:ring-accent"
-					/>
-				</div>
-			</div>
+<div class="relative z-10 bg-slate-50 py-24">
+	<div class="mx-auto max-w-md px-8">
+		<div class="rounded-xl bg-white p-8 shadow-xl ring-1 ring-slate-900/5">
+            
+            <form method="POST" onsubmit={() => isSubmitting = true} class="space-y-6">
+                {#if form?.message}
+                    <div class="rounded-md bg-red-50 p-4 text-sm font-bold text-red-600 border border-red-200">
+                        {form.message}
+                    </div>
+                {/if}
 
-			<div>
-				<label for="password" class="block text-sm font-medium leading-6 text-main/80"
-					>Password</label
-				>
-				<div class="mt-2">
-					<input
-						id="password"
-						name="password"
-						type="password"
-						required
-						class="block w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 placeholder:text-main/50 focus:ring-2 focus:ring-inset focus:ring-accent"
-					/>
-				</div>
-			</div>
+                <div>
+                    <label for="email" class="block text-sm font-bold text-main/80 mb-2">Email Address</label>
+                    <input 
+                        type="email" 
+                        name="email" 
+                        id="email" 
+                        required 
+                        class="w-full rounded-md border-0 bg-slate-50 px-4 py-3 text-main shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-accent"
+                    />
+                </div>
 
-			{#if form?.message}
-				<p class="text-center font-bold text-red-600">{form.message}</p>
-			{/if}
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="password" class="block text-sm font-bold text-main/80">Password</label>
+                        <a href="/forgot-password" class="text-xs font-bold text-accent hover:underline">Forgot?</a>
+                    </div>
+                    <input 
+                        type="password" 
+                        name="password" 
+                        id="password" 
+                        required 
+                        class="w-full rounded-md border-0 bg-slate-50 px-4 py-3 text-main shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-accent"
+                    />
+                </div>
 
-			<div>
-				<button
-					type="submit"
-					class="w-full rounded-md bg-accent px-6 py-3 font-bold text-main shadow-lg shadow-accent/30 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/40"
-				>
-					Sign in
-				</button>
-			</div>
-		</form>
-	</div>
+                <button 
+                    type="submit" 
+                    disabled={isSubmitting}
+                    class="w-full rounded-md bg-main px-8 py-3 font-bold text-light shadow-lg transition-all hover:bg-main/90 disabled:opacity-50"
+                >
+                    {isSubmitting ? 'Signing In...' : 'Sign In'}
+                </button>
+            </form>
+
+            <div class="mt-8 text-center text-sm text-main/60">
+                Don't have an account? 
+                <a href="/register" class="font-bold text-accent hover:underline">Create one now</a>
+            </div>
+        </div>
+    </div>
 </div>

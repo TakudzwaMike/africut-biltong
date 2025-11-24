@@ -15,52 +15,42 @@ const lucia = new Lucia(adapter, {
 	},
 	getUserAttributes: (attributes) => {
 		return {
-			username: attributes.username
+			id: attributes.id,
+			username: attributes.username,
+			email: attributes.email,
+			role: attributes.role,
+			firstName: attributes.firstName,
+			lastName: attributes.lastName
 		};
 	}
 });
 
 export const sessionCookieName = lucia.sessionCookieName;
 
-/** @param {string} userId */
 export async function createSession(userId) {
 	return await lucia.createSession(userId, {});
 }
 
-/** @param {string} sessionId */
 export async function validateSession(sessionId) {
 	return await lucia.validateSession(sessionId);
 }
 
-/** @param {string} sessionId */
 export async function invalidateSession(sessionId) {
 	await lucia.invalidateSession(sessionId);
 }
 
-/** @param {string} password */
 export async function hashPassword(password) {
 	return await new Argon2id().hash(password);
 }
 
-/**
- * @param {string} hash
- * @param {string} password
- */
 export async function verifyPassword(hash, password) {
 	return await new Argon2id().verify(hash, password);
 }
 
-/**
- * @param {string} sessionId
- * @returns {import('oslo/cookie').Cookie}
- */
 export function createSessionCookie(sessionId) {
 	return lucia.createSessionCookie(sessionId);
 }
 
-/**
- * @returns {import('oslo/cookie').Cookie}
- */
 export function createBlankSessionCookie() {
 	return lucia.createBlankSessionCookie();
 }

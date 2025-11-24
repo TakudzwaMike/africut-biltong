@@ -1,171 +1,186 @@
 <script>
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/toast-service';
-	import { invalidateAll } from '$app/navigation';
-	import SubmitButton from '$lib/components/SubmitButton.svelte';
-	import { page } from '$app/stores';
+    import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import DataTable from '$lib/components/admin/DataTable.svelte';
 	import Icon from '@iconify/svelte';
 
-	let { data, form } = $props();
+	let { data } = $props();
 
-	let isSubmittingCreate = $state(false);
-	let isSubmittingInvite = $state(false);
-	let generatedToken = $state(null);
+    // Search & View State
+	let searchQuery = $state(data.pagination.query || '');
+    let currentView = $derived(data.pagination.view || 'all');
+	let searchTimeout;
 
-	$effect(() => {
-		if (!form) return;
-
-		// Handle create action
-		if (form.form?.action.includes('?/create')) {
-			if (form.success) {
-				toast.success(form.message);
-				invalidateAll();
-				document.querySelector('form[action="?/create"]')?.reset();
-			} else if (form.message) {
-				toast.error(form.message);
-			}
-		}
-
-		// Handle generateInvite action
-		if (form.form?.action.includes('?/generateInvite')) {
-			if (form.success) {
-				generatedToken = form.token;
-				toast.success('Invite link generated!');
-			} else if (form.message) {
-				toast.error(form.message);
-			}
-		}
-	});
-
-	function handleDelete(event) {
-		if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-			event.preventDefault();
-		}
-		return ({ result }) => {
-			if (result.type === 'success' && result.data?.status === 200) {
-				toast.success(result.data.message);
-				invalidateAll();
-			} else if (result.type === 'failure') {
-				toast.error(result.data.message);
-			}
-		};
+	function handleSearchInput() {
+		clearTimeout(searchTimeout);
+		searchTimeout = setTimeout(() => {
+            updateUrl({ q: searchQuery, page: 1 });
+		}, 400);
 	}
 
+	function changePage(newPage) {
+        updateUrl({ page: newPage });
+	}
+
+    function changeView(view) {
+        // Clear search when switching views for cleaner UX
+        searchQuery = '';
+        updateUrl({ view, page: 1, q: '' });
+    }
+
+    function updateUrl(params) {
+        const url = new URL($page.url);
+        for (const [key, value] of Object.entries(params)) {
+            if (value) url.searchParams.set(key, value);
+            else url.searchParams.delete(key);
+        }
+        goto(url, { keepFocus: true, noScroll: true });
+    }
+
+    function handleRoleUpdate() {
+        return ({ result, update }) => {
+            if (result.type === 'success') toast.success('Role updated');
+            else toast.error(result.data?.message || 'Failed');
+            update({ reset: false });
+        };
+    }
+
+    function handleDelete() {
+        return ({ result, update }) => {
+            if (result.type === 'success') toast.success('User deleted');
+            else toast.error(result.data?.message || 'Failed');
+            update();
+        };
+    }
+
 	const columns = [
-		{ label: 'Username' },
+		{ label: 'User' },
+		{ label: 'Role' },
+		{ label: 'Joined' },
 		{ label: 'Actions', class: 'text-right' }
 	];
 </script>
 
 <div class="p-8">
-	<h1 class="text-3xl font-bold tracking-tight text-main">User Management</h1>
-	<p class="mt-2 text-base text-main/70">Create and manage user accounts for the admin panel.</p>
-
-	<div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-		<!-- Create New User Form -->
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
 		<div>
-			<form
-				method="POST"
-				action="?/create"
-				class="rounded-xl border border-main/10 p-6"
-				use:enhance={() => {
-					isSubmittingCreate = true;
-					return () => (isSubmittingCreate = false);
-				}}
-			>
-				<h3 class="text-lg font-bold">Add New User</h3>
-				<div class="mt-4 space-y-4">
-					<div>
-						<label for="username" class="mb-1 block font-medium text-main/80">Username</label>
-						<input
-							type="text"
-							id="username"
-							name="username"
-							required
-							class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-						/>
-					</div>
-					<div>
-						<label for="password" class="mb-1 block font-medium text-main/80">Password</label>
-						<input
-							type="password"
-							id="password"
-							name="password"
-							required
-							class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-						/>
-					</div>
-				</div>
-				<div class="mt-6">
-					<SubmitButton type="submit" loading={isSubmittingCreate} class="bg-accent px-6 py-2">
-						Create User
-					</SubmitButton>
-				</div>
-			</form>
+			<h1 class="text-3xl font-bold tracking-tight text-main">Users</h1>
+			<p class="mt-2 text-base text-main/70">Manage customers and staff access.</p>
 		</div>
-
-		<!-- Invite Link Generator -->
-		<div class="rounded-xl border border-main/10 p-6">
-			<h3 class="text-lg font-bold">Invite New User</h3>
-			<p class="mt-1 text-sm text-main/70">
-				Generate a secure, one-time link to invite a new user to create an account.
-			</p>
-			<form
-				method="POST"
-				action="?/generateInvite"
-				use:enhance={() => {
-					isSubmittingInvite = true;
-					return ({ result }) => {
-						isSubmittingInvite = false;
-						if (result.type === 'success') {
-							generatedToken = result.data?.token;
-							toast.success('Invite link generated!');
-						} else if (result.type === 'failure') {
-							toast.error(result.data?.message);
-						}
-					};
-				}}
-				class="mt-4"
+		
+		<div class="flex flex-col items-end gap-4 sm:flex-row">
+            <!-- Invite Button -->
+			<a
+				href="/_/admin/users/invite"
+				class="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 font-bold text-main shadow-sm transition hover:-translate-y-0.5"
 			>
-				<SubmitButton loading={isSubmittingInvite} class="bg-accent px-6 py-2"
-					>Generate Invite Link</SubmitButton
-				>
-			</form>
-
-			{#if generatedToken}
-				{@const inviteUrl = `${$page.url.origin}/_/admin/create-account/${generatedToken}`}
-				<div class="mt-4 rounded-md bg-accent/10 p-4">
-					<p class="font-medium text-main">Share this link with your new team member:</p>
-					<p class="mt-2 break-all font-mono text-sm text-accent">
-						<a href={inviteUrl} target="_blank" class="underline">{inviteUrl}</a>
-					</p>
-				</div>
-			{/if}
+				<Icon icon="mdi:email-plus" />
+				<span>Invite User</span>
+			</a>
 		</div>
 	</div>
 
-	<h3 class="mt-12 text-lg font-bold">Existing Users</h3>
-	
+    <!-- Tabs & Search Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <!-- Tabs -->
+        <div class="flex items-center gap-1 bg-main/5 p-1 rounded-lg w-fit">
+            <button 
+                onclick={() => changeView('all')}
+                class="px-4 py-1.5 rounded-md text-sm font-bold transition-all {currentView === 'all' ? 'bg-white text-main shadow-sm' : 'text-main/60 hover:text-main'}"
+            >
+                All
+            </button>
+            <button 
+                onclick={() => changeView('staff')}
+                class="px-4 py-1.5 rounded-md text-sm font-bold transition-all {currentView === 'staff' ? 'bg-white text-main shadow-sm' : 'text-main/60 hover:text-main'}"
+            >
+                Staff
+            </button>
+            <button 
+                onclick={() => changeView('customer')}
+                class="px-4 py-1.5 rounded-md text-sm font-bold transition-all {currentView === 'customer' ? 'bg-white text-main shadow-sm' : 'text-main/60 hover:text-main'}"
+            >
+                Customers
+            </button>
+        </div>
+
+        <!-- Search -->
+        <div class="relative w-full sm:w-64">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <Icon icon="mdi:magnify" class="text-main/40" />
+            </div>
+            <input
+                type="text"
+                placeholder="Search users..."
+                bind:value={searchQuery}
+                oninput={handleSearchInput}
+                class="block w-full rounded-md border-0 bg-white py-2 pl-10 pr-3 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent sm:text-sm sm:leading-6"
+            />
+        </div>
+    </div>
+
 	<DataTable 
 		items={data.users} 
 		{columns} 
-		emptyMessage="No other users found."
+		emptyMessage="No users found matching your criteria."
 		row={userRow}
 	/>
+
+     <!-- Pagination -->
+	{#if data.pagination.totalPages > 1}
+        <div class="mt-6 flex items-center justify-between border-t border-main/10 pt-6">
+            <div class="text-sm text-main/60">
+                Page <span class="font-bold text-main">{data.pagination.page}</span> of <span class="font-bold text-main">{data.pagination.totalPages}</span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick={() => changePage(data.pagination.page - 1)} disabled={data.pagination.page <= 1} class="flex items-center gap-1 rounded-md border border-main/10 bg-white px-3 py-1.5 text-sm font-medium text-main transition hover:bg-main/5 disabled:cursor-not-allowed disabled:opacity-50"><Icon icon="mdi:chevron-left" /> Previous</button>
+                <button onclick={() => changePage(data.pagination.page + 1)} disabled={data.pagination.page >= data.pagination.totalPages} class="flex items-center gap-1 rounded-md border border-main/10 bg-white px-3 py-1.5 text-sm font-medium text-main transition hover:bg-main/5 disabled:cursor-not-allowed disabled:opacity-50">Next <Icon icon="mdi:chevron-right" /></button>
+            </div>
+        </div>
+    {/if}
 </div>
 
-{#snippet userRow(user)}
-	<td class="p-4 font-medium">{user.username}</td>
+{#snippet userRow(u)}
+	<td class="p-4">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-main/10 flex items-center justify-center text-main/60 font-bold">
+                {(u.firstName?.[0] || u.email[0]).toUpperCase()}
+            </div>
+            <div>
+                <p class="font-bold text-main">{u.firstName || 'No Name'} {u.lastName || ''}</p>
+                <p class="text-xs text-main/60">{u.email}</p>
+            </div>
+        </div>
+    </td>
+	<td class="p-4">
+        <form method="POST" action="?/updateRole" use:enhance={handleRoleUpdate}>
+            <input type="hidden" name="id" value={u.id} />
+            <select 
+                name="role" 
+                class="rounded-md border-main/20 bg-main/5 px-3 py-1 text-xs font-bold uppercase tracking-wide cursor-pointer focus:ring-2 focus:ring-accent w-36"
+                onchange={(e) => e.target.form.requestSubmit()}
+                value={u.role}
+            >
+                <optgroup label="Staff">
+                    <option value="admin">Admin</option>
+                    <option value="store_manager">Store Manager</option>
+                    <option value="content_editor">Content Editor</option>
+                </optgroup>
+                <optgroup label="Users">
+                    <option value="customer">Customer</option>
+                </optgroup>
+            </select>
+        </form>
+    </td>
+	<td class="p-4 text-sm text-main/60">
+        {new Date(u.createdAt).toLocaleDateString()}
+    </td>
 	<td class="p-4 text-right">
-		<form method="POST" action="?/delete&id={user.id}" use:enhance={handleDelete}>
-			<button
-				type="submit"
-				class="font-bold text-red-500 transition hover:text-red-400"
-				title="Delete User"
-			>
-				<Icon icon="mdi:trash-can-outline" width="20" />
-			</button>
-		</form>
+        <form method="POST" action="?/delete" use:enhance={handleDelete} onsubmit={(e) => !confirm('Are you sure? This user will lose all access.') && e.preventDefault()}>
+            <input type="hidden" name="id" value={u.id} />
+		    <button class="text-red-500 hover:text-red-700 p-2" title="Delete"><Icon icon="mdi:trash-can-outline" width="20" /></button>
+        </form>
 	</td>
 {/snippet}

@@ -4,7 +4,13 @@ import { fail, redirect, error } from '@sveltejs/kit';
 import { eq, desc } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
 
-export async function load({ params }) {
+const ALLOWED_ROLES = ['admin', 'content_editor'];
+
+export async function load({ params, locals }) {
+	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+		throw error(403, 'Forbidden: You do not have permission to edit solutions.');
+	}
+
 	const id = Number(params.id);
 	if (isNaN(id)) {
 		throw error(404, 'Not found');
@@ -40,6 +46,10 @@ export async function load({ params }) {
 
 export const actions = {
 	default: async ({ request, params, locals }) => {
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
+		}
+
 		const id = Number(params.id);
 		const formData = await request.formData();
 		
@@ -50,7 +60,6 @@ export const actions = {
 		const ctaText = formData.get('ctaText');
 		const ctaLink = formData.get('ctaLink');
 		const mediaId = formData.get('mediaId');
-		
 		const productIds = formData.getAll('productIds').map(Number);
 
 		if (!solutionName || !slug) {
@@ -62,7 +71,6 @@ export const actions = {
 			try {
 				longDescription = JSON.parse(longDescriptionJson);
 			} catch (e) {
-				console.error('JSON Parse Error:', e);
 				return fail(400, { message: 'Invalid rich text format for long description.' });
 			}
 		}

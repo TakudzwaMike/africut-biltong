@@ -4,7 +4,14 @@ import { fail, redirect, error } from '@sveltejs/kit';
 import { eq, desc } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
 
-export async function load({ params }) {
+const ALLOWED_ROLES = ['admin', 'content_editor'];
+
+export async function load({ params, locals }) {
+	// 1. Security Check
+	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+		throw error(403, 'Forbidden: You do not have permission to edit case studies.');
+	}
+
 	const id = Number(params.id);
 	if (isNaN(id)) {
 		throw error(404, 'Not found');
@@ -30,6 +37,11 @@ export async function load({ params }) {
 
 export const actions = {
 	default: async ({ request, params, locals }) => {
+		// 2. Security Check
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
+		}
+
 		const id = Number(params.id);
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);

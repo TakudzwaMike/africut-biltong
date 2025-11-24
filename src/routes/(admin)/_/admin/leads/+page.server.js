@@ -1,18 +1,23 @@
 import { db } from '$lib/server/db';
 import { lead } from '$lib/server/db/schema';
-import { desc, eq, or, ilike, count, sql } from 'drizzle-orm';
-import { fail } from '@sveltejs/kit';
+import { desc, eq, or, ilike, count } from 'drizzle-orm';
+import { fail, error } from '@sveltejs/kit';
 import { log } from '$lib/server/auditLog.js';
 
 const ITEMS_PER_PAGE = 20;
+// Everyone on staff can see leads
+const ALLOWED_ROLES = ['admin', 'store_manager', 'content_editor'];
 
-export async function load({ url }) {
-	// 1. Get Query Params
+export async function load({ url, locals }) {
+	// SECURITY CHECK
+	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+		throw error(403, 'Forbidden: You do not have access to Leads.');
+	}
+
 	const query = url.searchParams.get('q');
 	const page = Number(url.searchParams.get('page')) || 1;
 	const offset = (page - 1) * ITEMS_PER_PAGE;
 
-	// 2. Build Filter Conditions
 	let filters = undefined;
 	if (query) {
 		const searchStr = `%${query}%`;
@@ -24,9 +29,7 @@ export async function load({ url }) {
 		);
 	}
 
-	// 3. Execute Queries in Parallel
 	const [leads, totalResult] = await Promise.all([
-		// Fetch Data
 		db.query.lead.findMany({
 			where: filters,
 			orderBy: desc(lead.createdAt),
@@ -36,7 +39,6 @@ export async function load({ url }) {
 			limit: ITEMS_PER_PAGE,
 			offset: offset
 		}),
-		// Fetch Total Count (for pagination UI)
 		db.select({ count: count() })
 			.from(lead)
 			.where(filters)
@@ -58,6 +60,11 @@ export async function load({ url }) {
 
 export const actions = {
 	updateStatus: async ({ request, locals }) => {
+		// SECURITY CHECK
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
+		}
+
 		const formData = await request.formData();
 		const id = Number(formData.get('id'));
 		const status = formData.get('status');

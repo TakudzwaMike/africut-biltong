@@ -7,14 +7,13 @@
 
 	let { data, form } = $props();
 
-	// Use $state for local form bindings, initialized from the loaded data.
+	// Initialize form state
 	let formState = $state({ ...data.settings });
 
 	let isSubmitting = $state(false);
 	let isSuccess = $state(false);
 	let isError = $state(false);
 
-	// A derived value to check if the form has been changed from its initial state
 	let isDirty = $derived(JSON.stringify(formState) !== JSON.stringify(data.settings));
 
 	function handleSubmit() {
@@ -22,25 +21,20 @@
 		isSuccess = false;
 		isError = false;
 
-		// The `update` function is provided by `enhance`.
 		return async ({ result, update }) => {
 			isSubmitting = false;
 
 			if (result.type === 'success') {
 				isSuccess = true;
 				toast.success(result.data?.message);
-				// Invalidate all data to get fresh state from the server for layouts, etc.
 				await invalidateAll();
 			} else if (result.type === 'failure') {
 				isError = true;
 				toast.error(result.data?.message);
 			}
 
-			// Tell SvelteKit to apply the form result but NOT reset the form inputs.
-			// This preserves the user's current view of the form.
 			update({ reset: false });
 
-			// Reset the button's visual state after a couple of seconds
 			setTimeout(() => {
 				isSuccess = false;
 				isError = false;
@@ -51,7 +45,7 @@
 
 <div class="p-8">
 	<h1 class="text-3xl font-bold tracking-tight text-main">Site Settings</h1>
-	<p class="mt-2 text-base text-main/70">Manage global branding and logos for the website.</p>
+	<p class="mt-2 text-base text-main/70">Manage global branding, store rates, and configuration.</p>
 
 	<form
 		method="POST"
@@ -59,10 +53,10 @@
 		use:enhance={handleSubmit}
 		class="mt-8 max-w-2xl space-y-6"
 	>
-		<!-- This hidden input ensures the selected logo ID is always sent with the form -->
 		<input type="hidden" name="siteLogoMediaId" value={formState.siteLogoMediaId ?? ''} />
 
-		<div class="rounded-xl border border-main/10 p-6">
+        <!-- Branding Card -->
+		<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
 			<h3 class="text-lg font-bold">Branding</h3>
 			<div class="mt-4 space-y-6">
 				<div>
@@ -83,24 +77,54 @@
 						bind:selectedMediaId={formState.siteLogoMediaId}
 						currentImageUrl={data.logo?.thumbnailUrl || data.logo?.originalUrl}
 						currentImageAlt={data.logo?.altText}
+                        label="Site Logo"
 					/>
 				</div>
 			</div>
 		</div>
 
-		<div class="rounded-xl border border-main/10 p-6">
+        <!-- Store Settings Card (NEW) -->
+        <div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
+			<h3 class="text-lg font-bold flex items-center gap-2">
+                Store Configuration
+                <span class="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent uppercase">Commerce</span>
+            </h3>
+			<div class="mt-4">
+				<label for="exchangeRate" class="mb-1 block font-medium text-main/80">USD to ZAR Exchange Rate</label>
+				<div class="relative">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <span class="text-main/50 font-bold">R</span>
+                    </div>
+                    <input
+                        type="number"
+                        step="0.01"
+                        id="exchangeRate"
+                        name="exchangeRate"
+                        bind:value={formState.exchangeRate}
+                        placeholder="18.50"
+                        class="w-full rounded-md border-0 bg-main/5 pl-8 pr-3 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+                    />
+                </div>
+				<p class="mt-1 text-xs text-main/60">
+					Used to auto-calculate ZAR prices for new products if only USD is provided (and vice versa).
+				</p>
+			</div>
+		</div>
+
+        <!-- Brochure Card -->
+		<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
 			<h3 class="text-lg font-bold">Company Brochure</h3>
 			<div class="mt-4">
 				<label for="brochure" class="mb-1 block font-medium text-main/80"
 					>Upload Brochure (PDF)</label
 				>
 				{#if data.settings.brochureUrl}
-					<div class="mb-2">
-						<p class="text-sm text-main/80">Current Brochure:</p>
+					<div class="mb-2 flex items-center gap-2 text-sm">
+						<span class="font-bold text-accent">✓ Active:</span>
 						<a
 							href={data.settings.brochureUrl}
 							target="_blank"
-							class="mt-1 block text-accent underline"
+							class="text-main/80 hover:text-main underline"
 						>
 							View Current Brochure
 						</a>
@@ -113,13 +137,11 @@
 					accept="application/pdf"
 					class="w-full rounded-md border border-main/10 bg-main/5 text-sm text-main/80 file:mr-4 file:border-0 file:bg-main/10 file:px-4 file:py-2 file:font-bold"
 				/>
-				<p class="mt-1 text-xs text-main/60">
-					Optional. Uploading a new PDF will replace the current one.
-				</p>
 			</div>
 		</div>
 
-		<div class="rounded-xl border border-main/10 p-6">
+        <!-- Hero Video Card -->
+		<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
 			<h3 class="text-lg font-bold">Homepage Hero</h3>
 			<div class="mt-4">
 				<label for="heroVideoUrl" class="mb-1 block font-medium text-main/80"
@@ -130,71 +152,62 @@
 					id="heroVideoUrl"
 					name="heroVideoUrl"
 					bind:value={formState.heroVideoUrl}
-					placeholder="e.g., https://www.youtube.com/watch?v=..."
+					placeholder="https://www.youtube.com/watch?v=..."
 					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 				/>
-				<p class="mt-1 text-xs text-main/60">
-					Optional. If provided, this will replace the background image. Use the full YouTube URL,
-					not the embed link
-				</p>
 			</div>
 		</div>
 
-		<div class="rounded-xl border border-main/10 p-6 space-y-4">
+        <!-- Social & Contact -->
+		<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm space-y-4">
 			<h3 class="text-lg font-bold">Contact & Social</h3>
 			<div>
 				<label for="whatsappNumber" class="mb-1 block font-medium text-main/80"
-					>WhatsApp Number for Quick Chat</label
+					>WhatsApp Number</label
 				>
 				<input
 					type="tel"
 					id="whatsappNumber"
 					name="whatsappNumber"
 					bind:value={formState.whatsappNumber}
-					placeholder="e.g., 263771234567 (include country code)"
+					placeholder="e.g., 263771234567"
 					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 				/>
-				<p class="mt-1 text-xs text-main/60">
-					Optional. If provided, a floating WhatsApp chat button will appear on the site.
-				</p>
 			</div>
 			<hr class="border-main/10" />
 			<div>
 				<label for="socialLinkedIn" class="mb-1 block font-medium text-main/80"
-					>LinkedIn Profile URL</label
+					>LinkedIn URL</label
 				>
 				<input
 					type="url"
 					id="socialLinkedIn"
 					name="socialLinkedIn"
 					bind:value={formState.socialLinkedIn}
-					placeholder="https://www.linkedin.com/company/..."
 					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 				/>
 			</div>
 			<div>
 				<label for="socialX" class="mb-1 block font-medium text-main/80"
-					>X (Twitter) Profile URL</label
+					>X (Twitter) URL</label
 				>
 				<input
 					type="url"
 					id="socialX"
 					name="socialX"
 					bind:value={formState.socialX}
-					placeholder="https://x.com/..."
 					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 				/>
 			</div>
 			<div>
 				<label for="socialFacebook" class="mb-1 block font-medium text-main/80"
-					>Facebook Profile URL</label
+					>Facebook URL</label
 				>
 				<input
 					type="url"
 					id="socialFacebook"
 					name="socialFacebook"
 					bind:value={formState.socialFacebook}
-					placeholder="https://www.facebook.com/..."
 					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 				/>
 			</div>
@@ -204,14 +217,14 @@
 			<p class="text-center font-bold text-red-600">{form.message}</p>
 		{/if}
 
-		<div class="text-left">
+		<div class="text-left pb-12">
 			<SubmitButton
 				type="submit"
 				loading={isSubmitting}
 				success={isSuccess}
 				error={isError}
 				disabled={!isDirty || isSubmitting}
-				class="bg-accent px-6 py-2"
+				class="bg-accent px-6 py-2 w-full sm:w-auto"
 			>
 				Save Settings
 			</SubmitButton>

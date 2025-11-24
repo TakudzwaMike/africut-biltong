@@ -1,10 +1,16 @@
 import { db } from '$lib/server/db';
 import { solution, media } from '$lib/server/db/schema.js';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail, redirect, error } from '@sveltejs/kit';
 import { log } from '$lib/server/auditLog.js';
 import { desc } from 'drizzle-orm';
 
-export async function load() {
+const ALLOWED_ROLES = ['admin', 'content_editor'];
+
+export async function load({ locals }) {
+	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+		throw error(403, 'Forbidden: You do not have permission to create solutions.');
+	}
+
 	const mediaItems = await db.query.media.findMany({
 		orderBy: desc(media.uploadedAt)
 	});
@@ -13,6 +19,10 @@ export async function load() {
 
 export const actions = {
 	default: async ({ request, locals }) => {
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
+		}
+
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 		const {
@@ -29,13 +39,11 @@ export const actions = {
 			return fail(400, { data, message: 'Solution Name and Slug are required.' });
 		}
 
-		let longDescription = null;
-		if (longDescriptionJson && typeof longDescriptionJson === 'string' && longDescriptionJson !== 'null' && longDescriptionJson !== '') {
-			try {
-				longDescription = JSON.parse(longDescriptionJson);
-			} catch (e) {
-				return fail(400, { data, message: 'Invalid rich text format for long description.' });
-			}
+		let longDescription;
+		try {
+			longDescription = longDescriptionJson ? JSON.parse(String(longDescriptionJson)) : null;
+		} catch (e) {
+			return fail(400, { data, message: 'Invalid rich text format for long description.' });
 		}
 
 		try {

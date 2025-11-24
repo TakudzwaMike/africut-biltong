@@ -46,6 +46,7 @@
 		"@lucia-auth/adapter-drizzle": "^1.0.7",
 		"@oslojs/crypto": "^1.0.1",
 		"@oslojs/encoding": "^1.1.0",
+		"@paralleldrive/cuid2": "^3.0.4",
 		"@tiptap/core": "^3.10.5",
 		"@tiptap/extension-bubble-menu": "^3.10.5",
 		"@tiptap/extension-link": "^3.10.5",

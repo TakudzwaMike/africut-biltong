@@ -1,114 +1,103 @@
 import { db } from '$lib/server/db';
-import { userTable, userInvite } from '$lib/server/db/schema.js';
-import { fail, redirect } from '@sveltejs/kit';
-import { desc, eq, ne } from 'drizzle-orm';
+import { userTable } from '$lib/server/db/schema.js';
+import { desc, eq, or, ilike, count, ne, and, inArray } from 'drizzle-orm';
+import { fail } from '@sveltejs/kit';
 import { log } from '$lib/server/auditLog.js';
-import { Argon2id } from 'oslo/password';
-import { generateId } from 'lucia';
-import crypto from 'crypto';
 
-export async function load({ locals }) {
-	// Load all users EXCEPT the currently logged-in one for safety
-	const users = await db.query.userTable.findMany({
-		where: ne(userTable.id, locals.user.id),
-		orderBy: desc(userTable.username),
-		columns: {
-			id: true,
-			username: true
-		}
-	});
-	return { users };
+const ITEMS_PER_PAGE = 20;
+const STAFF_ROLES = ['admin', 'store_manager', 'content_editor'];
+
+export async function load({ url, locals }) {
+    const query = url.searchParams.get('q');
+    const view = url.searchParams.get('view') || 'all'; // 'all', 'staff', 'customer'
+    const page = Number(url.searchParams.get('page')) || 1;
+    const offset = (page - 1) * ITEMS_PER_PAGE;
+
+    // Base condition: Exclude self
+    const conditions = [ne(userTable.id, locals.user.id)];
+
+    // 1. Apply View Filter
+    if (view === 'staff') {
+        conditions.push(inArray(userTable.role, STAFF_ROLES));
+    } else if (view === 'customer') {
+        conditions.push(eq(userTable.role, 'customer'));
+    }
+
+    // 2. Apply Search Filter
+    if (query) {
+        const searchStr = `%${query}%`;
+        conditions.push(or(
+            ilike(userTable.email, searchStr),
+            ilike(userTable.firstName, searchStr),
+            ilike(userTable.lastName, searchStr)
+        ));
+    }
+
+    const whereClause = and(...conditions);
+
+    const [users, totalResult] = await Promise.all([
+        db.select().from(userTable)
+            .where(whereClause)
+            .orderBy(desc(userTable.createdAt))
+            .limit(ITEMS_PER_PAGE)
+            .offset(offset),
+        db.select({ count: count() }).from(userTable).where(whereClause)
+    ]);
+
+    return { 
+        users, 
+        pagination: {
+            page,
+            totalPages: Math.ceil(totalResult[0].count / ITEMS_PER_PAGE),
+            totalItems: totalResult[0].count,
+            query,
+            view
+        }
+    };
 }
 
 export const actions = {
-	create: async ({ request, locals }) => {
-		const formData = await request.formData();
-		const username = formData.get('username');
-		const password = formData.get('password');
+    updateRole: async ({ request, locals }) => {
+        const formData = await request.formData();
+        const userId = String(formData.get('id'));
+        const newRole = String(formData.get('role'));
 
-		if (typeof username !== 'string' || username.length < 3 || username.length > 31) {
-			return fail(400, { message: 'Username must be between 3 and 31 characters.' });
-		}
-		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
-			return fail(400, { message: 'Password must be between 6 and 255 characters.' });
-		}
+        if (userId === locals.user.id) return fail(400, { message: 'Cannot change your own role.' });
 
-		try {
-			const userId = generateId(15);
-			const passwordHash = await new Argon2id().hash(password);
+        // Optional: Add check to prevent non-admins from promoting people
+        if (locals.user.role !== 'admin') return fail(403, { message: 'Only Admins can change roles.' });
 
-			const newUser = {
-				id: userId,
-				username,
-				passwordHash
-			};
-			await db.insert(userTable).values(newUser);
+        try {
+            await db.update(userTable)
+                .set({ role: newRole })
+                .where(eq(userTable.id, userId));
 
-			await log(locals.user?.id, 'create_user', { targetId: userId, data: { username } });
+            await log(locals.user.id, 'update_user_role', {
+                targetId: userId,
+                data: { role: newRole }
+            });
 
-			return { success: true, message: 'User created successfully.' };
-		} catch (error) {
-			console.error('Error creating user:', error);
-			if (error.code === '23505') {
-				// Drizzle wraps postgres errors, but the code is often available
-				return fail(400, { message: 'Username is already taken.' });
-			}
-			return fail(500, { message: 'Could not create user.' });
-		}
-	},
+            return { success: true };
+        } catch (e) {
+            return fail(500, { message: 'Failed to update role' });
+        }
+    },
 
-	delete: async ({ url, locals }) => {
-		const id = url.searchParams.get('id');
-		if (!id) {
-			return fail(400, { message: 'Invalid request' });
-		}
-		if (id === locals.user.id) {
-			return fail(403, { message: 'You cannot delete your own account.' });
-		}
+    delete: async ({ request, locals }) => {
+        const formData = await request.formData();
+        const userId = String(formData.get('id'));
 
-		try {
-			const userToDelete = await db.query.userTable.findFirst({ where: eq(userTable.id, id) });
-			if (!userToDelete) {
-				return fail(404, { message: 'User not found.' });
-			}
+        if (userId === locals.user.id) return fail(400, { message: 'Cannot delete yourself.' });
+        if (locals.user.role !== 'admin') return fail(403, { message: 'Only Admins can delete users.' });
 
-			await db.delete(userTable).where(eq(userTable.id, id));
-
-			await log(locals.user?.id, 'delete_user', {
-				targetId: id,
-				data: { username: userToDelete.username }
-			});
-
-			return { success: true, message: 'User deleted successfully.' };
-		} catch (error) {
-			console.error('Error deleting user:', error);
-			return fail(500, { message: 'Could not delete user.' });
-		}
-	},
-	
-	generateInvite: async ({ locals }) => {
-		try {
-			const token = crypto.randomBytes(32).toString('hex');
-			const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days from now
-
-			const [newInvite] = await db
-				.insert(userInvite)
-				.values({
-					token,
-					expiresAt,
-					createdBy: locals.user.id
-				})
-				.returning();
-
-			await log(locals.user?.id, 'generate_user_invite', {
-				targetId: newInvite.id,
-				data: { token: 'REDACTED' }
-			});
-			
-			return { success: true, token };
-		} catch (error) {
-			console.error('Error generating invite link:', error);
-			return fail(500, { message: 'Could not generate invite link.' });
-		}
-	}
+        try {
+            await db.delete(userTable).where(eq(userTable.id, userId));
+            
+            await log(locals.user.id, 'delete_user', { targetId: userId });
+            
+            return { success: true };
+        } catch (e) {
+            return fail(500, { message: 'Failed to delete user' });
+        }
+    }
 };

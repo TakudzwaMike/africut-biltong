@@ -4,7 +4,14 @@ import { fail, redirect, error } from '@sveltejs/kit';
 import { eq, desc } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
 
-export async function load({ params }) {
+const ALLOWED_ROLES = ['admin', 'content_editor'];
+
+export async function load({ params, locals }) {
+    // 1. Security Check (View)
+    if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+        throw error(403, 'Forbidden: You do not have permission to edit blog posts.');
+    }
+
 	const id = Number(params.id);
 	if (isNaN(id)) {
 		throw error(404, 'Not found');
@@ -39,6 +46,11 @@ export async function load({ params }) {
 
 export const actions = {
 	default: async ({ request, params, locals }) => {
+        // 2. Security Check (Action)
+        if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+            return fail(403, { message: 'Unauthorized.' });
+        }
+
 		const id = Number(params.id);
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
@@ -57,7 +69,7 @@ export const actions = {
 			return fail(400, { data, message: 'Invalid content format.' });
 		}
 
-try {
+        try {
 			const currentPost = await db.query.blogPost.findFirst({
 				where: eq(blogPost.id, id),
 				columns: { isPublished: true, publishedAt: true }
@@ -107,8 +119,7 @@ try {
 						}))
 					);
 				}
-			});
-
+			}); 
 
 			await log(locals.user?.id, 'update_blog_post', {
 				targetId: id,
