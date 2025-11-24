@@ -1,17 +1,59 @@
 import { db } from '$lib/server/db';
 import { lead } from '$lib/server/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, or, ilike, count, sql } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { log } from '$lib/server/auditLog.js';
 
-export async function load() {
-	const leads = await db.query.lead.findMany({
-		orderBy: desc(lead.createdAt),
-		with: {
-			solution: true
+const ITEMS_PER_PAGE = 20;
+
+export async function load({ url }) {
+	// 1. Get Query Params
+	const query = url.searchParams.get('q');
+	const page = Number(url.searchParams.get('page')) || 1;
+	const offset = (page - 1) * ITEMS_PER_PAGE;
+
+	// 2. Build Filter Conditions
+	let filters = undefined;
+	if (query) {
+		const searchStr = `%${query}%`;
+		filters = or(
+			ilike(lead.firstName, searchStr),
+			ilike(lead.lastName, searchStr),
+			ilike(lead.email, searchStr),
+			ilike(lead.status, searchStr)
+		);
+	}
+
+	// 3. Execute Queries in Parallel
+	const [leads, totalResult] = await Promise.all([
+		// Fetch Data
+		db.query.lead.findMany({
+			where: filters,
+			orderBy: desc(lead.createdAt),
+			with: {
+				solution: true
+			},
+			limit: ITEMS_PER_PAGE,
+			offset: offset
+		}),
+		// Fetch Total Count (for pagination UI)
+		db.select({ count: count() })
+			.from(lead)
+			.where(filters)
+	]);
+
+	const totalItems = totalResult[0].count;
+	const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+	return { 
+		leads, 
+		pagination: {
+			page,
+			totalPages,
+			totalItems,
+			query
 		}
-	});
-	return { leads };
+	};
 }
 
 export const actions = {

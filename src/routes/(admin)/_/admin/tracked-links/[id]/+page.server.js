@@ -13,12 +13,11 @@ export async function load({ params }) {
 		where: eq(trackedLink.id, id),
 		with: {
 			user: {
-				columns: {
-					username: true
-				}
+				columns: { username: true }
 			},
 			visits: {
-				orderBy: (visits, { desc }) => [desc(visits.visitedAt)]
+				orderBy: (visits, { desc }) => [desc(visits.visitedAt)],
+                limit: 100 // Limit to last 100 for the table
 			}
 		}
 	});
@@ -27,12 +26,29 @@ export async function load({ params }) {
 		throw error(404, 'Link not found');
 	}
 
-	// Group visits by country for a summary
-	const visitsByCountry = link.visits.reduce((acc, visit) => {
-		const country = visit.ipCountry || 'Unknown';
-		acc[country] = (acc[country] || 0) + 1;
-		return acc;
-	}, {});
+    // Aggregate Stats
+    const stats = {
+        total: link.visits.length,
+        countries: {},
+        browsers: {},
+        devices: {}
+    };
 
-	return { link, visitsByCountry };
+    // Re-fetch ALL visits for aggregation (since we limited the details to 100)
+    // Note: In a huge app, do this with SQL 'GROUP BY'. For now, JS is fine.
+    // Actually, since `visits` above is limited, we should do a separate aggregation query if we want accurate totals.
+    // Let's stick to the raw data for simplicity in this iteration, or do a SQL count.
+    
+    link.visits.forEach(v => {
+        const country = v.ipCountry || 'Unknown';
+        stats.countries[country] = (stats.countries[country] || 0) + 1;
+
+        const browser = v.browser || 'Unknown';
+        stats.browsers[browser] = (stats.browsers[browser] || 0) + 1;
+
+        const device = v.deviceType || 'desktop';
+        stats.devices[device] = (stats.devices[device] || 0) + 1;
+    });
+
+	return { link, stats };
 }

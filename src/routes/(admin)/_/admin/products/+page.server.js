@@ -1,25 +1,60 @@
 import { db } from '$lib/server/db';
 import { product, media, productImage } from '$lib/server/db/schema.js';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, or, ilike, count } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { log } from '$lib/server/auditLog.js';
 
-export async function load() {
-	const products = await db.query.product.findMany({
-		orderBy: desc(product.id),
-		with: {
-			featuredImage: true,
-			galleryImages: {
-				with: {
-					media: true
+const ITEMS_PER_PAGE = 20;
+
+export async function load({ url }) {
+	// 1. Pagination & Search Params
+	const query = url.searchParams.get('q');
+	const page = Number(url.searchParams.get('page')) || 1;
+	const offset = (page - 1) * ITEMS_PER_PAGE;
+
+	// 2. Filters
+	let filters = undefined;
+	if (query) {
+		const searchStr = `%${query}%`;
+		filters = or(
+			ilike(product.name, searchStr),
+			ilike(product.slug, searchStr)
+		);
+	}
+
+	// 3. Parallel Queries
+	const [products, totalResult, mediaItems] = await Promise.all([
+		db.query.product.findMany({
+			where: filters,
+			orderBy: desc(product.id),
+			limit: ITEMS_PER_PAGE,
+			offset: offset,
+			with: {
+				featuredImage: true,
+				galleryImages: {
+					with: {
+						media: true
+					}
 				}
 			}
+		}),
+		db.select({ count: count() }).from(product).where(filters),
+		db.query.media.findMany({ orderBy: desc(media.uploadedAt) })
+	]);
+
+	const totalItems = totalResult[0].count;
+	const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+	return { 
+		products, 
+		mediaItems,
+		pagination: {
+			page,
+			totalPages,
+			totalItems,
+			query
 		}
-	});
-	const mediaItems = await db.query.media.findMany({
-		orderBy: desc(media.uploadedAt)
-	});
-	return { products, mediaItems };
+	};
 }
 
 export const actions = {
@@ -45,11 +80,13 @@ export const actions = {
 			return fail(400, { message: 'Name and Slug are required.' });
 		}
 
-		let longDescription;
-		try {
-			longDescription = longDescriptionJson ? JSON.parse(String(longDescriptionJson)) : null;
-		} catch (e) {
-			return fail(400, { message: 'Invalid rich text format.' });
+		let longDescription = null;
+		if (longDescriptionJson && typeof longDescriptionJson === 'string' && longDescriptionJson !== 'null') {
+			try {
+				longDescription = JSON.parse(longDescriptionJson);
+			} catch (e) {
+				return fail(400, { message: 'Invalid rich text format.' });
+			}
 		}
 
 		const dataToSave = {
@@ -70,7 +107,6 @@ export const actions = {
 
 		try {
 			if (isNaN(id) || !id) {
-				// Create new product
 				const [newProduct] = await db.insert(product).values(dataToSave).returning();
 				if (galleryImageIds.length > 0) {
 					await db.insert(productImage).values(
@@ -86,7 +122,6 @@ export const actions = {
 					data: { ...newProduct, galleryImageIds }
 				});
 			} else {
-				// Update existing product
 				await db.transaction(async (tx) => {
 					await tx.update(product).set(dataToSave).where(eq(product.id, id));
 					await tx.delete(productImage).where(eq(productImage.productId, id));
