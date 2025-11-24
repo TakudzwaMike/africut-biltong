@@ -65,6 +65,6 @@ export const actions = {
 			return fail(500, { data: restOfData, message: 'Could not create the solution.' });
 		}
 
-		throw redirect(302, '/admin/solutions');
+		throw redirect(302, '/_/admin/solutions');
 	}
 };

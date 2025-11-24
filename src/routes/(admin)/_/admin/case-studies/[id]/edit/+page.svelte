@@ -22,7 +22,7 @@
 		<div class="flex items-center justify-between">
 			<h1 class="text-4xl font-bold tracking-tight text-main sm:text-5xl">Edit Case Study</h1>
 			<a
-				href="/admin/case-studies"
+				href="/_/admin/case-studies"
 				class="font-bold text-accent transition hover:drop-shadow-accent-glow"
 				>← Back to List</a
 			>

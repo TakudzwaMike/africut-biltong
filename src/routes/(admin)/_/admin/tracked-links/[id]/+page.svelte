@@ -4,7 +4,7 @@
 
 <div class="p-8">
 	<div>
-		<a href="/admin/tracked-links" class="font-bold text-accent hover:drop-shadow-accent-glow"
+		<a href="/_/admin/tracked-links" class="font-bold text-accent hover:drop-shadow-accent-glow"
 			>← Back to All Links</a
 		>
 		<h1 class="mt-2 text-3xl font-bold tracking-tight text-main">

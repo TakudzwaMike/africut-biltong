@@ -94,6 +94,6 @@ export const actions = {
 			return fail(500, { data, message: 'Could not update the case study.' });
 		}
 
-		throw redirect(302, '/admin/case-studies');
+		throw redirect(302, '/_/admin/case-studies');
 	}
 };

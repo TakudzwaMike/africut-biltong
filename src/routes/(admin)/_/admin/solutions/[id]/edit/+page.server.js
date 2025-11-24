@@ -85,6 +85,6 @@ export const actions = {
 			return fail({ data, message: 'Could not update the solution.' });
 		}
 
-		throw redirect(302, '/admin/solutions');
+		throw redirect(302, '/_/admin/solutions');
 	}
 };

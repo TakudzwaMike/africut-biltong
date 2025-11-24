@@ -12,7 +12,7 @@
 	<div class="mx-auto max-w-4xl px-8 py-20 sm:py-24">
 		<div class="flex items-center justify-between">
 			<h1 class="text-4xl font-bold tracking-tight text-main sm:text-5xl">Edit Solution</h1>
-			<a href="/admin/solutions" class="font-bold text-accent transition hover:drop-shadow-accent-glow"
+			<a href="/_/admin/solutions" class="font-bold text-accent transition hover:drop-shadow-accent-glow"
 				>← Back to List</a
 			>
 		</div>

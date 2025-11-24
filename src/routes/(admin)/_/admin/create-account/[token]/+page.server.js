@@ -84,6 +84,6 @@ export const actions = {
 
 		// Instead of throwing a redirect, we return a specific success type
 		// that the client-side `enhance` function can handle.
-		return { type: 'redirect', location: '/admin' };
+		return { type: 'redirect', location: '/_/admin' };
 	}
 };

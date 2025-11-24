@@ -20,7 +20,7 @@
 				<p class="mt-4 text-lg leading-8 text-main/70">Manage your case studies.</p>
 			</div>
 			<a
-				href="/admin/case-studies/new"
+				href="/_/admin/case-studies/new"
 				class="rounded-md bg-accent px-4 py-2 font-bold text-main shadow-sm transition hover:-translate-y-0.5"
 			>
 				+ Create New
@@ -44,7 +44,7 @@
 							<td class="p-4">
 								<div class="flex items-center justify-end gap-4">
 									<a
-										href={`/admin/case-studies/${cs.id}/edit`}
+										href={`/_/admin/case-studies/${cs.id}/edit`}
 										class="font-bold text-accent transition hover:drop-shadow-accent-glow"
 									>
 										Edit

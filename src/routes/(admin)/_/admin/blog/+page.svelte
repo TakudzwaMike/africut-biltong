@@ -19,7 +19,7 @@
 				<p class="mt-4 text-lg leading-8 text-main/70">Write, edit, and manage your posts.</p>
 			</div>
 			<a
-				href="/admin/blog/new"
+				href="/_/admin/blog/new"
 				class="rounded-md bg-accent px-4 py-2 font-bold text-main shadow-sm transition hover:-translate-y-0.5"
 			>
 				+ Create New Post
@@ -59,7 +59,7 @@
 							<td class="p-4">
 								<div class="flex items-center justify-end gap-4">
 									<a
-										href={`/admin/blog/${post.id}/edit`}
+										href={`/_/admin/blog/${post.id}/edit`}
 										class="font-bold text-accent transition hover:drop-shadow-accent-glow"
 									>
 										Edit

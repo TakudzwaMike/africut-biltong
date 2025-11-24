@@ -164,7 +164,7 @@
 						</td>
 						<td class="p-4 align-top">
 							<a
-								href={`/admin/tracked-links/${link.id}`}
+								href={`/_/admin/tracked-links/${link.id}`}
 								class="font-bold text-accent underline"
 							>
 								{link.visits.length}

@@ -61,7 +61,7 @@
 			{#if user}
 				<li>
 					<a
-						href="/admin"
+						href="/_/admin"
 						class="font-medium transition hover:text-accent hover:drop-shadow-accent-glow"
 						>Admin</a
 					>
@@ -131,7 +131,7 @@
 			</li>
 			{#if user}
 				<li>
-					<a href="/admin" class="text-2xl font-bold text-main">Admin</a>
+					<a href="/_/admin" class="text-2xl font-bold text-main">Admin</a>
 				</li>
 				<li>
 					<form action="/logout" method="POST">

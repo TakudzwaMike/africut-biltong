@@ -21,7 +21,7 @@
 	<div class="mx-auto max-w-4xl px-8 py-20 sm:py-24">
 		<div class="flex items-center justify-between">
 			<h1 class="text-4xl font-bold tracking-tight text-main sm:text-5xl">New Blog Post</h1>
-			<a href="/admin/blog" class="font-bold text-accent transition hover:drop-shadow-accent-glow"
+			<a href="/_/admin/blog" class="font-bold text-accent transition hover:drop-shadow-accent-glow"
 				>← Back to List</a
 			>
 		</div>
@@ -91,7 +91,7 @@
 				{#if data.categories.length === 0}
 					<p class="text-sm text-main/70">
 						No categories created yet. <a
-							href="/admin/blog/categories"
+							href="/_/admin/blog/categories"
 							class="text-accent underline">Create one first</a
 						>.
 					</p>

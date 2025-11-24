@@ -88,6 +88,6 @@ export const actions = {
 			return fail(500, { data, message: 'Could not create the blog post.' });
 		}
 
-		throw redirect(302, '/admin/blog');
+		throw redirect(302, '/_/admin/blog');
 	}
 };

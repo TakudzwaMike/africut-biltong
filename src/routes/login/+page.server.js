@@ -45,6 +45,6 @@ export const actions = {
 			...sessionCookie.attributes
 		});
 
-		throw redirect(302, '/admin');
+		throw redirect(302, '/_/admin');
 	}
 };

@@ -11,7 +11,7 @@
 <Modal {show} on:close>
 	<form
 		method="POST"
-		action="/admin/tracked-links?/create"
+		action="/_/admin/tracked-links?/create"
 		class="p-6"
 		use:enhance={() => {
 			isSubmitting = true;

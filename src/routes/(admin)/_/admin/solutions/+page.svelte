@@ -19,7 +19,7 @@
 			<p class="mt-2 text-base text-main/70">Manage your solutions pages.</p>
 		</div>
 		<a
-			href="/admin/solutions/new"
+			href="/_/admin/solutions/new"
 			class="rounded-md bg-accent px-4 py-2 font-bold text-main shadow-sm transition hover:-translate-y-0.5"
 		>
 			+ Create New
@@ -43,7 +43,7 @@
 						<td class="p-4">
 							<div class="flex items-center justify-end gap-4">
 								<a
-									href={`/admin/solutions/${s.id}/edit`}
+									href={`/_/admin/solutions/${s.id}/edit`}
 									class="font-bold text-accent transition hover:drop-shadow-accent-glow"
 								>
 									Edit

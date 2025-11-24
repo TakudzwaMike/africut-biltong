@@ -19,7 +19,7 @@
 		{#if mediaItems.length === 0}
 			<div class="mt-4 rounded-xl border border-dashed border-main/20 p-12 text-center">
 				<p class="text-main/70">
-					No media found. <a href="/admin/media" class="text-accent underline">Upload some first</a>.
+					No media found. <a href="/_/admin/media" class="text-accent underline">Upload some first</a>.
 				</p>
 			</div>
 		{:else}

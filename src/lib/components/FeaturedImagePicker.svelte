@@ -51,7 +51,7 @@
 				{/if}
 			</div>
 			<p class="mt-2 text-xs text-main/60">
-				Select an image from the <a href="/admin/media" class="text-accent underline">Media Library</a
+				Select an image from the <a href="/_/admin/media" class="text-accent underline">Media Library</a
 				>.
 			</p>
 		</div>

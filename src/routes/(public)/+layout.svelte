@@ -12,7 +12,7 @@
 	/** @type {import('./$types').LayoutData} */
 	const { children, data} = $props()
 
-	let isAdminRoute = $derived(page.url.pathname.startsWith('/admin'))
+	let isAdminRoute = $derived(page.url.pathname.startsWith('/_/admin'))
 
 	const organizationSchema = {
 		'@context': 'https://schema.org',

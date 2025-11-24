@@ -126,7 +126,7 @@
 		</form>
 
 		{#if generatedToken}
-			{@const inviteUrl = `${$page.url.origin}/_/create-account/${generatedToken}`}
+			{@const inviteUrl = `${$page.url.origin}/_/admin/create-account/${generatedToken}`}
 			<div class="mt-4 max-w-lg rounded-md bg-accent/10 p-4">
 				<p class="font-medium text-main">Share this link with your new team member:</p>
 				<p class="mt-2 break-all font-mono text-sm text-accent">

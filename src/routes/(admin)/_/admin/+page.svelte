@@ -49,7 +49,7 @@
 					<div class="rounded-md bg-main/5 p-3 text-center">
 						<p class="text-sm text-main/70">
 							No brochure uploaded yet. <a
-								href="/admin/settings"
+								href="/_/admin/settings"
 								class="font-bold text-accent underline">Upload one in settings</a
 							>.
 						</p>
