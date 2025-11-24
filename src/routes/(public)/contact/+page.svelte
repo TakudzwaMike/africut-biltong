@@ -1,18 +1,15 @@
 <script>
-	//import RegionalMap from '$lib/components/RegionalMap.svelte';
+	import { pow } from '$lib/actions/pow.js';
+	import { enhance } from '$app/forms';
 
 	let { data, form } = $props();
-	const { solution, product } = data; // Destructure both product and solution
+	const { solution, product } = data;
 
-	// This state will hold the message content.
-	// It defaults to the form data if a submission failed, otherwise it's empty.
 	let message = $state(form?.data?.message ?? '');
+	let isVerifying = $state(false); // State to track PoW progress
 
-	// This effect runs when the component loads.
-	// It pre-fills the message based on a product or solution query parameter.
 	$effect(() => {
 		if (form?.data?.message) {
-			// If the form failed, keep the user's typed message
 			message = form.data.message;
 		} else if (product) {
 			message = `I'm interested in discussing your "${product.name}" product.`;
@@ -55,7 +52,14 @@
 			{/if}
 
 			{#if !form?.success}
-				<form method="POST" class="mx-auto mt-12 max-w-xl">
+				<form 
+					method="POST" 
+					class="mx-auto mt-12 max-w-xl"
+					use:enhance 
+					use:pow
+					onpow-solving={() => isVerifying = true}
+					onpow-verified={() => isVerifying = false}
+				>
 					{#if solution}
 						<input type="hidden" name="solutionId" value={solution.id} />
 					{/if}
@@ -112,9 +116,14 @@
 					<div class="mt-10 text-center">
 						<button
 							type="submit"
-							class="rounded-md bg-accent px-6 py-3 font-bold text-main shadow-lg shadow-accent/30 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/40"
+							disabled={isVerifying}
+							class="rounded-md bg-accent px-6 py-3 font-bold text-main shadow-lg shadow-accent/30 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/40 disabled:opacity-50 disabled:cursor-not-allowed"
 						>
-							Send Message
+							{#if isVerifying}
+								Verifying Security...
+							{:else}
+								Send Message
+							{/if}
 						</button>
 					</div>
 				</form>
@@ -122,12 +131,6 @@
 		</div>
 	</div>
 </section>
-
-<!--
-<div class="mx-auto max-w-4xl px-8 pb-20 sm:pb-24">
-	<RegionalMap locations={data.locations} />
-</div>
--->
 
 {#if data.locations && data.locations.length > 0}
 	<section class="relative z-10">

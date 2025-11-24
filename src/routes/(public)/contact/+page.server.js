@@ -1,12 +1,14 @@
 import { db } from '$lib/server/db';
-import {
-	lead as leadTable,
-	solution as solutionTable,
-	product as productTable,
-	location
+import { 
+	lead as leadTable, 
+	solution as solutionTable, 
+	product as productTable, 
+	location 
 } from '$lib/server/db/schema';
 import { fail } from '@sveltejs/kit';
 import { eq, desc } from 'drizzle-orm';
+import { sendNewLeadNotification } from '$lib/server/email';
+import { verifySolution } from '$lib/server/pow';
 
 export async function load({ url }) {
 	const solutionSlug = url.searchParams.get('solution');
@@ -38,7 +40,14 @@ export const actions = {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 
-		const { firstName, lastName, email, message, solutionId } = data;
+		const { firstName, lastName, email, message, solutionId, pow_salt, pow_nonce } = data;
+
+		// 1. Verify Anti-Spam Proof of Work
+		const isValidPoW = verifySolution(String(pow_salt), Number(pow_nonce));
+		if (!isValidPoW) {
+			// Return the data so the user doesn't lose their message
+			return fail(400, { data, message: 'Anti-spam verification failed. Please wait a moment and try again.' });
+		}
 
 		if (!email || !firstName || !lastName || !message) {
 			return fail(400, { data, message: 'All fields are required.' });
@@ -57,7 +66,6 @@ export const actions = {
 			await db.insert(leadTable).values(valuesToInsert);
 
 			// After successfully saving, send the email notification.
-			// We don't await this so the user gets an immediate response.
 			sendNewLeadNotification(valuesToInsert);
 
 			return {
@@ -66,7 +74,6 @@ export const actions = {
 			};
 		} catch (error) {
 			console.error('Database error on lead submission:', error);
-			// For robust error handling, you would log this error to a service like Sentry or Logtail
 			return fail(500, { data, message: 'Could not submit your message due to a server error.' });
 		}
 	}
