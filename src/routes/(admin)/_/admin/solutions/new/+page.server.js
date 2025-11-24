@@ -29,11 +29,13 @@ export const actions = {
 			return fail(400, { data, message: 'Solution Name and Slug are required.' });
 		}
 
-		let longDescription;
-		try {
-			longDescription = longDescriptionJson ? JSON.parse(String(longDescriptionJson)) : null;
-		} catch (e) {
-			return fail(400, { data, message: 'Invalid rich text format for long description.' });
+		let longDescription = null;
+		if (longDescriptionJson && typeof longDescriptionJson === 'string' && longDescriptionJson !== 'null' && longDescriptionJson !== '') {
+			try {
+				longDescription = JSON.parse(longDescriptionJson);
+			} catch (e) {
+				return fail(400, { data, message: 'Invalid rich text format for long description.' });
+			}
 		}
 
 		try {
