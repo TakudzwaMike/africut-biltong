@@ -1,0 +1,16 @@
+name: Publish Scheduled Posts
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Publish Endpoint
+        run: |
+          curl -X GET ${{ secrets.SITE_URL }}/api/cron/publish-post \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+          -H "Content-Type: application/json"
