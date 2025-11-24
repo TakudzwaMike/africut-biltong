@@ -4,11 +4,13 @@
 
 	let { data, form } = $props();
 
-	// Use a single state object for the entire form, initialized from the loaded data.
-	let solutionData = $state(data.solution);
+	// Initialize state with deep copy to avoid reference issues
+	let solutionData = $state({
+		...data.solution,
+		// Ensure longDescription is at least null if missing
+		longDescription: data.solution.longDescription || null
+	});
 
-	// Create a Set of currently linked product IDs for easy checking
-	// data.solution.products is an array of { solutionId, productId } objects from the link table
 	let selectedProductIds = $derived(new Set(data.solution.products.map((link) => link.productId)));
 </script>
 
@@ -22,6 +24,8 @@
 		</div>
 
 		<form method="POST" class="mt-12 space-y-8">
+			<!-- SAFEGUARDS: Use a fallback empty object if null to ensure JSON.stringify doesn't produce "null" string if we don't want it to, 
+			     or handle "null" string on server (which we did in Step 1) -->
 			<input type="hidden" name="longDescription" value={JSON.stringify(solutionData.longDescription)} />
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
@@ -102,6 +106,8 @@
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Long Description (Content)</h3>
+				<!-- Bind content to solutionData.longDescription -->
+				<!-- Pass initialContent explicitly to ensure prefill works -->
 				<RichTextEditor
 					bind:content={solutionData.longDescription}
 					initialContent={data.solution.longDescription}

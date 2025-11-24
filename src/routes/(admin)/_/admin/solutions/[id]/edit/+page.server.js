@@ -10,12 +10,11 @@ export async function load({ params }) {
 		throw error(404, 'Not found');
 	}
 
-	// 1. Fetch the Solution with its linked products
 	const sol = await db.query.solution.findFirst({
 		where: eq(solution.id, id),
 		with: {
 			featuredImage: true,
-			products: true // This fetches the link table entries
+			products: true
 		}
 	});
 
@@ -23,15 +22,13 @@ export async function load({ params }) {
 		throw error(404, 'Not found');
 	}
 
-	// 2. Fetch all Media
 	const mediaItems = await db.query.media.findMany({
 		orderBy: desc(media.uploadedAt)
 	});
 
-	// 3. Fetch all Products (to populate the selection list)
 	const allProducts = await db.query.product.findMany({
 		orderBy: desc(product.name),
-		columns: { id: true, name: true } // We only need ID and Name for the checkbox list
+		columns: { id: true, name: true }
 	});
 
 	return {
@@ -46,7 +43,6 @@ export const actions = {
 		const id = Number(params.id);
 		const formData = await request.formData();
 		
-		// Extract standard fields
 		const solutionName = formData.get('solutionName');
 		const slug = formData.get('slug');
 		const shortDescription = formData.get('shortDescription');
@@ -55,18 +51,20 @@ export const actions = {
 		const ctaLink = formData.get('ctaLink');
 		const mediaId = formData.get('mediaId');
 		
-		// Extract Product IDs (Multiselect)
 		const productIds = formData.getAll('productIds').map(Number);
 
 		if (!solutionName || !slug) {
 			return fail(400, { message: 'Solution Name and Slug are required.' });
 		}
 
-		let longDescription;
-		try {
-			longDescription = longDescriptionJson ? JSON.parse(String(longDescriptionJson)) : null;
-		} catch (e) {
-			return fail(400, { message: 'Invalid rich text format for long description.' });
+		let longDescription = null;
+		if (longDescriptionJson && typeof longDescriptionJson === 'string' && longDescriptionJson !== 'null' && longDescriptionJson !== '') {
+			try {
+				longDescription = JSON.parse(longDescriptionJson);
+			} catch (e) {
+				console.error('JSON Parse Error:', e);
+				return fail(400, { message: 'Invalid rich text format for long description.' });
+			}
 		}
 
 		const dataToUpdate = {
@@ -81,10 +79,8 @@ export const actions = {
 
 		try {
 			await db.transaction(async (tx) => {
-				// 1. Update Solution Details
 				await tx.update(solution).set(dataToUpdate).where(eq(solution.id, id));
 
-				// 2. Update Product Links (Delete all, then re-insert selected)
 				await tx.delete(solutionsToProducts).where(eq(solutionsToProducts.solutionId, id));
 				
 				if (productIds.length > 0) {

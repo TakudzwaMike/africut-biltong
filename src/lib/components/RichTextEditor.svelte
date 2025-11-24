@@ -11,8 +11,48 @@
 	let element = $state();
 	let editor = $state();
 
+	/**
+	 * Converts legacy EditorJS data to HTML string for TipTap ingestion.
+	 */
+	function convertLegacyContent(data) {
+		if (!data || !data.blocks) return '';
+		
+		return data.blocks.map(block => {
+			switch(block.type) {
+				case 'header':
+					return `<h${block.data.level}>${block.data.text}</h${block.data.level}>`;
+				case 'paragraph':
+					return `<p>${block.data.text}</p>`;
+				case 'list':
+					const tag = block.data.style === 'ordered' ? 'ol' : 'ul';
+					const items = block.data.items.map(item => {
+						const text = typeof item === 'string' ? item : (item.content || item.text || '');
+						return `<li>${text}</li>`;
+					}).join('');
+					return `<${tag}>${items}</${tag}>`;
+				case 'quote':
+					return `<blockquote>${block.data.text}</blockquote>`;
+				case 'delimiter':
+					return `<hr>`;
+				default:
+					return '';
+			}
+		}).join('');
+	}
+
 	onMount(() => {
 		if (!browser) return;
+
+		// DECIDE: Is this new TipTap JSON or old EditorJS JSON?
+		let contentToLoad;
+		
+		// Check for legacy EditorJS structure (has 'blocks' array)
+		if (initialContent && initialContent.blocks && Array.isArray(initialContent.blocks)) {
+			contentToLoad = convertLegacyContent(initialContent);
+		} else {
+			// Otherwise assume it's compatible TipTap JSON or empty
+			contentToLoad = initialContent || content || '';
+		}
 
 		editor = new Editor({
 			element: element,
@@ -26,7 +66,7 @@
 					}
 				})
 			],
-			content: initialContent || content || '',
+			content: contentToLoad,
 			editorProps: {
 				attributes: {
 					class: 'prose prose-lg max-w-none focus:outline-none min-h-[200px] text-main/80'
@@ -41,15 +81,24 @@
 		});
 	});
 
-	// Fix: Watch for changes in initialContent to handle async data loading
 	$effect(() => {
 		if (editor && initialContent && !editor.isDestroyed) {
-			// Check if content is different to avoid cursor jumping or loops
-			// JSON.stringify is a cheap way to compare simple TipTap docs
-			const currentContent = JSON.stringify(editor.getJSON());
-			const newContent = JSON.stringify(initialContent);
+			// We only want to re-set content if the ID changes or explicit reload happens,
+			// otherwise we overwrite user typing.
+			// For simple use cases, comparing stringified JSON is "good enough".
+			const currentJSON = JSON.stringify(editor.getJSON());
 			
-			if (currentContent !== newContent && newContent !== JSON.stringify({ type: 'doc', content: [] })) {
+			// Handle Legacy check again for updates
+			let newContentFormatted;
+			if (initialContent.blocks) {
+				// If incoming is legacy, we can't easily compare against current TipTap JSON.
+				// Usually, this runs only on mount. We skip updates if it's legacy to avoid loops.
+				return;
+			} else {
+				newContentFormatted = JSON.stringify(initialContent);
+			}
+
+			if (currentJSON !== newContentFormatted && newContentFormatted !== JSON.stringify({ type: 'doc', content: [] })) {
 				editor.commands.setContent(initialContent);
 			}
 		}
