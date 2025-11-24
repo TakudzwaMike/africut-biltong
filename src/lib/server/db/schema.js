@@ -276,6 +276,10 @@ export const linkVisit = pgTable('link_visit', {
 		.notNull()
 		.references(() => trackedLink.id, { onDelete: 'cascade' }),
 	ipCountry: varchar('ip_country', { length: 2 }),
+    browser: varchar('browser', { length: 100 }),
+    os: varchar('os', { length: 100 }),
+    deviceType: varchar('device_type', { length: 50 }),
+    referrer: text('referrer'),
 	visitedAt: timestamp('visited_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
 

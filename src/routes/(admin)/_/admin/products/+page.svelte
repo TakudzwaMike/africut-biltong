@@ -2,11 +2,14 @@
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/toast-service';
 	import { invalidateAll } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
 	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
 	import ImageGalleryManager from '$lib/components/ImageGalleryManager.svelte';
 	import DataTable from '$lib/components/admin/DataTable.svelte';
+	import Icon from '@iconify/svelte';
 
 	let { data, form } = $props();
 
@@ -18,12 +21,36 @@
 	let contentJson = $state(null);
 	let galleryImages = $state([]);
 
+	// Search & Pagination State
+	let searchQuery = $state(data.pagination.query || '');
+	let searchTimeout;
+
 	const columns = [
 		{ label: 'Image', class: 'w-24' },
 		{ label: 'Name' },
 		{ label: 'Description' },
 		{ label: 'Actions', class: 'text-right' }
 	];
+
+	function handleSearchInput() {
+		clearTimeout(searchTimeout);
+		searchTimeout = setTimeout(() => {
+			const url = new URL($page.url);
+			if (searchQuery) {
+				url.searchParams.set('q', searchQuery);
+				url.searchParams.set('page', '1');
+			} else {
+				url.searchParams.delete('q');
+			}
+			goto(url, { keepFocus: true, noScroll: true });
+		}, 400);
+	}
+
+	function changePage(newPage) {
+		const url = new URL($page.url);
+		url.searchParams.set('page', newPage.toString());
+		goto(url, { noScroll: true });
+	}
 
 	function startEditing(product) {
 		editingProduct = {
@@ -87,19 +114,38 @@
 </script>
 
 <div class="p-8">
-	<div class="flex items-center justify-between">
+	<!-- Header Row -->
+	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 		<div>
 			<h1 class="text-3xl font-bold tracking-tight text-main">Products</h1>
 			<p class="mt-2 text-base text-main/70">Manage your products and services for the store.</p>
 		</div>
-		{#if !editingProduct}
-			<button
-				onclick={startCreating}
-				class="rounded-md bg-accent px-4 py-2 font-bold text-main shadow-sm transition hover:-translate-y-0.5"
-			>
-				+ Create New
-			</button>
-		{/if}
+		
+		<div class="flex flex-col items-end gap-4 sm:flex-row">
+			<!-- Search Box -->
+			<div class="relative w-full sm:w-64">
+				<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+					<Icon icon="mdi:magnify" class="text-main/40" />
+				</div>
+				<input
+					type="text"
+					placeholder="Search products..."
+					bind:value={searchQuery}
+					oninput={handleSearchInput}
+					class="block w-full rounded-md border-0 bg-white py-2 pl-10 pr-3 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent sm:text-sm sm:leading-6"
+				/>
+			</div>
+
+			{#if !editingProduct}
+				<button
+					onclick={startCreating}
+					class="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 font-bold text-main shadow-sm transition hover:-translate-y-0.5"
+				>
+					<Icon icon="mdi:plus" />
+					<span>Create New</span>
+				</button>
+			{/if}
+		</div>
 	</div>
 
 	<!-- Add/Edit Form as a slide-over panel -->
@@ -116,7 +162,8 @@
 		>
 			<form method="POST" action="?/save" class="flex h-full flex-col" use:enhance={handleSubmit}>
 				<input type="hidden" name="id" value={editingProduct.id} />
-				<input type="hidden" name="longDescription" value={JSON.stringify(contentJson)} />
+				<!-- Ensure contentJson is valid -->
+				<input type="hidden" name="longDescription" value={JSON.stringify(contentJson || {})} />
 
 				<!-- Header -->
 				<header class="flex-shrink-0 border-b border-main/10 p-4">
@@ -305,6 +352,31 @@
 			emptyMessage="No products found. Create your first one!"
 			row={productRow}
 		/>
+
+		<!-- Pagination Footer -->
+		{#if data.pagination.totalPages > 1}
+			<div class="mt-6 flex items-center justify-between border-t border-main/10 pt-6">
+				<div class="text-sm text-main/60">
+					Page <span class="font-bold text-main">{data.pagination.page}</span> of <span class="font-bold text-main">{data.pagination.totalPages}</span>
+				</div>
+				<div class="flex gap-2">
+					<button
+						onclick={() => changePage(data.pagination.page - 1)}
+						disabled={data.pagination.page <= 1}
+						class="flex items-center gap-1 rounded-md border border-main/10 bg-white px-3 py-1.5 text-sm font-medium text-main transition hover:bg-main/5 disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						<Icon icon="mdi:chevron-left" /> Previous
+					</button>
+					<button
+						onclick={() => changePage(data.pagination.page + 1)}
+						disabled={data.pagination.page >= data.pagination.totalPages}
+						class="flex items-center gap-1 rounded-md border border-main/10 bg-white px-3 py-1.5 text-sm font-medium text-main transition hover:bg-main/5 disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						Next <Icon icon="mdi:chevron-right" />
+					</button>
+				</div>
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -333,44 +405,11 @@
 				class="rounded-md bg-main/80 p-1.5 text-light backdrop-blur-sm hover:bg-main"
 				title="Edit Product"
 			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="lucide lucide-pencil"
-					><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path
-						d="m15 5 4 4"
-					/></svg
-				>
+				<Icon icon="mdi:pencil" width="16" />
 			</button>
 			<form method="POST" action="?/delete&id={p.id}" use:enhance={handleDelete}>
 				<button class="rounded-md bg-red-500 p-1.5 text-white hover:bg-red-600" title="Delete Product">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						class="lucide lucide-trash-2"
-						><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path
-							d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
-						/><line x1="10" x2="10" y1="11" y2="17" /><line
-							x1="14"
-							x2="14"
-							y1="11"
-							y2="17"
-						/></svg
-					>
+					<Icon icon="mdi:trash-can-outline" width="16" />
 				</button>
 			</form>
 		</div>
