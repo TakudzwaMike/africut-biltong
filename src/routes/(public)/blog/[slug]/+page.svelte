@@ -1,56 +1,20 @@
 <script>
-	import edjsHTML from 'editorjs-html';
-	import Image from '$lib/components/Image.svelte';
 	import Seo from '$lib/components/Seo.svelte';
-	// import renderRichTextToHtml from '$lib/renderRichTextToHtml'
+	import RichTextRenderer from '$lib/components/RichTextRenderer.svelte';
+	import PageHeader from '$lib/components/PageHeader.svelte';
+	import Icon from '@iconify/svelte';
 
 	let { data } = $props();
 	const { post } = data;
 
-	const edjsParser = edjsHTML();
-
 	/**
-	 * Extracts the first paragraph of text from Editor.js JSON to use as a meta description.
-	 * @param {object | null | undefined} richText
-	 * @returns {string}
+	 * Extracts the first paragraph of text from TipTap JSON to use as a meta description.
 	 */
 	function getExcerpt(richText) {
-		if (!richText?.blocks) return '';
-		const firstParagraph = richText.blocks.find((block) => block.type === 'paragraph');
-		return firstParagraph?.data?.text?.substring(0, 155) || ''; // Truncate to standard meta description length
-	}
-
-		/**
-	 * Renders TipTap's JSON output to a basic HTML string.
-	 * NOTE: This is a simplified renderer. For a production app, you might use a more robust
-	 * library or extend this function to handle all desired node types (lists, blockquotes, etc.).
-	 * @param {object | null | undefined} richText
-	 * @returns {string}
-	 */
-	function renderRichTextToHtml(richText) {
 		if (!richText?.content) return '';
-
-		const renderNode = (node) => {
-			let textContent = node.content?.map(renderNode).join('') || '';
-
-			switch (node.type) {
-				case 'paragraph':
-					return `<p>${textContent || '<br>'}</p>`;
-				case 'heading':
-					const level = node.attrs?.level || 1;
-					return `<h${level}>${textContent}</h${level}>`;
-				case 'bold':
-					return `<strong>${textContent}</strong>`;
-				case 'italic':
-					return `<em>${textContent}</em>`;
-				case 'text':
-					return node.text;
-				default:
-					return textContent;
-			}
-		};
-
-		return richText.content.map(renderNode).join('');
+		const paragraph = richText.content.find((node) => node.type === 'paragraph');
+		const text = paragraph?.content?.map(c => c.text).join('') || '';
+		return text.substring(0, 155) || '';
 	}
 
 	const seoDescription = getExcerpt(post.contentJson);
@@ -64,19 +28,37 @@
 	ogType="article"
 />
 
-<div class="relative z-10">
-	<div class="mx-auto max-w-4xl px-8 py-20 sm:py-24">
-		<div class="text-center">
-			<h1 class="text-4xl font-bold tracking-tight text-main sm:text-5xl">{post.title}</h1>
-			<p class="mt-6 text-lg leading-8 text-main/70">
-				By {post.author.username} on {new Date(post.publishedAt).toLocaleDateString()}
-			</p>
+<!-- Cinematic Header using the Featured Image -->
+<PageHeader 
+	title={post.title}
+	subtitle={seoDescription}
+	backgroundImage={post.featuredImage}
+/>
+
+<div class="relative z-10 bg-light py-20">
+	<div class="mx-auto max-w-3xl px-8">
+		
+		<!-- Metadata Bar -->
+		<div class="mb-12 flex flex-wrap items-center justify-between gap-4 border-b border-main/10 pb-8 text-sm text-main/60">
+			<div class="flex items-center gap-6">
+				<div class="flex items-center gap-2">
+					<div class="flex h-8 w-8 items-center justify-center rounded-full bg-main/5">
+						<Icon icon="mdi:account" class="text-main/60" />
+					</div>
+					<span class="font-bold text-main">{post.author.username}</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<Icon icon="mdi:calendar" />
+					<span>{new Date(post.publishedAt).toLocaleDateString()}</span>
+				</div>
+			</div>
+
 			{#if post.categories.length > 0}
-				<div class="mt-4 flex flex-wrap items-center justify-center gap-2">
+				<div class="flex gap-2">
 					{#each post.categories as postCategory}
 						<a
 							href={`/blog/category/${postCategory.category.slug}`}
-							class="rounded-full bg-main/10 px-3 py-1 text-sm font-semibold text-main/80 transition hover:bg-main/20"
+							class="rounded-full bg-accent/10 px-3 py-1 font-bold text-accent hover:bg-accent/20 transition-colors"
 						>
 							{postCategory.category.name}
 						</a>
@@ -85,24 +67,46 @@
 			{/if}
 		</div>
 
-		{#if post.featuredImage}
-			<div class="mt-16">
-				<Image
-					src={post.featuredImage.displayUrl || post.featuredImage.originalUrl}
-					alt={post.featuredImage.altText}
-					class="aspect-video w-full rounded-xl shadow-lg"
-				/>
-			</div>
-		{/if}
-
-		<article class="prose prose-lg mx-auto mt-16 text-main/80">
-			{@html renderRichTextToHtml(post.contentJson)}
+		<!-- Main Content -->
+		<article class="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-main prose-p:text-main/80 prose-a:text-accent prose-img:rounded-xl prose-img:shadow-lg">
+			<RichTextRenderer content={post.contentJson} />
 		</article>
 
-		<div class="mt-16 border-t border-main/10 pt-8 text-center">
-			<a href="/blog" class="font-bold text-accent transition hover:drop-shadow-accent-glow"
-				>← Back to All Posts</a
-			>
+		<!-- Article Footer -->
+		<div class="mt-16 border-t border-main/10 pt-8">
+			<div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
+				<div class="text-center sm:text-left">
+					<p class="text-xs font-bold uppercase tracking-widest text-main/40">Share this article</p>
+					<div class="mt-2 flex gap-4">
+						<!-- Mock Share Buttons -->
+						<button class="text-main/60 hover:text-[#0A66C2] transition-colors" aria-label="Share on LinkedIn">
+							<Icon icon="mdi:linkedin" width="24" />
+						</button>
+						<button class="text-main/60 hover:text-black transition-colors" aria-label="Share on X">
+							<Icon icon="mdi:twitter" width="24" />
+						</button>
+						<button class="text-main/60 hover:text-[#1877F2] transition-colors" aria-label="Share on Facebook">
+							<Icon icon="mdi:facebook" width="24" />
+						</button>
+						<button 
+							class="text-main/60 hover:text-main transition-colors" 
+							aria-label="Copy Link"
+							onclick={() => navigator.clipboard.writeText(window.location.href)}
+						>
+							<Icon icon="mdi:link-variant" width="24" />
+						</button>
+					</div>
+				</div>
+
+				<a
+					href="/blog"
+					class="group inline-flex items-center gap-2 rounded-md border border-main/10 px-6 py-3 text-sm font-bold text-main transition hover:border-accent hover:text-accent"
+				>
+					<Icon icon="mdi:arrow-left" class="transition-transform group-hover:-translate-x-1" />
+					Back to Blog
+				</a>
+			</div>
 		</div>
+
 	</div>
 </div>

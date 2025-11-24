@@ -8,8 +8,8 @@
 
 	let showModal = $state(false);
 
-	function handleSelect(event) {
-		const selectedMedia = event.detail;
+	// Updated handler: receives the media object directly, not an event
+	function handleSelect(selectedMedia) {
 		// Avoid adding duplicates
 		if (!galleryImages.some((img) => img.mediaId === selectedMedia.id)) {
 			galleryImages.push({
@@ -17,6 +17,9 @@
 				media: selectedMedia
 			});
 		}
+		// Keep modal open for multiple selections? 
+		// Usually for galleries it's nicer to keep picking, but let's close it to be safe/simple for now.
+		showModal = false; 
 	}
 
 	function removeImage(mediaId) {
@@ -56,11 +59,12 @@
 	<div class="grid grid-cols-3 gap-4 md:grid-cols-4 lg:grid-cols-5">
 		{#each galleryImages as image, i (image.mediaId)}
 			<div
-				class="group relative aspect-square"
+				class="group relative aspect-square cursor-move"
 				draggable="true"
 				ondragstart={(e) => handleDragStart(e, i)}
 				ondragover={(e) => handleDragOver(e, i)}
 				ondragend={handleDragEnd}
+				role="listitem"
 			>
 				<img
 					src={image.media.thumbnailUrl || image.media.originalUrl}
@@ -103,5 +107,5 @@
 <MediaLibraryModal
 	{mediaItems}
 	bind:show={showModal}
-	on:select={handleSelect}
+	onselect={handleSelect}
 />

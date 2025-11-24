@@ -4,8 +4,9 @@
 	import { invalidateAll } from '$app/navigation';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
-	import BlockEditor from '$lib/components/BlockEditor.svelte';
+	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
 	import ImageGalleryManager from '$lib/components/ImageGalleryManager.svelte';
+	import DataTable from '$lib/components/admin/DataTable.svelte';
 
 	let { data, form } = $props();
 
@@ -16,6 +17,13 @@
 
 	let contentJson = $state(null);
 	let galleryImages = $state([]);
+
+	const columns = [
+		{ label: 'Image', class: 'w-24' },
+		{ label: 'Name' },
+		{ label: 'Description' },
+		{ label: 'Actions', class: 'text-right' }
+	];
 
 	function startEditing(product) {
 		editingProduct = {
@@ -100,6 +108,8 @@
 		<div
 			onclick={cancelEditing}
 			class="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+			role="button"
+			tabindex="0"
 		></div>
 		<div
 			class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl flex flex-col bg-light shadow-lg"
@@ -234,7 +244,7 @@
 					<!-- Long Description -->
 					<div class="space-y-4 rounded-xl border border-main/10 p-6">
 						<h3 class="text-lg font-bold">Long Description</h3>
-						<BlockEditor
+						<RichTextEditor
 							bind:content={contentJson}
 							initialContent={editingProduct.longDescription}
 						/>
@@ -287,93 +297,82 @@
 		</div>
 	{/if}
 
-	<!-- Existing Products Table -->
-	<div class="mt-12 overflow-x-auto" class:hidden={editingProduct}>
-		<table class="w-full min-w-max text-left">
-			<thead class="border-b border-main/10">
-				<tr>
-					<th class="p-4">Image</th>
-					<th class="p-4">Name</th>
-					<th class="p-4">Description</th>
-					<th class="p-4 text-right">Actions</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each data.products as p (p.id)}
-					<tr class="border-b border-main/10">
-						<td class="p-4">
-							{#if p.featuredImage}
-								<img
-									src={p.featuredImage.thumbnailUrl || p.featuredImage.originalUrl}
-									alt={p.featuredImage.altText}
-									class="h-10 w-16 rounded-md bg-main/5 object-cover"
-								/>
-							{:else}
-								<div
-									class="flex h-10 w-16 items-center justify-center rounded-md bg-main/5 text-xs text-main/50"
-								>
-									No Image
-								</div>
-							{/if}
-						</td>
-						<td class="p-4 font-medium">{p.name}</td>
-						<td class="p-4 text-main/80">{p.shortDescription}</td>
-						<td class="p-4">
-							<div class="flex items-center justify-end gap-2">
-								<button
-									onclick={() => startEditing(p)}
-									class="rounded-md bg-main/80 p-1.5 text-light backdrop-blur-sm"
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="16"
-										height="16"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										class="lucide lucide-pencil"
-										><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path
-											d="m15 5 4 4"
-										/></svg
-									>
-								</button>
-								<form method="POST" action="?/delete&id={p.id}" use:enhance={handleDelete}>
-									<button class="rounded-md bg-red-500 p-1.5 text-white">
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="16"
-											height="16"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											class="lucide lucide-trash-2"
-											><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path
-												d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
-											/><line x1="10" x2="10" y1="11" y2="17" /><line
-												x1="14"
-												x2="14"
-												y1="11"
-												y2="17"
-											/></svg
-										>
-									</button>
-								</form>
-							</div>
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-		{#if (data.products?.length ?? 0) === 0}
-			<div class="mt-8 rounded-xl border border-dashed border-main/20 p-12 text-center">
-				<p class="text-main/70">No products found. Create your first one!</p>
-			</div>
-		{/if}
+	<!-- Existing Products Table using DataTable -->
+	<div class:hidden={editingProduct}>
+		<DataTable 
+			items={data.products} 
+			{columns} 
+			emptyMessage="No products found. Create your first one!"
+			row={productRow}
+		/>
 	</div>
 </div>
+
+{#snippet productRow(p)}
+	<td class="p-4">
+		{#if p.featuredImage}
+			<img
+				src={p.featuredImage.thumbnailUrl || p.featuredImage.originalUrl}
+				alt={p.featuredImage.altText}
+				class="h-10 w-16 rounded-md bg-main/5 object-cover"
+			/>
+		{:else}
+			<div
+				class="flex h-10 w-16 items-center justify-center rounded-md bg-main/5 text-xs text-main/50"
+			>
+				No Image
+			</div>
+		{/if}
+	</td>
+	<td class="p-4 font-medium">{p.name}</td>
+	<td class="p-4 text-main/80">{p.shortDescription}</td>
+	<td class="p-4">
+		<div class="flex items-center justify-end gap-2">
+			<button
+				onclick={() => startEditing(p)}
+				class="rounded-md bg-main/80 p-1.5 text-light backdrop-blur-sm hover:bg-main"
+				title="Edit Product"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="lucide lucide-pencil"
+					><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path
+						d="m15 5 4 4"
+					/></svg
+				>
+			</button>
+			<form method="POST" action="?/delete&id={p.id}" use:enhance={handleDelete}>
+				<button class="rounded-md bg-red-500 p-1.5 text-white hover:bg-red-600" title="Delete Product">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="lucide lucide-trash-2"
+						><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path
+							d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+						/><line x1="10" x2="10" y1="11" y2="17" /><line
+							x1="14"
+							x2="14"
+							y1="11"
+							y2="17"
+						/></svg
+					>
+				</button>
+			</form>
+		</div>
+	</td>
+{/snippet}

@@ -1,9 +1,15 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 
-	let { show = false, documentId, documentTitle } = $props();
-	const dispatch = createEventDispatcher();
+	/**
+	 * @type {{
+	 *   show: boolean,
+	 *   documentId: number,
+	 *   documentTitle: string,
+	 *   onclose: () => void
+	 * }}
+	 */
+	let { show = false, documentId, documentTitle, onclose } = $props();
 
 	let email = $state('');
 	let isLoading = $state(false);
@@ -31,7 +37,7 @@
 
 			// On success, trigger the download and close the modal
 			window.open(data.fileUrl, '_blank');
-			dispatch('close');
+			if (onclose) onclose();
 		} catch (error) {
 			errorMessage = error.message;
 		} finally {
@@ -50,15 +56,19 @@
 </script>
 
 {#if show}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
 		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
 		role="dialog"
 		aria-modal="true"
-		onclick={() => dispatch('close')}
+		onclick={onclose}
+		tabindex="-1"
 	>
 		<div
 			class="w-full max-w-lg rounded-xl bg-main p-8 text-center shadow-2xl"
 			onclick={(e) => e.stopPropagation()}
+			role="document"
+			tabindex="0"
 		>
 			<h2 class="text-2xl font-bold text-light">Access Document</h2>
 			<p class="mt-2 text-base text-light/70">

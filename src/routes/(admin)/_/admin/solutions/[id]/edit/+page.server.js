@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { solution, media } from '$lib/server/db/schema.js';
+import { solution, media, product, solutionsToProducts } from '$lib/server/db/schema.js';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { eq, desc } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
@@ -10,10 +10,12 @@ export async function load({ params }) {
 		throw error(404, 'Not found');
 	}
 
+	// 1. Fetch the Solution with its linked products
 	const sol = await db.query.solution.findFirst({
 		where: eq(solution.id, id),
 		with: {
-			featuredImage: true
+			featuredImage: true,
+			products: true // This fetches the link table entries
 		}
 	});
 
@@ -21,13 +23,21 @@ export async function load({ params }) {
 		throw error(404, 'Not found');
 	}
 
+	// 2. Fetch all Media
 	const mediaItems = await db.query.media.findMany({
 		orderBy: desc(media.uploadedAt)
 	});
 
+	// 3. Fetch all Products (to populate the selection list)
+	const allProducts = await db.query.product.findMany({
+		orderBy: desc(product.name),
+		columns: { id: true, name: true } // We only need ID and Name for the checkbox list
+	});
+
 	return {
 		solution: sol,
-		mediaItems
+		mediaItems,
+		allProducts
 	};
 }
 
@@ -35,26 +45,28 @@ export const actions = {
 	default: async ({ request, params, locals }) => {
 		const id = Number(params.id);
 		const formData = await request.formData();
-		const data = Object.fromEntries(formData);
-		const {
-			solutionName,
-			slug,
-			shortDescription,
-			longDescription: longDescriptionJson,
-			ctaText,
-			ctaLink,
-			mediaId
-		} = data;
+		
+		// Extract standard fields
+		const solutionName = formData.get('solutionName');
+		const slug = formData.get('slug');
+		const shortDescription = formData.get('shortDescription');
+		const longDescriptionJson = formData.get('longDescription');
+		const ctaText = formData.get('ctaText');
+		const ctaLink = formData.get('ctaLink');
+		const mediaId = formData.get('mediaId');
+		
+		// Extract Product IDs (Multiselect)
+		const productIds = formData.getAll('productIds').map(Number);
 
 		if (!solutionName || !slug) {
-			return fail(400, { data, message: 'Solution Name and Slug are required.' });
+			return fail(400, { message: 'Solution Name and Slug are required.' });
 		}
 
 		let longDescription;
 		try {
 			longDescription = longDescriptionJson ? JSON.parse(String(longDescriptionJson)) : null;
 		} catch (e) {
-			return fail(400, { data, message: 'Invalid rich text format for long description.' });
+			return fail(400, { message: 'Invalid rich text format for long description.' });
 		}
 
 		const dataToUpdate = {
@@ -68,21 +80,35 @@ export const actions = {
 		};
 
 		try {
-			await db.update(solution).set(dataToUpdate).where(eq(solution.id, id));
+			await db.transaction(async (tx) => {
+				// 1. Update Solution Details
+				await tx.update(solution).set(dataToUpdate).where(eq(solution.id, id));
+
+				// 2. Update Product Links (Delete all, then re-insert selected)
+				await tx.delete(solutionsToProducts).where(eq(solutionsToProducts.solutionId, id));
+				
+				if (productIds.length > 0) {
+					await tx.insert(solutionsToProducts).values(
+						productIds.map((prodId) => ({
+							solutionId: id,
+							productId: prodId
+						}))
+					);
+				}
+			});
 
 			await log(locals.user?.id, 'update_solution', {
 				targetId: id,
-				data: dataToUpdate
+				data: { ...dataToUpdate, productIds }
 			});
 		} catch (error) {
 			console.error('Error updating solution:', error);
-			if (error.message.includes('duplicate key value violates unique constraint')) {
-				return fail({
-					data,
+			if (error.message?.includes('duplicate key value violates unique constraint')) {
+				return fail(400, {
 					message: 'This slug is already in use. Please choose another.'
 				});
 			}
-			return fail({ data, message: 'Could not update the solution.' });
+			return fail(500, { message: 'Could not update the solution.' });
 		}
 
 		throw redirect(302, '/_/admin/solutions');

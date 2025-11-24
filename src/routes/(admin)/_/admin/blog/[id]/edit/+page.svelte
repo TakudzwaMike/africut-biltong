@@ -1,5 +1,5 @@
 <script>
-	import BlockEditor from '$lib/components/BlockEditor.svelte';
+	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
 	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
 
 	let { data, form } = $props();
@@ -73,7 +73,8 @@
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Content</h3>
-				<BlockEditor bind:content={contentJson} initialContent={postData.contentJson} />
+				<!-- Replaced BlockEditor with RichTextEditor -->
+				<RichTextEditor bind:content={contentJson} initialContent={postData.contentJson} />
 			</div>
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">

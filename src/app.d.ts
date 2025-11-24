@@ -15,6 +15,7 @@ declare global {
 		interface PrivateEnv {
 			IMAGE_PROCESSING_SECRET: string;
 			BLOB_READ_WRITE_TOKEN: string;
+			CRON_SECRET: string;
 		}
 	}
 }

@@ -6,6 +6,8 @@
 	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
 	import CreateTrackedLinkModal from '$lib/components/CreateTrackedLinkModal.svelte';
 	import { upload } from '@vercel/blob/client';
+	import DataTable from '$lib/components/admin/DataTable.svelte';
+	import Icon from '@iconify/svelte';
 
 	let { data, form } = $props();
 
@@ -35,7 +37,6 @@
 	}
 
 	function handleDelete() {
-		// ... (no changes needed here)
 		return async ({ result, update }) => {
 			if (result.type === 'success' && result.data?.success) {
 				toast.success(result.data.message);
@@ -47,7 +48,6 @@
 		};
 	}
 
-	// 2. UPDATE HELPER: Reset the full upload status when starting.
 	function startEditing(doc) {
 		editingDocument = { ...doc };
 		fileUploadStatus = { inProgress: false, progress: 0, message: '' };
@@ -69,19 +69,16 @@
 		editingDocument = null;
 	}
 
-	// 3. UPDATE UPLOAD HANDLER: Use the onUploadProgress callback.
 	async function handleFileChange(event) {
 		const file = event.currentTarget.files?.[0];
 		if (!file) return;
 
-		// Reset state for the new upload
 		fileUploadStatus = { inProgress: true, progress: 0, message: `Uploading ${file.name}...` };
 
 		try {
 			const newBlob = await upload(file.name, file, {
 				access: 'public',
 				handleUploadUrl: '/api/upload',
-				// This callback provides real-time progress updates
 				onUploadProgress: ({ progress }) => {
 					fileUploadStatus.progress = progress;
 				}
@@ -98,6 +95,13 @@
 			toast.error(message);
 		}
 	}
+
+	const columns = [
+		{ label: 'Thumbnail', class: 'w-24' },
+		{ label: 'Title' },
+		{ label: 'Description' },
+		{ label: 'Actions', class: 'text-right' }
+	];
 </script>
 
 <div class="p-8">
@@ -130,7 +134,6 @@
 				class="space-y-6 rounded-xl border border-main/10 p-6"
 				use:enhance={handleSave}
 			>
-				<!-- 4. WRAP FORM: Use a fieldset to easily disable all inputs during upload -->
 				<fieldset disabled={fileUploadStatus.inProgress}>
 					{#if editingDocument.id}
 						<input type="hidden" name="id" value={editingDocument.id} />
@@ -169,7 +172,6 @@
 							Document File (PDF, etc.)
 						</label>
 
-						<!-- 5. ADD UI: Progress bar and status text -->
 						{#if fileUploadStatus.inProgress}
 							<div class="my-2 space-y-1">
 								<div class="h-2.5 w-full rounded-full bg-main/10">
@@ -249,120 +251,58 @@
 	{/if}
 
 	<!-- Existing Documents Table -->
-	<div class="mt-12 overflow-x-auto" class:hidden={editingDocument}>
-		<!-- ... (rest of the component is unchanged) ... -->
-		<table class="w-full min-w-max text-left">
-			<thead class="border-b border-main/10">
-				<tr>
-					<th class="p-4">Thumbnail</th>
-					<th class="p-4">Title</th>
-					<th class="p-4">Description</th>
-					<th class="p-4 text-right">Actions</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each data.documents as doc (doc.id)}
-					<tr class="border-b border-main/10">
-						<td class="p-4">
-							{#if doc.thumbnail}
-								<img
-									src={doc.thumbnail.thumbnailUrl || doc.thumbnail.originalUrl}
-									alt={doc.thumbnail.altText}
-									class="h-10 w-16 rounded-md bg-main/5 object-cover"
-								/>
-							{:else}
-								<div
-									class="flex h-10 w-16 items-center justify-center rounded-md bg-main/5 text-xs text-main/50"
-								>
-									No Thumb
-								</div>
-							{/if}
-						</td>
-						<td class="p-4 font-medium">{doc.title}</td>
-						<td class="p-4 text-main/80">{doc.description}</td>
-						<td class="p-4">
-							<div class="flex items-center justify-end gap-2">
-								<button
-									onclick={() => (linkableDocument = doc)}
-									title="Create Tracked Link"
-									class="rounded-md bg-blue-500 p-1.5 text-light"
-								>
-									<!-- Link Icon -->
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="16"
-										height="16"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										class="lucide lucide-link"
-										><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72" /><path
-											d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"
-										/></svg
-									>
-								</button>
-								<button
-									onclick={() => startEditing(doc)}
-									class="rounded-md bg-main/80 p-1.5 text-light backdrop-blur-sm"
-								>
-									<!-- Edit Icon -->
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="16"
-										height="16"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										class="lucide lucide-pencil"
-										><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path
-											d="m15 5 4 4"
-										/></svg
-									>
-								</button>
-								<form method="POST" action="?/delete&id={doc.id}" use:enhance={handleDelete}>
-									<button class="rounded-md bg-red-500 p-1.5 text-white">
-										<!-- Delete Icon -->
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="16"
-											height="16"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											class="lucide lucide-trash-2"
-											><path d="M3 6h18" /><path
-												d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"
-											/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line
-												x1="10"
-												x2="10"
-												y1="11"
-												y2="17"
-											/><line x1="14" x2="14" y1="11" y2="17" /></svg
-										>
-									</button>
-								</form>
-							</div>
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-		{#if (data.documents?.length ?? 0) === 0}
-			<div class="mt-8 rounded-xl border border-dashed border-main/20 p-12 text-center">
-				<p class="text-main/70">No documents found. Upload your first one!</p>
-			</div>
-		{/if}
+	<div class:hidden={editingDocument}>
+		<DataTable 
+			items={data.documents} 
+			{columns} 
+			emptyMessage="No documents found. Upload your first one!"
+			row={documentRow}
+		/>
 	</div>
 </div>
+
+{#snippet documentRow(doc)}
+	<td class="p-4">
+		{#if doc.thumbnail}
+			<img
+				src={doc.thumbnail.thumbnailUrl || doc.thumbnail.originalUrl}
+				alt={doc.thumbnail.altText}
+				class="h-10 w-16 rounded-md bg-main/5 object-cover"
+			/>
+		{:else}
+			<div
+				class="flex h-10 w-16 items-center justify-center rounded-md bg-main/5 text-xs text-main/50"
+			>
+				No Thumb
+			</div>
+		{/if}
+	</td>
+	<td class="p-4 font-medium">{doc.title}</td>
+	<td class="p-4 text-main/80">{doc.description}</td>
+	<td class="p-4">
+		<div class="flex items-center justify-end gap-2">
+			<button
+				onclick={() => (linkableDocument = doc)}
+				title="Create Tracked Link"
+				class="rounded-md bg-blue-500 p-1.5 text-light hover:bg-blue-600 transition-colors"
+			>
+				<Icon icon="mdi:link-variant" width="16" />
+			</button>
+			<button
+				onclick={() => startEditing(doc)}
+				class="rounded-md bg-main/80 p-1.5 text-light backdrop-blur-sm hover:bg-main transition-colors"
+				title="Edit Document"
+			>
+				<Icon icon="mdi:pencil" width="16" />
+			</button>
+			<form method="POST" action="?/delete&id={doc.id}" use:enhance={handleDelete}>
+				<button class="rounded-md bg-red-500 p-1.5 text-white hover:bg-red-600 transition-colors" title="Delete Document">
+					<Icon icon="mdi:trash-can-outline" width="16" />
+				</button>
+			</form>
+		</div>
+	</td>
+{/snippet}
 
 {#if linkableDocument}
 	<CreateTrackedLinkModal

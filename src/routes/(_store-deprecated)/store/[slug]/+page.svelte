@@ -4,11 +4,16 @@
 	import { page } from '$app/stores';
 	import { toast } from '$lib/toast-service';
 	import ProductGallery from '$lib/components/ProductGallery.svelte';
+	import RichTextRenderer from '$lib/components/RichTextRenderer.svelte';
+	import Image from '$lib/components/Image.svelte';
 
 	let { data } = $props();
 	const { product } = data;
 	const currency = $derived($page.data.userCountryCode === 'ZA' ? 'ZAR' : 'USD');
 	const price = $derived(product.prices?.[currency]);
+
+	// Extract related solutions from the join table structure
+	const relatedSolutions = product.solutions.map(s => s.solution).filter(Boolean);
 
 	const productSchema = {
 		'@context': 'https://schema.org',
@@ -40,32 +45,6 @@
 		}
 		cart.addItem(product, price, currency);
 		toast.success(`Added ${product.name} to cart!`);
-	}
-
-	function renderRichTextToHtml(richText) {
-		if (!richText?.content) return '';
-
-		const renderNode = (node) => {
-			let textContent = node.content?.map(renderNode).join('') || '';
-
-			switch (node.type) {
-				case 'paragraph':
-					return `<p>${textContent || '<br>'}</p>`;
-				case 'heading':
-					const level = node.attrs?.level || 1;
-					return `<h${level}>${textContent}</h${level}>`;
-				case 'bold':
-					return `<strong>${textContent}</strong>`;
-				case 'italic':
-					return `<em>${textContent}</em>`;
-				case 'text':
-					return node.text;
-				default:
-					return textContent;
-			}
-		};
-
-		return richText.content.map(renderNode).join('');
 	}
 </script>
 
@@ -105,8 +84,40 @@
 			</div>
 		</div>
 
-		<article class="prose prose-lg mx-auto mt-16 text-main/80">
-			{@html renderRichTextToHtml(product.longDescription)}
-		</article>
+		<div class="mx-auto mt-16">
+			<RichTextRenderer content={product.longDescription} />
+		</div>
+
+		<!-- Related Solutions Section -->
+		{#if relatedSolutions.length > 0}
+			<div class="mt-24 border-t border-main/10 pt-16">
+				<h3 class="text-2xl font-bold text-main mb-8">Part of these Solutions</h3>
+				<div class="grid grid-cols-1 gap-8 sm:grid-cols-2">
+					{#each relatedSolutions as solution}
+						<a href={`/solutions/${solution.slug}`} class="group relative block overflow-hidden rounded-xl border border-main/10 bg-white hover:shadow-lg transition-all hover:-translate-y-1">
+							<div class="aspect-[16/9] overflow-hidden">
+								{#if solution.featuredImage}
+									<Image 
+										src={solution.featuredImage.thumbnailUrl || solution.featuredImage.originalUrl} 
+										alt={solution.featuredImage.altText}
+										aspectRatio="16/9"
+										class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+									/>
+								{:else}
+									<div class="flex h-full w-full items-center justify-center bg-main/5">
+										<span class="text-main/40">No Image</span>
+									</div>
+								{/if}
+							</div>
+							<div class="p-6">
+								<h4 class="text-lg font-bold text-main group-hover:text-accent">{solution.solutionName}</h4>
+								<p class="mt-2 text-sm text-main/70 line-clamp-2">{solution.shortDescription}</p>
+								<span class="mt-4 inline-block text-sm font-bold text-accent">Learn more →</span>
+							</div>
+						</a>
+					{/each}
+				</div>
+			</div>
+		{/if}
 	</div>
 </div>

@@ -3,12 +3,17 @@
 	import { enhance } from '$app/forms';
 	import SubmitButton from './SubmitButton.svelte';
 
-	let { show = false, destinationUrl, documentTitle } = $props();
+	let { show = $bindable(false), destinationUrl, documentTitle, onclose } = $props();
 
 	let isSubmitting = $state(false);
+
+	function handleClose() {
+		show = false;
+		if (onclose) onclose();
+	}
 </script>
 
-<Modal {show} on:close>
+<Modal bind:show>
 	<form
 		method="POST"
 		action="/_/admin/tracked-links?/create"
@@ -19,7 +24,7 @@
 				isSubmitting = false;
 				if (result.type === 'success') {
 					// The toast and invalidate are handled on the tracked-links page
-					show = false; // Close the modal
+					handleClose();
 				}
 				update(); // Update form prop on failure
 			};
@@ -47,7 +52,7 @@
 		</div>
 
 		<div class="mt-6 flex justify-end gap-4">
-			<button type="button" class="font-medium text-main/70" on:click={() => (show = false)}
+			<button type="button" class="font-medium text-main/70" onclick={handleClose}
 				>Cancel</button
 			>
 			<SubmitButton type="submit" loading={isSubmitting} class="bg-accent px-6 py-2">

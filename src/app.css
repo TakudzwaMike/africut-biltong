@@ -1,5 +1,4 @@
 @import "tailwindcss";
-
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
 
@@ -22,9 +21,6 @@
     background-color: var(--color-light);
     font-family: var(--font-sans);
     color: var(--color-main);
-  }
-  .prose {
-    text-align: justify;
   }
 }
 
@@ -100,7 +96,8 @@
     transform-origin: bottom right;
     transform: scale(1);
   }
-  	/* New styles for scroll-triggered animations */
+  
+	/* New styles for scroll-triggered animations */
 	.fade-in {
 		/* Start invisible and slightly scaled down */
 		opacity: 0;
@@ -125,6 +122,7 @@
 	.perspective-container {
 		perspective: 800px;
 	}
+
   .corner-border:hover::before,
   .corner-border:hover::after {
     transform: scale(1.15);
@@ -137,5 +135,33 @@
   }
   .btn-danger {
     @apply rounded-md bg-red-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-600;
+  }
+
+  /* 
+    Typography Overrides 
+    This ensures all rich text content matches your brand colors
+  */
+  .prose {
+    --tw-prose-body: var(--color-main);
+    --tw-prose-headings: var(--color-main);
+    --tw-prose-links: var(--color-accent);
+    --tw-prose-bold: var(--color-main);
+    --tw-prose-counters: var(--color-accent);
+    --tw-prose-bullets: var(--color-accent);
+    --tw-prose-hr: color-mix(in srgb, var(--color-main) 20%, transparent);
+    --tw-prose-quotes: var(--color-main);
+    --tw-prose-quote-borders: var(--color-accent);
+    
+    text-align: justify;
+  }
+  
+  /* Force links to be bold and hoverable */
+  .prose a {
+    font-weight: 700;
+    text-decoration: none;
+    transition: text-shadow 0.2s;
+  }
+  .prose a:hover {
+    text-shadow: 0 0 8px rgba(192, 213, 50, 0.4);
   }
 }

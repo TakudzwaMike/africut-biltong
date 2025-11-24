@@ -11,14 +11,17 @@
 
 	let showModal = $state(false);
 
+	// Derived state to find the full media object based on the ID
 	let selectedImage = $derived(mediaItems.find((item) => item.id === selectedMediaId));
 
+	// Decide what to show: the selected object, or the initial URL passed in
 	let imageToShow = $derived(
 		selectedImage || (currentImageUrl ? { url: currentImageUrl, altText: currentImageAlt } : null)
 	);
 
-	function handleSelect(event) {
-		selectedMediaId = event.detail.id;
+	// New Handler: Receives the media object directly
+	function handleSelect(media) {
+		selectedMediaId = media.id;
 		showModal = false;
 	}
 
@@ -63,7 +66,6 @@
 
 <MediaLibraryModal
 	{mediaItems}
-	show={showModal}
-	on:select={handleSelect}
-	on:close={() => (showModal = false)}
+	bind:show={showModal}
+	onselect={handleSelect}
 />

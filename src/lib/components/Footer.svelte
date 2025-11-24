@@ -1,201 +1,116 @@
 <script>
 	import { page } from '$app/state';
+	import Icon from '@iconify/svelte';
 
 	let settings = $derived(page.data.settings);
 	let locations = $derived(page.data.locations);
 	let userCountryCode = $derived(page.data.userCountryCode);
 	let mediaItems = $derived(page.data.mediaItems);
 
+	// Find the logo object from the media list using the ID stored in settings
 	let logo = $derived(mediaItems?.find((m) => m.id == settings?.siteLogoMediaId));
 </script>
 
-<footer class="relative z-10 border-t border-main/10 bg-light">
-	<div class="mx-auto max-w-6xl px-8 py-12">
-		<div class="grid grid-cols-1 gap-12 text-center sm:grid-cols-2 lg:grid-cols-4 sm:text-left">
-			<div class="flex flex-col items-center sm:items-start">
-				<a href="/" class="text-xl font-bold">
+<footer class="bg-main text-light relative z-10 border-t-4 border-accent">
+	<div class="mx-auto max-w-7xl px-8 py-16">
+		<div class="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
+			
+			<!-- Brand Section -->
+			<div class="space-y-6">
+				<a href="/" class="block text-2xl font-bold tracking-tight">
 					{#if logo}
 						<img
 							src={logo.displayUrl || logo.originalUrl}
 							alt={logo.altText}
-							class="h-8 object-contain"
+							class="h-10 object-contain brightness-0 invert" 
 						/>
 					{:else}
 						{settings?.siteName || 'Vision AI Tech'}
 					{/if}
 				</a>
-				<p class="mt-2 text-main/70">Smart, Simple AI Solutions.</p>
-			</div>
-
-			<div>
-				<h3 class="font-bold uppercase tracking-wider text-main/60">Sitemap</h3>
-				<ul class="mt-4 space-y-2">
-					<li>
-						<a
-							href="/solutions"
-							class="text-main/80 transition hover:text-accent hover:drop-shadow-accent-glow"
-							>Solutions</a
-						>
-					</li>
-					<li>
-						<a
-							href="/case-studies"
-							class="text-main/80 transition hover:text-accent hover:drop-shadow-accent-glow"
-							>Case Studies</a
-						>
-					</li>
-					<li>
-						<a
-							href="/resources"
-							class="text-main/80 transition hover:text-accent hover:drop-shadow-accent-glow"
-							>Resources</a
-						>
-					</li>
-					<li>
-						<a
-							href="/about"
-							class="text-main/80 transition hover:text-accent hover:drop-shadow-accent-glow"
-							>About Us</a
-						>
-					</li>
-					<li>
-						<a
-							href="/contact"
-							class="text-main/80 transition hover:text-accent hover:drop-shadow-accent-glow"
-							>Contact</a
-						>
-					</li>
-
-					<!--
-					{#if settings?.brochureUrl}
-						<li>
-							<a
-								href={settings.brochureUrl}
-								target="_blank"
-								class="font-bold text-accent transition hover:drop-shadow-accent-glow"
-								>Download Brochure</a
-							>
-						</li>
-					{/if}
-					-->
-				</ul>
-			</div>
-
-			<div>
-				<h3 class="font-bold uppercase tracking-wider text-main/60">Get In Touch</h3>
-				<ul class="mt-4 space-y-2">
-					<li>
-						<a
-							href="mailto:contact@vision-ai.tech"
-							class="text-main/80 transition hover:text-accent hover:drop-shadow-accent-glow"
-							>hello@vision-ai.tech</a
-						>
-					</li>
-					{#if locations?.length > 0}
-						{#each locations as loc}
-							<li
-								class="transition {userCountryCode === loc.countryCode
-									? 'text-accent font-bold'
-									: 'text-main/80'}"
-							>
-								{loc.address}, {loc.countryName}
-								{#if loc.phoneNumber}
-									<br />
-									<a href="tel:{loc.phoneNumber.replace(/\s/g, '')}" class="hover:underline"
-										>{loc.phoneNumber}</a
-									>
-								{/if}
-							</li>
-						{/each}
-					{/if}
-				</ul>
-			</div>
-
-			<div>
-				<h3 class="font-bold uppercase tracking-wider text-main/60">Follow Us</h3>
-				<div class="mt-4 flex justify-center gap-6 sm:justify-start">
+				<p class="text-sm leading-relaxed text-light/70">
+					Transforming heavy industry through smart, simple AI solutions. We turn operational data into measurable profitability and safety.
+				</p>
+				<div class="flex gap-4">
 					{#if settings?.socialLinkedIn}
-						<a
-							href={settings.socialLinkedIn}
-							target="_blank"
-							rel="noopener noreferrer"
-							class="text-main/70 hover:text-accent"
-							aria-label="LinkedIn"
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="24"
-								height="24"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path
-									d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"
-								/><rect width="4" height="12" x="2" y="9" /><circle cx="4" cy="4" r="2" /></svg
-							>
+						<a href={settings.socialLinkedIn} target="_blank" rel="noopener noreferrer" class="text-light/70 hover:text-accent transition-colors" aria-label="LinkedIn">
+							<Icon icon="mdi:linkedin" width="24" />
 						</a>
 					{/if}
 					{#if settings?.socialX}
-						<a
-							href={settings.socialX}
-							target="_blank"
-							rel="noopener noreferrer"
-							class="text-main/70 hover:text-accent"
-							aria-label="X (formerly Twitter)"
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="24"
-								height="24"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								class="lucide lucide-x"
-								><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg
-							>
+						<a href={settings.socialX} target="_blank" rel="noopener noreferrer" class="text-light/70 hover:text-accent transition-colors" aria-label="X (Twitter)">
+							<Icon icon="mdi:twitter" width="24" />
 						</a>
 					{/if}
 					{#if settings?.socialFacebook}
-						<a
-							href={settings.socialFacebook}
-							target="_blank"
-							rel="noopener noreferrer"
-							class="text-main/70 hover:text-accent"
-							aria-label="Facebook"
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="24"
-								height="24"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg
-							>
+						<a href={settings.socialFacebook} target="_blank" rel="noopener noreferrer" class="text-light/70 hover:text-accent transition-colors" aria-label="Facebook">
+							<Icon icon="mdi:facebook" width="24" />
 						</a>
+					{/if}
+				</div>
+			</div>
+
+			<!-- Navigation -->
+			<div>
+				<h3 class="text-sm font-bold uppercase tracking-widest text-accent">Company</h3>
+				<ul class="mt-6 space-y-4 text-sm">
+					<li><a href="/about" class="text-light/80 hover:text-white hover:underline">About Us</a></li>
+					<li><a href="/solutions" class="text-light/80 hover:text-white hover:underline">Solutions</a></li>
+					<li><a href="/case-studies" class="text-light/80 hover:text-white hover:underline">Case Studies</a></li>
+					<li><a href="/blog" class="text-light/80 hover:text-white hover:underline">Latest Insights</a></li>
+					<li><a href="/contact" class="text-light/80 hover:text-white hover:underline">Contact</a></li>
+				</ul>
+			</div>
+
+			<!-- Contact Info -->
+			<div class="lg:col-span-2">
+				<h3 class="text-sm font-bold uppercase tracking-widest text-accent">Global Presence</h3>
+				
+				<div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+					<!-- Primary Email -->
+					<div class="flex items-start gap-3">
+						<Icon icon="mdi:email-outline" class="mt-1 text-accent" width="20" />
+						<div>
+							<p class="text-xs font-bold uppercase text-light/50">General Inquiries</p>
+							<a href="mailto:hello@vision-ai.tech" class="hover:text-accent transition-colors">hello@vision-ai.tech</a>
+						</div>
+					</div>
+
+					<!-- Locations Loop -->
+					{#if locations?.length > 0}
+						{#each locations as loc}
+							<div class="flex items-start gap-3 {userCountryCode === loc.countryCode ? 'rounded-md bg-light/10 p-2 -m-2' : ''}">
+								<Icon icon="mdi:map-marker-outline" class="mt-1 text-accent" width="20" />
+								<div>
+									<p class="font-bold text-sm">{loc.countryName}</p>
+									<p class="text-sm text-light/70">{loc.address}</p>
+									{#if loc.phoneNumber}
+										<a href="tel:{loc.phoneNumber.replace(/\s/g, '')}" class="text-xs text-accent hover:underline mt-1 block">
+											{loc.phoneNumber}
+										</a>
+									{/if}
+								</div>
+							</div>
+						{/each}
 					{/if}
 				</div>
 			</div>
 		</div>
 
-		<div
-			class="mt-12 flex flex-col items-center border-t border-main/10 pt-8 sm:flex-row sm:justify-between"
-		>
-			<p class="text-sm text-main/60">
+		<!-- Bottom Bar -->
+		<div class="mt-16 flex flex-col items-center justify-between border-t border-light/10 pt-8 sm:flex-row">
+			<p class="text-xs text-light/50">
 				© {new Date().getFullYear()} {settings?.siteName || 'Vision AI Tech'}. All Rights Reserved.
 			</p>
-			<a href="#hero" class="mt-4 text-sm font-bold text-main/60 transition hover:text-accent sm:mt-0">
-				Back to Top ↑
-			</a>
+			<div class="mt-4 flex gap-6 sm:mt-0">
+				<a href="/privacy" class="text-xs text-light/50 hover:text-light">Privacy Policy</a>
+				<a href="/terms" class="text-xs text-light/50 hover:text-light">Terms of Service</a>
+				{#if page.data.user}
+					<a href="/_/admin" class="text-xs font-bold text-accent">Admin Panel</a>
+				{:else}
+					<a href="/login" class="text-xs text-light/30 hover:text-light">Staff Login</a>
+				{/if}
+			</div>
 		</div>
 	</div>
 </footer>

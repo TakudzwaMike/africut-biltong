@@ -1,17 +1,23 @@
 <script>
 	import Modal from '$lib/components/Modal.svelte';
-	import { createEventDispatcher } from 'svelte';
 
-	let { show = false, mediaItems = [] } = $props();
-
-	const dispatch = createEventDispatcher();
+	/**
+	 * @type {{
+	 *   show: boolean,
+	 *   mediaItems: any[],
+	 *   onselect: (media: any) => void
+	 * }}
+	 */
+	let { show = $bindable(false), mediaItems = [], onselect } = $props();
 
 	function selectImage(media) {
-		dispatch('select', media);
+		if (onselect) {
+			onselect(media);
+		}
 	}
 </script>
 
-<Modal {show} on:close={() => dispatch('close')}>
+<Modal bind:show>
 	<div class="p-6">
 		<h3 class="text-lg font-bold">Select an Image</h3>
 		<p class="text-sm text-main/70">Click an image to select it.</p>

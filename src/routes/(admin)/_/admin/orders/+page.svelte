@@ -1,4 +1,6 @@
 <script>
+	import DataTable from '$lib/components/admin/DataTable.svelte';
+
 	let { data } = $props();
 
 	function formatCurrency(amount, currency) {
@@ -7,42 +9,52 @@
 			currency: currency
 		}).format(amount / 100);
 	}
+
+	const columns = [
+		{ label: 'Date' },
+		{ label: 'Customer' },
+		{ label: 'Items' },
+		{ label: 'Total', class: 'text-right' },
+		{ label: 'Status', class: 'text-right' }
+	];
 </script>
 
 <div class="p-8">
 	<h1 class="text-3xl font-bold tracking-tight text-main">Orders</h1>
 	<p class="mt-2 text-base text-main/70">View incoming orders from the store.</p>
 
-	<div class="mt-8 space-y-6">
-		{#each data.orders as order (order.id)}
-			<div class="rounded-xl border border-main/10">
-				<header class="flex items-center justify-between gap-4 border-b border-main/10 p-4">
-					<div>
-						<p class="font-bold">{order.customerName}</p>
-						<p class="text-sm text-main/70">{order.customerEmail}</p>
-					</div>
-					<div class="text-right">
-						<p class="font-bold">{formatCurrency(order.totalAmount, order.currency)}</p>
-						<p class="text-sm text-main/70">
-							{new Date(order.createdAt).toLocaleString()}
-						</p>
-					</div>
-				</header>
-				<div class="p-4">
-					<ul class="space-y-2">
-						{#each order.items as item}
-							<li class="flex justify-between text-sm">
-								<span>{item.quantity} x {item.product?.name || 'Deleted Product'}</span>
-								<span>{formatCurrency(item.priceAtPurchase, order.currency)}</span>
-							</li>
-						{/each}
-					</ul>
-				</div>
-			</div>
-		{:else}
-			<div class="mt-8 rounded-xl border border-dashed border-main/20 p-12 text-center">
-				<p class="text-main/70">No orders have been placed yet.</p>
-			</div>
-		{/each}
-	</div>
+	<DataTable 
+		items={data.orders} 
+		{columns} 
+		emptyMessage="No orders have been placed yet."
+		row={orderRow}
+	/>
 </div>
+
+{#snippet orderRow(order)}
+	<td class="p-4 text-sm text-main/70 whitespace-nowrap">
+		{new Date(order.createdAt).toLocaleString()}
+	</td>
+	<td class="p-4">
+		<p class="font-bold text-main">{order.customerName}</p>
+		<p class="text-xs text-main/60">{order.customerEmail}</p>
+	</td>
+	<td class="p-4 text-sm">
+		<ul class="space-y-1">
+			{#each order.items as item}
+				<li>
+					<span class="font-bold">{item.quantity}x</span> 
+					{item.product?.name || 'Deleted Product'}
+				</li>
+			{/each}
+		</ul>
+	</td>
+	<td class="p-4 text-right font-mono font-bold">
+		{formatCurrency(order.totalAmount, order.currency)}
+	</td>
+	<td class="p-4 text-right">
+		<span class="inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-green-800">
+			{order.status}
+		</span>
+	</td>
+{/snippet}

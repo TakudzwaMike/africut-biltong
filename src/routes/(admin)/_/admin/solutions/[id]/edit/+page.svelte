@@ -1,11 +1,15 @@
 <script>
 	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
-	import BlockEditor from '$lib/components/BlockEditor.svelte';
+	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
 
 	let { data, form } = $props();
 
 	// Use a single state object for the entire form, initialized from the loaded data.
 	let solutionData = $state(data.solution);
+
+	// Create a Set of currently linked product IDs for easy checking
+	// data.solution.products is an array of { solutionId, productId } objects from the link table
+	let selectedProductIds = $derived(new Set(data.solution.products.map((link) => link.productId)));
 </script>
 
 <div class="relative z-10">
@@ -61,6 +65,32 @@
 			</div>
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
+				<h3 class="text-lg font-bold">Related Products</h3>
+				<p class="text-sm text-main/70">Select the hardware or software packages used in this solution.</p>
+				
+				{#if data.allProducts.length > 0}
+					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+						{#each data.allProducts as product}
+							<label class="flex items-center gap-3 rounded-md border border-main/5 bg-main/5 p-3 transition hover:bg-main/10">
+								<input
+									type="checkbox"
+									name="productIds"
+									value={product.id}
+									checked={selectedProductIds.has(product.id)}
+									class="h-4 w-4 rounded border-main/20 text-accent focus:ring-accent"
+								/>
+								<span class="text-sm font-medium">{product.name}</span>
+							</label>
+						{/each}
+					</div>
+				{:else}
+					<div class="rounded-md bg-yellow-50 p-4 text-sm text-yellow-800">
+						No products found. <a href="/_/admin/products" class="underline font-bold">Create products</a> to link them here.
+					</div>
+				{/if}
+			</div>
+
+			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Featured Image</h3>
 				<FeaturedImagePicker
 					mediaItems={data.mediaItems}
@@ -72,7 +102,7 @@
 
 			<div class="space-y-4 rounded-xl border border-main/10 p-6">
 				<h3 class="text-lg font-bold">Long Description (Content)</h3>
-				<BlockEditor
+				<RichTextEditor
 					bind:content={solutionData.longDescription}
 					initialContent={data.solution.longDescription}
 				/>

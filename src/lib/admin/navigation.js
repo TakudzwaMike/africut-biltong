@@ -6,7 +6,7 @@ export const navItems = [
 	{ href: `${ADMIN_ROUTE}/products`, label: `Store Products` },
 	{ href: `${ADMIN_ROUTE}/solutions`, label: `Solutions` },
 	{ href: `${ADMIN_ROUTE}/documents`, label: `Documents` },
-	{ href: `${ADMIN_ROUTE}/clients`, label: `Clients` },
+	{ href: `${ADMIN_ROUTE}/partners`, label: `Partners` },
 	{ href: `${ADMIN_ROUTE}/case-studies`, label: `Case Studies` },
 	{ href: `${ADMIN_ROUTE}/team-members`, label: `Team Members` },
 	{

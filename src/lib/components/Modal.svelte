@@ -3,38 +3,64 @@
 	import { quintOut } from 'svelte/easing';
 
 	/**
-	 * A two-way bindable prop to control the modal's visibility.
-	 * @type {boolean}
+	 * @type {{
+	 *   show: boolean,
+	 *   children: import('svelte').Snippet,
+	 *   onclose?: () => void
+	 * }}
 	 */
-	let { show = $bindable() } = $props();
+	let { show = $bindable(false), children, onclose } = $props();
+
+	function close() {
+		show = false;
+		if (onclose) onclose();
+	}
 
 	function handleKeydown(event) {
-		if (event.key === 'Escape') {
-			show = false;
+		if (event.key === 'Escape' && show) {
+			close();
 		}
 	}
+
+	// FIX: Use $effect to handle body scrolling instead of <svelte:body>
+	// This runs only in the browser and reacts to changes in 'show'
+	$effect(() => {
+		if (show) {
+			document.body.style.overflow = 'hidden';
+		} else {
+			document.body.style.overflow = '';
+		}
+
+		// Cleanup when component unmounts
+		return () => {
+			document.body.style.overflow = '';
+		};
+	});
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 {#if show}
-	<!-- svelte-ignore a11y-click-events-have-key-events -->
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
 		transition:fade={{ duration: 150 }}
-		on:click={() => (show = false)}
+		onclick={close}
 		role="dialog"
 		aria-modal="true"
-		class="fixed inset-0 z-[999] flex items-center justify-center bg-main/80 backdrop-blur-sm"
+		class="fixed inset-0 z-[999] flex items-center justify-center bg-main/80 backdrop-blur-sm p-4"
+		tabindex="-1"
 	>
-		<!-- svelte-ignore a11y-click-events-have-key-events -->
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<div
 			transition:fade={{ duration: 250, easing: quintOut, y: -20, start: 0.95 }}
-			on:click={(e) => e.stopPropagation()}
-			class="corner-border relative w-full max-w-2xl"
+			onclick={(e) => e.stopPropagation()}
+			role="document"
+			tabindex="0"
+			class="corner-border relative max-h-[90vh] w-full max-w-2xl overflow-y-auto bg-light shadow-2xl"
 		>
 			<button
 				type="button"
-				on:click={() => (show = false)}
+				onclick={close}
 				aria-label="Close modal"
 				class="absolute right-4 top-4 z-10 text-main/50 transition hover:text-main"
 			>
@@ -53,7 +79,8 @@
 				>
 			</button>
 
-			<slot />
+			<!-- Render the content snippet -->
+			{@render children?.()}
 		</div>
 	</div>
 {/if}

@@ -1,50 +1,64 @@
 <script>
+	import { onMount, onDestroy } from 'svelte';
+	import { browser } from '$app/environment';
 	import { Editor } from '@tiptap/core';
 	import StarterKit from '@tiptap/starter-kit';
 	import Link from '@tiptap/extension-link';
-	import BubbleMenu from '@tiptap/extension-bubble-menu';
 	import Icon from '@iconify/svelte';
 
 	let { content = $bindable(), initialContent = undefined } = $props();
 
-	let editorEl = $state();
-	let bubbleMenuEl = $state();
+	let element = $state();
 	let editor = $state();
 
-	$effect(() => {
-		if (!editorEl) return;
+	onMount(() => {
+		if (!browser) return;
 
-		const editorInstance = new Editor({
-			element: editorEl,
+		editor = new Editor({
+			element: element,
 			extensions: [
 				StarterKit,
 				Link.configure({
-					openOnClick: false, // Don't open links in the editor
-					autolink: true,     // Automatically detect links
-				}),
-				BubbleMenu.configure({
-					element: bubbleMenuEl,
-					tippyOptions: {
-						duration: 100,
-					},
-				}),
+					openOnClick: false,
+					autolink: true,
+					HTMLAttributes: {
+						class: 'text-accent underline cursor-pointer'
+					}
+				})
 			],
-			content: initialContent || '',
+			content: initialContent || content || '',
 			editorProps: {
 				attributes: {
-					class: 'prose max-w-none p-4 min-h-[200px] focus:outline-none overflow-y-auto',
-				},
+					class: 'prose prose-lg max-w-none focus:outline-none min-h-[200px] text-main/80'
+				}
 			},
 			onUpdate: ({ editor }) => {
 				content = editor.getJSON();
 			},
+			onTransaction: () => {
+				editor = editor; 
+			}
 		});
+	});
 
-		editor = editorInstance;
+	// Fix: Watch for changes in initialContent to handle async data loading
+	$effect(() => {
+		if (editor && initialContent && !editor.isDestroyed) {
+			// Check if content is different to avoid cursor jumping or loops
+			// JSON.stringify is a cheap way to compare simple TipTap docs
+			const currentContent = JSON.stringify(editor.getJSON());
+			const newContent = JSON.stringify(initialContent);
+			
+			if (currentContent !== newContent && newContent !== JSON.stringify({ type: 'doc', content: [] })) {
+				editor.commands.setContent(initialContent);
+			}
+		}
+	});
 
-		return () => {
-			editorInstance.destroy();
-		};
+	onDestroy(() => {
+		if (editor) {
+			editor.destroy();
+		}
 	});
 
 	function setLink() {
@@ -52,7 +66,7 @@
 		const previousUrl = editor.getAttributes('link').href;
 		const url = window.prompt('URL', previousUrl);
 
-		if (url === null) return; // User cancelled
+		if (url === null) return;
 		if (url === '') {
 			editor.chain().focus().extendMarkRange('link').unsetLink().run();
 			return;
@@ -61,116 +75,105 @@
 	}
 </script>
 
-<div class="rounded-md border border-main/20 bg-main/5">
+{#snippet toolbarButton(icon, label, onClick, isActive = false)}
+	<button
+		type="button"
+		onclick={onClick}
+		class="rounded p-2 text-main/60 transition-colors hover:bg-main/10 hover:text-main"
+		class:bg-accent={isActive}
+		class:text-main={isActive}
+		title={label}
+		aria-label={label}
+	>
+		<Icon {icon} width="20" />
+	</button>
+{/snippet}
+
+<div class="rounded-xl border border-main/10 bg-light overflow-hidden shadow-sm transition-shadow focus-within:ring-2 focus-within:ring-accent/50">
 	{#if editor}
-		<!-- Fixed Toolbar for Block Elements -->
-		<div class="flex flex-wrap items-center gap-1 border-b border-main/20 p-2">
-			<!-- Headings -->
-			<button
-				type="button"
-				class:is-active={editor.isActive('heading', { level: 2 })}
-				on:click={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-			>
-				<Icon icon="mdi:format-header-2" />
-			</button>
-			<button
-				type="button"
-				class:is-active={editor.isActive('heading', { level: 3 })}
-				on:click={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-			>
-				<Icon icon="mdi:format-header-3" />
-			</button>
-			<button
-				type="button"
-				class:is-active={editor.isActive('paragraph')}
-				on:click={() => editor.chain().focus().setParagraph().run()}
-			>
-				<Icon icon="mdi:format-paragraph" />
-			</button>
+		<!-- Fixed Toolbar -->
+		<div class="flex flex-wrap items-center gap-1 border-b border-main/10 bg-main/5 p-2">
+			
+			{@render toolbarButton(
+				"mdi:format-header-2", 
+				"Heading 2", 
+				() => editor.chain().focus().toggleHeading({ level: 2 }).run(), 
+				editor.isActive('heading', { level: 2 })
+			)}
+			
+			{@render toolbarButton(
+				"mdi:format-header-3", 
+				"Heading 3", 
+				() => editor.chain().focus().toggleHeading({ level: 3 }).run(), 
+				editor.isActive('heading', { level: 3 })
+			)}
+			
+			{@render toolbarButton(
+				"mdi:format-paragraph", 
+				"Paragraph", 
+				() => editor.chain().focus().setParagraph().run(), 
+				editor.isActive('paragraph')
+			)}
 
 			<div class="mx-2 h-5 w-px bg-main/20"></div>
 
-			<!-- Lists -->
-			<button
-				type="button"
-				class:is-active={editor.isActive('bulletList')}
-				on:click={() => editor.chain().focus().toggleBulletList().run()}
-			>
-				<Icon icon="mdi:format-list-bulleted" />
-			</button>
-			<button
-				type="button"
-				class:is-active={editor.isActive('orderedList')}
-				on:click={() => editor.chain().focus().toggleOrderedList().run()}
-			>
-				<Icon icon="mdi:format-list-numbered" />
-			</button>
+			{@render toolbarButton(
+				"mdi:format-bold", 
+				"Bold", 
+				() => editor.chain().focus().toggleBold().run(), 
+				editor.isActive('bold')
+			)}
+			
+			{@render toolbarButton(
+				"mdi:format-italic", 
+				"Italic", 
+				() => editor.chain().focus().toggleItalic().run(), 
+				editor.isActive('italic')
+			)}
 
 			<div class="mx-2 h-5 w-px bg-main/20"></div>
 
-			<!-- Blockquote -->
-			<button
-				type="button"
-				class:is-active={editor.isActive('blockquote')}
-				on:click={() => editor.chain().focus().toggleBlockquote().run()}
-			>
-				<Icon icon="mdi:format-quote-close" />
-			</button>
-		</div>
+			{@render toolbarButton(
+				"mdi:format-list-bulleted", 
+				"Bullet List", 
+				() => editor.chain().focus().toggleBulletList().run(), 
+				editor.isActive('bulletList')
+			)}
+			
+			{@render toolbarButton(
+				"mdi:format-list-numbered", 
+				"Ordered List", 
+				() => editor.chain().focus().toggleOrderedList().run(), 
+				editor.isActive('orderedList')
+			)}
 
-		<!-- Bubble Menu (Floating Toolbar) for Inline Elements -->
-		<div bind:this={bubbleMenuEl} class="bubble-menu">
+			<div class="mx-2 h-5 w-px bg-main/20"></div>
+
+			{@render toolbarButton(
+				"mdi:format-quote-close", 
+				"Blockquote", 
+				() => editor.chain().focus().toggleBlockquote().run(), 
+				editor.isActive('blockquote')
+			)}
+			
+			{@render toolbarButton(
+				"mdi:link-variant", 
+				"Link", 
+				setLink, 
+				editor.isActive('link')
+			)}
+			
 			<button
 				type="button"
-				class:is-active={editor.isActive('bold')}
-				on:click={() => editor.chain().focus().toggleBold().run()}
+				onclick={() => editor.chain().focus().unsetLink().run()}
+				class="rounded p-2 text-main/60 transition-colors hover:bg-main/10 hover:text-main disabled:opacity-30"
+				disabled={!editor.isActive('link')}
+				title="Remove Link"
 			>
-				<Icon icon="mdi:format-bold" />
-			</button>
-			<button
-				type="button"
-				class:is-active={editor.isActive('italic')}
-				on:click={() => editor.chain().focus().toggleItalic().run()}
-			>
-				<Icon icon="mdi:format-italic" />
-			</button>
-			<button
-				type="button"
-				class:is-active={editor.isActive('link')}
-				on:click={setLink}
-			>
-				<Icon icon="mdi:link-variant" />
+				<Icon icon="mdi:link-variant-off" width="20" />
 			</button>
 		</div>
 	{/if}
 
-	<!-- The element where TipTap will mount the editor -->
-	<div bind:this={editorEl}></div>
+	<div bind:this={element} class="p-4"></div>
 </div>
-
-<style>
-	.bubble-menu {
-		display: flex;
-		background-color: var(--color-main);
-		padding: 0.2rem;
-		border-radius: 0.5rem;
-		box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-	}
-
-	button {
-		@apply rounded p-2 text-main/60 transition-colors hover:bg-main/10 hover:text-main;
-	}
-
-	button.is-active {
-		@apply bg-accent text-main;
-	}
-
-	/* Style for bubble menu buttons */
-	.bubble-menu button {
-		@apply p-2 text-light/70 hover:bg-light/20 hover:text-light;
-	}
-
-	.bubble-menu button.is-active {
-		@apply text-accent;
-	}
-</style>

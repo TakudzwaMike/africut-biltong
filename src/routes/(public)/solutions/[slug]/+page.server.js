@@ -10,7 +10,17 @@ export async function load({ params }) {
 	const solution = await db.query.solution.findFirst({
 		where: eq(solutionTable.slug, slug),
 		with: {
-			featuredImage: true
+			featuredImage: true,
+			// Fetch linked products via the junction table
+			products: {
+				with: {
+					product: {
+						with: {
+							featuredImage: true
+						}
+					}
+				}
+			}
 		}
 	});
 
