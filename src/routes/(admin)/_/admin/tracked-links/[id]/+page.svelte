@@ -1,226 +1,122 @@
 <script>
-	import { enhance } from '$app/forms';
-	import { toast } from '$lib/toast-service';
-	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
 	import Icon from '@iconify/svelte';
 	import DataTable from '$lib/components/admin/DataTable.svelte';
-	import Modal from '$lib/components/Modal.svelte';
 
 	let { data } = $props();
-	
-	// Local state for UI elements
-	let selectedLead = $state(null);
-	let searchTimeout;
-	
-	// Initialize search query from server data (URL param)
-	let searchQuery = $state(data.pagination.query || '');
-
-	function handleStatusChange() {
-		return ({ result, update }) => {
-			if (result.type === 'success') {
-				toast.success('Status updated');
-			} else if (result.type === 'failure') {
-				toast.error('Failed to update status');
-			}
-			update({ reset: false }); 
-		};
-	}
-
-	// Debounced Search Handler
-	function handleSearchInput() {
-		clearTimeout(searchTimeout);
-		searchTimeout = setTimeout(() => {
-			const url = new URL($page.url);
-			if (searchQuery) {
-				url.searchParams.set('q', searchQuery);
-				url.searchParams.set('page', '1'); // Reset to page 1 on new search
-			} else {
-				url.searchParams.delete('q');
-			}
-			goto(url, { keepFocus: true, noScroll: true });
-		}, 400); // 400ms delay
-	}
-
-	// Pagination Handler
-	function changePage(newPage) {
-		const url = new URL($page.url);
-		url.searchParams.set('page', newPage.toString());
-		goto(url, { noScroll: true });
-	}
-
-	// Status Badge Colors
-	const statusColors = {
-		new: 'bg-blue-100 text-blue-800 border-blue-200',
-		contacted: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-		qualified: 'bg-purple-100 text-purple-800 border-purple-200',
-		lost: 'bg-gray-100 text-gray-800 border-gray-200',
-		closed: 'bg-green-100 text-green-800 border-green-200'
-	};
+    // Default to empty objects to prevent crashes if data is missing during hydration
+	let link = $derived(data.link || {});
+    let stats = $derived(data.stats || { total: 0, countries: {}, browsers: {}, devices: {} });
 
 	const columns = [
-		{ label: 'Date' },
-		{ label: 'Name' },
-		{ label: 'Interest' },
-		{ label: 'Status' },
-		{ label: 'Message' }
+		{ label: 'Time' },
+		{ label: 'Location' },
+		{ label: 'Device' },
+		{ label: 'Referrer' }
 	];
 </script>
 
 <div class="p-8">
-	<!-- Header Section -->
-	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight text-main">Leads</h1>
-			<p class="mt-2 text-base text-main/70">Manage inquiries from the contact form.</p>
-		</div>
-		
-		<div class="flex gap-2">
-			<!-- Search Box -->
-			<div class="relative w-full md:w-64">
-				<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-					<Icon icon="mdi:magnify" class="text-main/40" />
-				</div>
-				<input
-					type="text"
-					placeholder="Search leads..."
-					bind:value={searchQuery}
-					oninput={handleSearchInput}
-					class="block w-full rounded-md border-0 bg-white py-2 pl-10 pr-3 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent sm:text-sm sm:leading-6"
-				/>
-			</div>
-
-			<!-- Export Button -->
-			<a
-				href="/_/admin/leads/export"
-				download
-				class="flex items-center gap-2 rounded-md bg-main px-4 py-2 font-bold text-light shadow-sm transition hover:bg-main/90"
-			>
-				<Icon icon="mdi:download" width="20" />
-				<span class="hidden sm:inline">Export CSV</span>
+	<!-- Header -->
+	<div class="mb-8">
+		<div class="flex items-center gap-4 mb-2">
+			<a href="/_/admin/tracked-links" class="text-main/60 hover:text-main">
+				<Icon icon="mdi:arrow-left" width="24" />
 			</a>
+			<h1 class="text-3xl font-bold tracking-tight text-main">Link Analytics</h1>
+		</div>
+		<div class="ml-10">
+			<p class="text-lg font-medium text-main">{link.description || 'Loading...'}</p>
+			<div class="flex items-center gap-4 text-sm text-main/60 mt-1">
+				<a href={link.destinationUrl} target="_blank" class="hover:underline flex items-center gap-1">
+					<Icon icon="mdi:link" /> {link.destinationUrl || '#'}
+				</a>
+				<span>•</span>
+				<span class="font-mono bg-main/5 px-2 py-0.5 rounded text-main/80">
+                    vision-ai.tech/r/{link.shortCode || '...'}
+                </span>
+			</div>
 		</div>
 	</div>
 
-	<!-- Data Table -->
-	<DataTable 
-		items={data.leads} 
-		{columns} 
-		emptyMessage="No leads found matching your criteria."
-		row={leadRow}
-	/>
-
-	<!-- Pagination Footer -->
-	{#if data.pagination.totalPages > 1}
-		<div class="mt-6 flex items-center justify-between border-t border-main/10 pt-6">
-			<div class="text-sm text-main/60">
-				Showing page <span class="font-bold text-main">{data.pagination.page}</span> of <span class="font-bold text-main">{data.pagination.totalPages}</span>
-				({data.pagination.totalItems} results)
-			</div>
-			<div class="flex gap-2">
-				<button
-					onclick={() => changePage(data.pagination.page - 1)}
-					disabled={data.pagination.page <= 1}
-					class="flex items-center gap-1 rounded-md border border-main/10 bg-white px-3 py-1.5 text-sm font-medium text-main transition hover:bg-main/5 disabled:cursor-not-allowed disabled:opacity-50"
-				>
-					<Icon icon="mdi:chevron-left" /> Previous
-				</button>
-				<button
-					onclick={() => changePage(data.pagination.page + 1)}
-					disabled={data.pagination.page >= data.pagination.totalPages}
-					class="flex items-center gap-1 rounded-md border border-main/10 bg-white px-3 py-1.5 text-sm font-medium text-main transition hover:bg-main/5 disabled:cursor-not-allowed disabled:opacity-50"
-				>
-					Next <Icon icon="mdi:chevron-right" />
-				</button>
-			</div>
+	<!-- Stats Cards -->
+	<div class="grid grid-cols-1 gap-6 sm:grid-cols-4 mb-12">
+		<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
+			<p class="text-sm font-bold uppercase tracking-widest text-main/60">Recent Clicks</p>
+			<p class="mt-2 text-4xl font-bold text-accent">{stats.total}</p>
 		</div>
-	{/if}
+		
+		<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
+			<p class="text-sm font-bold uppercase tracking-widest text-main/60">Top Country</p>
+			{#if Object.keys(stats.countries).length > 0}
+				{@const top = Object.entries(stats.countries).sort((a,b) => b[1] - a[1])[0]}
+				<p class="mt-2 text-2xl font-bold text-main">{top[0]}</p>
+				<p class="text-xs text-main/50">{top[1]} visits</p>
+			{:else}
+				<p class="mt-2 text-xl text-main/40">-</p>
+			{/if}
+		</div>
+
+		<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
+			<p class="text-sm font-bold uppercase tracking-widest text-main/60">Top Browser</p>
+			{#if Object.keys(stats.browsers).length > 0}
+				{@const top = Object.entries(stats.browsers).sort((a,b) => b[1] - a[1])[0]}
+				<p class="mt-2 text-2xl font-bold text-main">{top[0]}</p>
+				<p class="text-xs text-main/50">{top[1]} visits</p>
+			{:else}
+				<p class="mt-2 text-xl text-main/40">-</p>
+			{/if}
+		</div>
+
+        <div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
+			<p class="text-sm font-bold uppercase tracking-widest text-main/60">Mobile vs Desktop</p>
+            <div class="mt-4 flex h-4 w-full overflow-hidden rounded-full bg-main/5">
+                <div 
+                    class="bg-accent h-full transition-all duration-500" 
+                    style="width: {((stats.devices['mobile'] || 0) / (stats.total || 1)) * 100}%"
+                ></div>
+            </div>
+            <div class="flex justify-between text-xs mt-2 text-main/60">
+                <span>Mobile: {stats.devices['mobile'] || 0}</span>
+                <span>Desktop: {stats.devices['desktop'] || 0}</span>
+            </div>
+		</div>
+	</div>
+
+	<!-- Recent Visits Table -->
+	<h3 class="text-xl font-bold text-main mb-4">Recent Activity</h3>
+	
+    <DataTable 
+		items={link.visits || []} 
+		{columns} 
+		emptyMessage="No clicks recorded yet." 
+		row={visitRow} 
+	/>
 </div>
 
-<!-- Row Snippet -->
-{#snippet leadRow(lead)}
+{#snippet visitRow(v)}
 	<td class="p-4 text-sm text-main/70 whitespace-nowrap">
-		{new Date(lead.createdAt).toLocaleDateString()}
+		{new Date(v.visitedAt).toLocaleString()}
 	</td>
 	<td class="p-4">
-		<p class="font-bold text-main">{lead.firstName} {lead.lastName}</p>
-		<a href="mailto:{lead.email}" class="text-xs text-accent hover:underline">
-			{lead.email}
-		</a>
+		<span class="inline-flex items-center gap-2">
+            {#if v.ipCountry}
+			    <img 
+                    src={`https://flagcdn.com/24x18/${v.ipCountry.toLowerCase()}.png`} 
+                    alt={v.ipCountry} 
+                    class="h-3 w-auto rounded-sm shadow-sm"
+                    loading="lazy"
+                />
+            {/if}
+			<span class="font-medium text-main">{v.ipCountry || 'Unknown'}</span>
+		</span>
 	</td>
 	<td class="p-4 text-sm">
-		{#if lead.solution}
-			<span class="font-medium text-accent">{lead.solution.solutionName}</span>
-		{:else}
-			<span class="text-main/50">General Inquiry</span>
-		{/if}
+		<div class="flex flex-col">
+			<span class="font-bold text-main">{v.browser}</span>
+			<span class="text-xs text-main/50">{v.os} • {v.deviceType}</span>
+		</div>
 	</td>
-	<td class="p-4">
-		<form
-			method="POST"
-			action="?/updateStatus"
-			use:enhance={handleStatusChange}
-			class="inline-block"
-		>
-			<input type="hidden" name="id" value={lead.id} />
-			<select
-				name="status"
-				class="cursor-pointer rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider border-2 focus:ring-2 focus:ring-accent focus:outline-none {statusColors[lead.status] || 'bg-gray-100'}"
-				onchange={(e) => e.target.form.requestSubmit()}
-				value={lead.status}
-			>
-				<option value="new">New</option>
-				<option value="contacted">Contacted</option>
-				<option value="qualified">Qualified</option>
-				<option value="lost">Lost</option>
-				<option value="closed">Closed</option>
-			</select>
-		</form>
-	</td>
-	<td class="p-4">
-		<button 
-			onclick={() => selectedLead = lead}
-			class="text-left max-w-xs group block w-full"
-		>
-			<div class="truncate text-sm text-main/70 group-hover:text-main transition-colors">
-				{lead.message}
-			</div>
-			<span class="text-xs text-accent underline opacity-0 group-hover:opacity-100 transition-opacity">Read More</span>
-		</button>
+	<td class="p-4 text-sm text-main/60 max-w-xs truncate" title={v.referrer}>
+		{v.referrer || 'Direct / None'}
 	</td>
 {/snippet}
-
-<!-- Message Viewer Modal -->
-<Modal show={!!selectedLead} onclose={() => selectedLead = null}>
-	{#if selectedLead}
-		<div class="p-6">
-			<div class="flex justify-between items-start mb-4">
-				<div>
-					<h3 class="text-xl font-bold">{selectedLead.firstName} {selectedLead.lastName}</h3>
-					<a href="mailto:{selectedLead.email}" class="text-accent hover:underline">{selectedLead.email}</a>
-				</div>
-				<span class="text-xs text-main/50">{new Date(selectedLead.createdAt).toLocaleString()}</span>
-			</div>
-			
-			{#if selectedLead.solution}
-				<div class="mb-6 rounded-md bg-accent/10 p-3 text-sm">
-					<strong>Interest:</strong> {selectedLead.solution.solutionName}
-				</div>
-			{/if}
-
-			<div class="rounded-xl bg-main/5 p-4">
-				<p class="text-sm font-bold uppercase tracking-wide text-main/60 mb-2">Message</p>
-				<p class="whitespace-pre-wrap text-main/90">{selectedLead.message}</p>
-			</div>
-
-			<div class="mt-6 flex justify-end">
-				<button
-					onclick={() => selectedLead = null}
-					class="rounded-md bg-main px-6 py-2 text-sm font-bold text-light"
-				>
-					Close
-				</button>
-			</div>
-		</div>
-	{/if}
-</Modal>

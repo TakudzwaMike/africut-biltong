@@ -1,5 +1,6 @@
 <script>
 	import { enhance } from '$app/forms';
+	import { toast } from '$lib/toast-service'; // Import toast
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 
 	let isSubmitting = $state(false);
@@ -16,9 +17,17 @@
 		class="space-y-6 rounded-xl border border-main/10 bg-white p-8 shadow-sm"
 		use:enhance={() => {
 			isSubmitting = true;
-			return async ({ update }) => {
-				await update();
+			return async ({ result, update }) => {
+				// Ensure we turn off loading regardless of success/failure
 				isSubmitting = false;
+				
+				if (result.type === 'failure') {
+					toast.error(result.data?.message || 'Failed to create event.');
+				} else if (result.type === 'error') {
+					toast.error('An unexpected error occurred.');
+				}
+				
+				await update();
 			};
 		}}
 	>
