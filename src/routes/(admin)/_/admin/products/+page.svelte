@@ -200,16 +200,24 @@
 				<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
 					<Icon icon="mdi:magnify" class="text-main/40" />
 				</div>
-				<input
-					type="text"
-					placeholder="Search products..."
-					bind:value={searchQuery}
+				<input 
+					type="text" 
+					placeholder="Search products..." 
+					bind:value={searchQuery} 
 					oninput={handleSearchInput}
 					class="block w-full rounded-md border-0 bg-white py-2 pl-10 pr-3 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent sm:text-sm sm:leading-6"
 				/>
 			</div>
 
-			<button
+            <!-- Import/Export Buttons -->
+            <a href="/_/admin/products/import" class="flex items-center justify-center gap-2 rounded-md border border-main/20 bg-white px-3 py-2 font-bold text-main shadow-sm transition hover:bg-main/5">
+                <Icon icon="mdi:file-upload" />
+            </a>
+            <a href="/_/admin/products/export" class="flex items-center justify-center gap-2 rounded-md border border-main/20 bg-white px-3 py-2 font-bold text-main shadow-sm transition hover:bg-main/5" title="Export CSV">
+                <Icon icon="mdi:file-download" />
+            </a>
+
+			<button 
 				onclick={startCreating}
 				class="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 font-bold text-main shadow-sm transition hover:-translate-y-0.5"
 			>
@@ -224,10 +232,10 @@
 		<DataTable 
 			items={data.products} 
 			{columns} 
-			emptyMessage="No products found."
+			emptyMessage="No products found." 
 			row={productRow}
 		/>
-        
+                 
         <!-- Pagination -->
         {#if data.pagination.totalPages > 1}
             <div class="mt-6 flex items-center justify-between border-t border-main/10 pt-6">
@@ -245,10 +253,10 @@
 	{#if editingProduct}
 		<!-- Backdrop -->
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<div
-			onclick={cancelEditing}
-			class="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity"
-			role="button"
+		<div 
+			onclick={cancelEditing} 
+			class="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity" 
+			role="button" 
 			tabindex="0"
 		></div>
 
@@ -323,7 +331,7 @@
 									<!-- Delete Button -->
 									<button type="button" onclick={() => removeVariant(i)} class="absolute right-2 top-2 text-red-500 hover:text-red-700" title="Remove Variant">
 										<Icon icon="mdi:close" />
-									</button>
+									</button> 
 
 									<div class="sm:col-span-2">
 										<label class="mb-1 block text-xs font-bold text-main/60">Variant Name</label>
@@ -387,10 +395,10 @@
 					<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
 						<h3 class="text-sm font-bold uppercase tracking-wider text-main/60 mb-4">Media</h3>
 						<div class="space-y-6">
-							<FeaturedImagePicker
-								mediaItems={data.mediaItems}
-								bind:selectedMediaId={editingProduct.mediaId}
-								currentImageUrl={editingProduct.featuredImage?.thumbnailUrl || editingProduct.featuredImage?.originalUrl}
+							<FeaturedImagePicker 
+								mediaItems={data.mediaItems} 
+								bind:selectedMediaId={editingProduct.mediaId} 
+								currentImageUrl={editingProduct.featuredImage?.thumbnailUrl || editingProduct.featuredImage?.originalUrl} 
 								currentImageAlt={editingProduct.featuredImage?.altText}
 							/>
 							<div class="border-t border-main/10 pt-6">
@@ -428,8 +436,8 @@
 						<!-- Rich Text -->
 						<div>
 							<label class="mb-2 block text-sm font-bold text-main/80">Long Description</label>
-							<RichTextEditor
-								bind:content={contentJson}
+							<RichTextEditor 
+								bind:content={contentJson} 
 								initialContent={editingProduct.longDescription}
 							/>
 						</div>

@@ -3,9 +3,12 @@ import { db } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
 import * as paynow from '$lib/server/payment/paynow.js';
 import * as paystack from '$lib/server/payment/paystack.js';
-import { inArray, eq, sql } from 'drizzle-orm';
+import { inArray, eq, sql, and, lte, gte, or, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { createId } from '@paralleldrive/cuid2';
+
+// Import the logic to fetch active sales
+import { getActiveSales } from '$lib/server/pricing'; 
 
 const initiateCheckoutSchema = z.object({
     items: z.array(z.object({
@@ -13,9 +16,10 @@ const initiateCheckoutSchema = z.object({
         quantity: z.number().int().positive()
     })).min(1),
     currency: z.enum(['USD', 'ZAR']),
-    shippingAddressId: z.string().min(1).optional(), // Optional for digital/service
-    paymentMethod: z.string(), // 'ecocash', 'card', 'onemoney'
-    phone: z.string().optional()
+    shippingAddressId: z.string().min(1).optional(),
+    paymentMethod: z.string(),
+    phone: z.string().optional(),
+    discountCode: z.string().optional()
 });
 
 export async function POST({ request, locals }) {
@@ -30,12 +34,18 @@ export async function POST({ request, locals }) {
         throw error(400, { message: 'Invalid checkout data.', errors: parseResult.error.flatten().fieldErrors });
     }
 
-    const { items, currency, shippingAddressId, paymentMethod, phone } = parseResult.data;
+    const { items, currency, shippingAddressId, paymentMethod, phone, discountCode: codeStr } = parseResult.data;
 
     let newOrder;
 
     try {
-        // 1. Create Order in Database
+        // 1. Prepare Pricing Context (Active Sales)
+        // We fetch this *outside* the transaction to minimize transaction time, 
+        // though strictly speaking it could change during the transaction. 
+        // For a standard store, fetching immediately before is acceptable.
+        const { events, prices: salePrices } = await getActiveSales();
+
+        // 2. Create Order in Database
         newOrder = await db.transaction(async (tx) => {
             const variantIds = items.map(item => item.variantId);
             
@@ -45,48 +55,109 @@ export async function POST({ request, locals }) {
                 with: { product: true }
             });
 
-            let totalCents = 0;
+            let subtotalCents = 0;
 
-            // Validate Stock & Calculate Total
+            // Validate Stock & Calculate Subtotal
             for (const item of items) {
                 const variant = variants.find(v => v.id === item.variantId);
                 
                 if (!variant) throw new Error(`Product variant ID ${item.variantId} not found.`);
                 
-                // Check Stock (if physical)
+                // Stock Check
                 if (variant.product.type === 'physical' && variant.stock !== null) {
                     if (variant.stock < item.quantity) {
                         throw new Error(`Not enough stock for ${variant.product.name} - ${variant.name}. Available: ${variant.stock}`);
                     }
                 }
 
-                // Get Price
-                const price = currency === 'USD' ? variant.priceUsd : variant.priceZar;
-                if (price === null) throw new Error(`Price for ${variant.product.name} not available in ${currency}.`);
+                // --- PRICING LOGIC (Base vs Sale) ---
+                let unitPrice = currency === 'USD' ? variant.priceUsd : variant.priceZar;
+                if (unitPrice === null) throw new Error(`Price for ${variant.product.name} not available in ${currency}.`);
 
-                totalCents += price * item.quantity;
+                // Check for active sale override
+                // We filter salePrices for this specific variant
+                const variantSales = salePrices.filter(sp => sp.variantId === variant.id);
+                
+                if (variantSales.length > 0) {
+                    // Find the lowest applicable sale price
+                    for (const sale of variantSales) {
+                        const salePrice = currency === 'USD' ? sale.salePriceUsd : sale.salePriceZar;
+                        // If sale price exists and is lower than current best price, take it
+                        if (salePrice !== null && salePrice < unitPrice) {
+                            unitPrice = salePrice;
+                        }
+                    }
+                }
+
+                subtotalCents += unitPrice * item.quantity;
+                
+                // Attach the calculated price to the item object for use in OrderItem insertion
+                item.calculatedPrice = unitPrice; 
             }
+
+            // --- DISCOUNT LOGIC ---
+            let discountAmount = 0;
+            let appliedCodeId = null;
+
+            if (codeStr) {
+                const normalizedCode = codeStr.trim().toUpperCase();
+                const now = new Date();
+
+                const validCode = await tx.query.discountCode.findFirst({
+                    where: and(
+                        eq(schema.discountCode.code, normalizedCode),
+                        eq(schema.discountCode.isActive, true),
+                        or(isNull(schema.discountCode.startsAt), lte(schema.discountCode.startsAt, now)),
+                        or(isNull(schema.discountCode.endsAt), gte(schema.discountCode.endsAt, now))
+                    )
+                });
+
+                if (validCode) {
+                    const limitReached = validCode.usageLimit !== null && validCode.usageCount >= validCode.usageLimit;
+                    const minOrderMet = validCode.minOrderAmount === null || subtotalCents >= validCode.minOrderAmount;
+
+                    if (!limitReached && minOrderMet) {
+                        if (validCode.type === 'percentage') {
+                            discountAmount = Math.round(subtotalCents * (validCode.value / 100));
+                        } else {
+                            discountAmount = validCode.value;
+                        }
+                        
+                        if (discountAmount > subtotalCents) discountAmount = subtotalCents;
+                        appliedCodeId = validCode.id;
+
+                        // Increment usage
+                        await tx.update(schema.discountCode)
+                            .set({ usageCount: sql`${schema.discountCode.usageCount} + 1` })
+                            .where(eq(schema.discountCode.id, validCode.id));
+                    }
+                }
+            }
+
+            const finalTotal = subtotalCents - discountAmount;
 
             // Insert Order
             const orderId = createId();
             const [createdOrder] = await tx.insert(schema.order).values({
                 id: orderId,
                 userId: locals.user.id,
-                total: totalCents,
+                subtotal: subtotalCents,
+                total: finalTotal,
+                discountAmount: discountAmount,
+                discountCodeId: appliedCodeId,
                 currency: currency,
                 shippingAddressId: shippingAddressId || null,
                 status: 'pending'
             }).returning();
 
-            // Insert Order Items
+            // Insert Order Items using calculated prices
             const orderItemsData = items.map(item => {
-                const variant = variants.find(v => v.id === item.variantId);
                 return {
                     id: createId(),
                     orderId: createdOrder.id,
                     productVariantId: item.variantId,
                     quantity: item.quantity,
-                    priceAtPurchase: currency === 'USD' ? variant.priceUsd : variant.priceZar
+                    priceAtPurchase: item.calculatedPrice // Use the sale-adjusted price
                 };
             });
             await tx.insert(schema.orderItem).values(orderItemsData);
@@ -114,41 +185,44 @@ export async function POST({ request, locals }) {
         let paymentResponse;
         const orderPublicId = String(newOrder.publicId);
 
+        if (newOrder.total <= 0) {
+             await db.update(schema.order).set({ status: 'paid' }).where(eq(schema.order.id, newOrder.id));
+             return json({
+                 orderId: newOrder.id,
+                 orderPublicId: newOrder.publicId,
+                 status: 'paid',
+                 pollUrl: null,
+                 redirectUrl: `/checkout/success?order=${newOrder.publicId}`
+             });
+        }
+
         if (currency === 'USD') {
-            // PAYNOW (Zimbabwe)
             if (paymentMethod === 'card') {
                 paymentResponse = await paynow.initiateRedirectTransaction(orderPublicId, newOrder.total, locals.user.email);
             } else {
-                // Mobile Money (EcoCash / OneMoney)
                 if (!phone) throw error(400, 'Phone number required for mobile money.');
                 paymentResponse = await paynow.initiateExpressTransaction(orderPublicId, newOrder.total, locals.user.email, paymentMethod, phone);
             }
         } else {
-            // PAYSTACK (ZAR / International)
-            // Paystack only does redirect for our setup
             paymentResponse = await paystack.initiateRedirectTransaction(orderPublicId, newOrder.total, locals.user.email);
         }
 
-        // Save Poll URL if Paynow provided one (for Express Checkout status checks)
         if (paymentResponse.pollurl) {
             await db.update(schema.order)
                 .set({ paymentGatewayPollUrl: paymentResponse.pollurl })
                 .where(eq(schema.order.id, newOrder.id));
         }
 
-        // 3. Return Response to Frontend
-        // Normalize response: Frontend expects `redirectUrl` (browser) or `pollUrl` (mobile push)
         return json({
             orderId: newOrder.id,
             orderPublicId: newOrder.publicId,
-            redirectUrl: paymentResponse.browserurl || paymentResponse.authorization_url, // Paynow vs Paystack keys
+            redirectUrl: paymentResponse.browserurl || paymentResponse.authorization_url,
             pollUrl: paymentResponse.pollurl,
             status: paymentResponse.status
         });
 
     } catch (e) {
         console.error('Payment Gateway Error:', e);
-        // Cancel order if payment fails to initiate
         await db.update(schema.order).set({ status: 'cancelled' }).where(eq(schema.order.id, newOrder.id));
         throw error(500, { message: "Payment provider failed to initiate transaction." });
     }

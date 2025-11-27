@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db';
 import { product } from '$lib/server/db/schema';
 import { desc } from 'drizzle-orm';
+import { applyPricing } from '$lib/server/pricing';
 
 export async function load() {
     // Fetch products with their Featured Image and Default Variant (for pricing)
@@ -14,5 +15,8 @@ export async function load() {
         }
     });
 
-    return { products };
+    // Apply dynamic pricing logic (Sale Events)
+    const productsWithPricing = await applyPricing(products);
+
+    return { products: productsWithPricing };
 }

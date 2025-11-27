@@ -1,7 +1,8 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { product, productVariant } from '$lib/server/db/schema';
-import { ilike, or, sql, desc } from 'drizzle-orm';
+import { product } from '$lib/server/db/schema';
+import { ilike, or, desc } from 'drizzle-orm';
+import { applyPricing } from '$lib/server/pricing'; // Import pricing logic
 
 export async function GET({ url }) {
     const query = url.searchParams.get('q');
@@ -13,29 +14,28 @@ export async function GET({ url }) {
     const searchQuery = `%${query}%`;
 
     try {
-        // Search products by name, description, or tags
+        // Search products by name, description
         const products = await db.query.product.findMany({
             where: or(
                 ilike(product.name, searchQuery),
-                ilike(product.shortDescription, searchQuery),
-                // Note: Drizzle currently needs raw SQL for array searching in some drivers, 
-                // but simple text search on name/desc covers 90% of use cases.
-                // We can add tag search if needed:
-                // sql`array_to_string(${product.tags}, ' ') ilike ${searchQuery}`
+                ilike(product.shortDescription, searchQuery)
             ),
             limit: 12,
+            orderBy: desc(product.createdAt),
             with: {
                 // Fetch featured image
                 featuredImage: true,
                 // Fetch variants to show price
                 variants: {
-                    limit: 1,
                     orderBy: (variants, { desc }) => [desc(variants.isDefault)]
                 }
             }
         });
 
-        return json(products);
+        // Apply dynamic pricing (Sale Events) to search results
+        const productsWithPricing = await applyPricing(products);
+
+        return json(productsWithPricing);
     } catch (e) {
         console.error("Product search failed:", e);
         return json({ error: 'An error occurred while searching for products.' }, { status: 500 });

@@ -3,12 +3,12 @@
     import Image from '$lib/components/Image.svelte';
     import RichTextRenderer from '$lib/components/RichTextRenderer.svelte';
     import Icon from '@iconify/svelte';
-    import { cart } from '$lib/stores/cart.svelte.js'; // Updated import
+    import { cart } from '$lib/stores/cart.svelte.js';
     import { currency } from '$lib/stores/currency.js';
     import { toast } from '$lib/toast-service';
 
     let { data } = $props();
-    const { product, relatedProducts } = data;
+    const { product } = data;
 
     // Variant State
     let selectedVariant = $state(product.variants.find(v => v.isDefault) || product.variants[0]);
@@ -24,13 +24,30 @@
     
     let activeImage = $derived(allImages[activeImageIndex]);
 
-    // Derived Price
-    let displayPrice = $derived.by(() => {
-        if (!selectedVariant) return 'Unavailable';
-        if ($currency === 'ZAR') {
-            return selectedVariant.priceZar ? `R ${(selectedVariant.priceZar / 100).toFixed(2)}` : 'N/A';
-        }
-        return selectedVariant.priceUsd ? `$${(selectedVariant.priceUsd / 100).toFixed(2)}` : 'N/A';
+    // Pricing Logic (Reactive to Currency & Variant Selection)
+    let pricing = $derived.by(() => {
+        if (!selectedVariant) return { current: 'Unavailable', original: null };
+
+        const isZar = $currency === 'ZAR';
+        
+        // Use effective prices calculated by server
+        const currentCents = isZar ? selectedVariant.effectivePriceZar : selectedVariant.effectivePriceUsd;
+        const originalCents = isZar ? selectedVariant.compareAtPriceZar : selectedVariant.compareAtPriceUsd;
+
+        if (currentCents === null) return { current: 'N/A', original: null };
+
+        const format = (cents) => {
+            const val = (cents / 100).toFixed(2);
+            return isZar ? `R ${val}` : `$${val}`;
+        };
+
+        return {
+            current: format(currentCents),
+            currentRaw: currentCents, // For Cart
+            original: originalCents ? format(originalCents) : null,
+            isOnSale: !!originalCents,
+            badge: selectedVariant.saleBadge || 'Sale'
+        };
     });
 
     // Derived Stock
@@ -46,9 +63,7 @@
 
     function handleAddToCart() {
         if (!selectedVariant) return;
-        
-        const price = $currency === 'ZAR' ? selectedVariant.priceZar : selectedVariant.priceUsd;
-        if (!price) {
+        if (pricing.current === 'N/A' || pricing.current === 'Unavailable') {
             toast.error('Price unavailable in this currency.');
             return;
         }
@@ -62,9 +77,9 @@
             variantId: selectedVariant.id,
             variantName: selectedVariant.name,
             image: product.featuredImage?.thumbnailUrl || product.featuredImage?.originalUrl,
-            price: price,
+            price: pricing.currentRaw, // Use the calculated effective price
             currency: $currency,
-            quantity: quantity // This is now correctly respected by the new store
+            quantity: quantity
         });
 
         toast.success('Added to Cart');
@@ -102,15 +117,21 @@
                             aspectRatio="4/3"
                             class="h-full w-full object-contain p-8 transition-transform duration-500 group-hover:scale-105"
                         />
-                    {:else}
-                         <div class="flex h-full w-full items-center justify-center text-main/20">
+                    {:else} 
+                        <div class="flex h-full w-full items-center justify-center text-main/20">
                             <Icon icon="mdi:image-off" width="64" />
                         </div>
                     {/if}
-                    <div class="absolute top-4 left-4">
+                    
+                    <div class="absolute top-4 left-4 flex flex-col gap-2 items-start">
                         <span class="bg-white/90 backdrop-blur text-main text-xs font-bold px-3 py-1 rounded-full shadow-sm border border-slate-100 uppercase tracking-wider">
                             {product.type}
                         </span>
+                        {#if pricing.isOnSale}
+                            <span class="bg-accent text-main text-xs font-bold px-3 py-1 rounded-full shadow-sm uppercase tracking-wider animate-pulse">
+                                {pricing.badge}
+                            </span>
+                        {/if}
                     </div>
                 </div>
 
@@ -126,7 +147,7 @@
                                 <img 
                                     src={img.thumbnailUrl || img.originalUrl} 
                                     alt="Thumbnail" 
-                                    class="h-full w-full object-cover"
+                                    class="h-full w-full object-cover" 
                                 />
                             </button>
                         {/each}
@@ -148,14 +169,23 @@
                     <div class="flex items-center justify-between border-y border-slate-200 py-6">
                         <div>
                             <p class="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">Price</p>
-                            <p class="text-4xl font-bold text-main">{displayPrice}</p>
+                            <div class="flex items-baseline gap-3">
+                                <p class="text-4xl font-bold text-main {pricing.isOnSale ? 'text-accent' : ''}">
+                                    {pricing.current}
+                                </p>
+                                {#if pricing.isOnSale}
+                                    <p class="text-lg font-medium text-slate-400 line-through">
+                                        {pricing.original}
+                                    </p>
+                                {/if}
+                            </div>
                         </div>
-                        <div class="text-right">
-                             <p class="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">Availability</p>
-                             <div class="flex items-center justify-end gap-1 {stockStatus.color}">
+                        <div class="text-right"> 
+                            <p class="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">Availability</p> 
+                            <div class="flex items-center justify-end gap-1 {stockStatus.color}">
                                 <Icon icon={stockStatus.icon} width="20" />
                                 <span class="font-bold">{stockStatus.label}</span>
-                             </div>
+                            </div>
                         </div>
                     </div>
 
@@ -251,12 +281,12 @@
                                 {@const sol = link.solution}
                                 <a href={`/solutions/${sol.slug}`} class="flex items-center gap-4 rounded-lg bg-white/10 p-3 hover:bg-white/20 transition-colors group">
                                     <div class="h-12 w-12 flex-shrink-0 rounded bg-white/5 overflow-hidden">
-                                         {#if sol.featuredImage}
+                                        {#if sol.featuredImage}
                                             <Image 
                                                 src={sol.featuredImage.thumbnailUrl || sol.featuredImage.originalUrl} 
-                                                alt={sol.solutionName}
-                                                aspectRatio="1/1"
-                                                class="h-full w-full object-cover"
+                                                alt={sol.solutionName} 
+                                                aspectRatio="1/1" 
+                                                class="h-full w-full object-cover" 
                                             />
                                         {/if}
                                     </div>

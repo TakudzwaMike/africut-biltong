@@ -4,18 +4,19 @@ export const navItems = [
 	{ href: `${ADMIN_ROUTE}/orders`, label: `Orders` },
 	{ href: `${ADMIN_ROUTE}/page-content`, label: `Page Content` },
 	{ href: `${ADMIN_ROUTE}/products`, label: `Store Products` },
+	{ href: `${ADMIN_ROUTE}/marketing`, label: `Marketing & Sales` },
 	{ href: `${ADMIN_ROUTE}/solutions`, label: `Solutions` },
 	{ href: `${ADMIN_ROUTE}/documents`, label: `Documents` },
 	{ href: `${ADMIN_ROUTE}/partners`, label: `Partners` },
 	{ href: `${ADMIN_ROUTE}/case-studies`, label: `Case Studies` },
 	{ href: `${ADMIN_ROUTE}/team-members`, label: `Team Members` },
-	{
-		href: `${ADMIN_ROUTE}/blog`,
-		label: `Blog`,
+	{ 
+		href: `${ADMIN_ROUTE}/blog`, 
+		label: `Blog`, 
 		subItems: [
 			{ href: `${ADMIN_ROUTE}/blog`, label: `Posts`, exact: true },
 			{ href: `${ADMIN_ROUTE}/blog/categories`, label: `Categories` }
-		]
+		] 
 	},
 	{ href: `${ADMIN_ROUTE}/tracked-links`, label: `Tracked Links & QR` },
 	{ href: `${ADMIN_ROUTE}/leads`, label: `Leads` },

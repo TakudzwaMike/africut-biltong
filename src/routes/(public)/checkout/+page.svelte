@@ -1,5 +1,5 @@
 <script>
-	import { cart } from '$lib/stores/cart.svelte.js'; // Ensure .svelte.js extension
+	import { cart } from '$lib/stores/cart.svelte.js';
 	import { onMount } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
 	import { goto } from '$app/navigation';
@@ -11,9 +11,19 @@
 
 	// Reactive Cart State
 	let items = $derived(cart.items);
-	let total = $derived(cart.total);
+	let subtotal = $derived(cart.total); // Using 'total' from store as subtotal
 	let currency = $derived(cart.currency);
 	
+	// Discount State
+	let discountCode = $state('');
+	let discountError = $state('');
+	let discountSuccess = $state('');
+	let discountAmount = $state(0);
+	let isCheckingCode = $state(false);
+	
+	// Final Calculation
+	let total = $derived(Math.max(0, subtotal - discountAmount));
+
 	// Form State
 	let currentStep = $state('address'); // 'address' | 'payment' | 'polling'
 	let selectedAddressId = $state(addresses.find(a => a.isDefault)?.id || addresses[0]?.id || null);
@@ -38,6 +48,45 @@
 		return `${symbol}${(cents / 100).toFixed(2)}`;
 	}
 
+	async function applyDiscount() {
+		if (!discountCode.trim()) return;
+		isCheckingCode = true;
+		discountError = '';
+		discountSuccess = '';
+		discountAmount = 0;
+
+		try {
+			const res = await fetch('/api/store/discount/validate', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ 
+					code: discountCode, 
+					subtotalCents: subtotal 
+				})
+			});
+			
+			const result = await res.json();
+			
+			if (result.valid) {
+				discountAmount = result.discountAmount;
+				discountSuccess = result.message;
+			} else {
+				discountError = result.message;
+			}
+		} catch (e) {
+			discountError = 'Failed to validate code.';
+		} finally {
+			isCheckingCode = false;
+		}
+	}
+
+	function removeDiscount() {
+		discountCode = '';
+		discountAmount = 0;
+		discountSuccess = '';
+		discountError = '';
+	}
+
 	async function handlePayment() {
 		if (!selectedAddressId) {
 			errorMsg = 'Please select a shipping address.';
@@ -53,7 +102,8 @@
 				currency,
 				shippingAddressId: selectedAddressId,
 				paymentMethod,
-				phone: paymentMethod === 'ecocash' ? mobilePhone : undefined
+				phone: paymentMethod === 'ecocash' ? mobilePhone : undefined,
+				discountCode: discountAmount > 0 ? discountCode : undefined
 			};
 
 			const res = await fetch('/api/store/checkout/initiate', {
@@ -64,6 +114,13 @@
 
 			const result = await res.json();
 			if (!res.ok) throw new Error(result.message || 'Payment initiation failed.');
+
+			// Check for 100% discount or redirect
+			if (result.status === 'paid' && result.redirectUrl && result.redirectUrl.includes('checkout/success')) {
+				cart.clear();
+				goto(result.redirectUrl);
+				return;
+			}
 
 			// Handle Redirect (Card) or Polling (Mobile Money)
 			if (result.redirectUrl) {
@@ -86,7 +143,7 @@
 	function startPolling(orderPublicId) {
 		pollInterval = setInterval(async () => {
 			try {
-				const res = await fetch(`/api/store/orders/status/${orderPublicId}`);
+				const res = await fetch(`/api/store/orders/${orderPublicId}/status`); // Fixed endpoint
 				const data = await res.json();
 
 				if (data.status === 'paid') {
@@ -163,13 +220,13 @@
 						{#if addresses.length > 0}
 							<div class="space-y-4">
 								{#each addresses as addr}
-									<label class="group relative flex cursor-pointer items-start gap-4 rounded-xl border p-6 shadow-sm transition-all
+									<label class="group relative flex cursor-pointer items-start gap-4 rounded-xl border p-6 shadow-sm transition-all 
 										{selectedAddressId === addr.id ? 'border-accent bg-accent/5 ring-1 ring-accent' : 'border-slate-200 bg-white hover:border-slate-300'}">
 										
                                         <div class="flex h-5 items-center">
                                             <input type="radio" bind:group={selectedAddressId} value={addr.id} class="h-4 w-4 text-accent focus:ring-accent" />
                                         </div>
-                                        
+                                         
 										<div class="flex-1">
                                             <div class="flex justify-between items-center mb-1">
 											    <span class="font-bold text-main">{addr.label}</span>
@@ -241,7 +298,7 @@
                                         <p class="text-xs text-slate-400 mt-2">You will receive a USSD prompt on this number.</p>
 									</div>
 								{/if}
-                                
+                                                                 
                                 <!-- Card -->
 								<label class="flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all hover:shadow-md {paymentMethod === 'card' ? 'border-accent bg-accent/5 ring-1 ring-accent' : 'border-slate-200 bg-white'}">
 									<input type="radio" bind:group={paymentMethod} value="card" class="text-accent focus:ring-accent" />
@@ -325,12 +382,52 @@
 					<div class="border-t border-slate-100 pt-4 mt-4 space-y-2">
 						<div class="flex justify-between text-sm text-slate-600">
 							<span>Subtotal</span>
-							<span>{formatPrice(total)}</span>
+							<span>{formatPrice(subtotal)}</span>
 						</div>
 						<div class="flex justify-between text-sm text-slate-600">
 							<span>Shipping</span>
 							<span class="text-green-600 font-medium">Free</span>
 						</div>
+						{#if discountAmount > 0}
+							<div class="flex justify-between text-sm text-green-600 font-bold">
+								<span>Discount ({discountCode})</span>
+								<span>-{formatPrice(discountAmount)}</span>
+							</div>
+						{/if}
+					</div>
+
+					<!-- Discount Input -->
+					<div class="mt-4 pt-4 border-t border-slate-100">
+						<label for="discount" class="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2 block">Discount Code</label>
+						<div class="flex gap-2">
+							<input 
+								type="text" 
+								id="discount" 
+								bind:value={discountCode} 
+								placeholder="Enter Code" 
+								disabled={discountAmount > 0}
+								class="w-full rounded-md border-slate-200 bg-slate-50 py-2 px-3 text-sm focus:border-accent focus:ring-accent disabled:text-slate-400"
+							/>
+							{#if discountAmount > 0}
+								<button onclick={removeDiscount} class="rounded-md bg-red-100 px-3 text-red-600 hover:bg-red-200">
+									<Icon icon="mdi:close" />
+								</button>
+							{:else}
+								<button 
+									onclick={applyDiscount} 
+									disabled={!discountCode || isCheckingCode}
+									class="rounded-md bg-main px-4 text-sm font-bold text-white hover:bg-main/90 disabled:opacity-50"
+								>
+									Apply
+								</button>
+							{/if}
+						</div>
+						{#if discountError}
+							<p class="mt-1 text-xs text-red-500 font-bold">{discountError}</p>
+						{/if}
+						{#if discountSuccess}
+							<p class="mt-1 text-xs text-green-600 font-bold">{discountSuccess}</p>
+						{/if}
 					</div>
 					
 					<div class="border-t border-slate-100 pt-4 mt-4 flex justify-between items-center">

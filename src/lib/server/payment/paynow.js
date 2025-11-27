@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import { PUBLIC_BASE_URL } from '$env/static/public';
+import { env as publicEnv } from '$env/dynamic/public'; // Switched to dynamic
 import crypto from 'crypto';
 import querystring from 'querystring';
 
@@ -10,12 +10,16 @@ const PAYNOW_REMOTETRANSACTION_URL = 'https://www.paynow.co.zw/interface/remotet
 const PAYNOW_ID = env.PAYNOW_INTEGRATION_ID;
 const PAYNOW_KEY = env.PAYNOW_INTEGRATION_KEY;
 
-// Fallback for development
-const BASE_URL = PUBLIC_BASE_URL || 'http://localhost:5173';
-
 const isDev = process.env.NODE_ENV === 'development';
 function logDev(...args) {
     if (isDev) console.log('[PaynowProvider]', ...args);
+}
+
+// Helper to get the current Base URL at runtime
+function getBaseUrl() {
+    // Prioritize the environment variable, fallback to localhost
+    // Using a function ensures we get the latest value if it changes (though unlikely for Base URL)
+    return publicEnv.PUBLIC_BASE_URL || 'http://localhost:5173';
 }
 
 function generateHash(payload) {
@@ -54,14 +58,15 @@ export async function initiateRedirectTransaction(orderPublicId, amountInCents, 
     
     // Convert Cents to Dollars for Paynow
     const amount = (amountInCents / 100).toFixed(2);
+    const baseUrl = getBaseUrl();
 
     const payload = {
         id: PAYNOW_ID,
         reference: orderPublicId,
         amount: amount,
         additionalinfo: `Order #${orderPublicId}`,
-        returnurl: `${BASE_URL}/checkout/return?order_id=${orderPublicId}`,
-        resulturl: `${BASE_URL}/api/store/payment-callback/paynow`, // Updated callback path
+        returnurl: `${baseUrl}/checkout/return?order_id=${orderPublicId}`,
+        resulturl: `${baseUrl}/api/store/payment-callback/paynow`,
         status: 'Message',
     };
     
@@ -95,14 +100,15 @@ export async function initiateExpressTransaction(orderPublicId, amountInCents, c
     logDev(`Initiating EXPRESS payment for order #${orderPublicId} via ${method}`);
     
     const amount = (amountInCents / 100).toFixed(2);
+    const baseUrl = getBaseUrl();
 
     const payload = {
         id: PAYNOW_ID,
         reference: orderPublicId,
         amount: amount,
         additionalinfo: `Order #${orderPublicId}`,
-        returnurl: `${BASE_URL}/checkout/return?order_id=${orderPublicId}`,
-        resulturl: `${BASE_URL}/api/store/payment-callback/paynow`,
+        returnurl: `${baseUrl}/checkout/return?order_id=${orderPublicId}`,
+        resulturl: `${baseUrl}/api/store/payment-callback/paynow`,
         authemail: customerEmail,
         status: 'Message',
         method: method.toLowerCase(),

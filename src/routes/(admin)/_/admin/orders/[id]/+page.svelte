@@ -52,9 +52,28 @@
 						</li>
 					{/each}
 				</ul>
-				<div class="mt-4 pt-4 border-t border-main/10 flex justify-between items-center">
-					<span class="font-bold text-lg">Total</span>
-					<span class="font-bold text-2xl text-accent drop-shadow-sm">{formatMoney(order.total, order.currency)}</span>
+				
+				<!-- Financial Breakdown -->
+				<div class="mt-4 pt-4 border-t border-main/10 space-y-2">
+					<div class="flex justify-between items-center text-sm text-main/70">
+						<span>Subtotal</span>
+						<span>{formatMoney(order.subtotal || order.total, order.currency)}</span>
+					</div>
+					
+					{#if order.discountAmount > 0}
+						<div class="flex justify-between items-center text-sm text-green-600 font-medium">
+							<span class="flex items-center gap-1">
+								<Icon icon="mdi:ticket-percent" width="16" />
+								Discount {order.discountCode ? `(${order.discountCode.code})` : ''}
+							</span>
+							<span>-{formatMoney(order.discountAmount, order.currency)}</span>
+						</div>
+					{/if}
+
+					<div class="flex justify-between items-center pt-2 mt-2 border-t border-dashed border-main/10">
+						<span class="font-bold text-lg">Total</span>
+						<span class="font-bold text-2xl text-accent drop-shadow-sm">{formatMoney(order.total, order.currency)}</span>
+					</div>
 				</div>
 			</div>
 

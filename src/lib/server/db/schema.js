@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, serial, varchar, jsonb, integer, pgEnum, boolean, decimal, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, serial, varchar, jsonb, integer, pgEnum, boolean, primaryKey } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -9,12 +9,13 @@ export const productTypeEnum = pgEnum('product_type', ['physical', 'service', 'd
 export const orderStatusEnum = pgEnum('order_status', ['pending', 'paid', 'shipped', 'delivered', 'cancelled']);
 export const userRoleEnum = pgEnum('user_role', ['admin', 'customer', 'store_manager', 'content_editor']);
 export const userStatusEnum = pgEnum('user_status', ['pending', 'active', 'disabled']);
+export const discountTypeEnum = pgEnum('discount_type', ['percentage', 'fixed']);
 
 // --- AUTH & USERS ---
 export const userTable = pgTable('user', {
 	id: text('id').primaryKey(),
 	email: varchar('email', { length: 255 }).notNull().unique(),
-	username: varchar('username', { length: 255 }), // Optional, for admin display
+	username: varchar('username', { length: 255 }),
 	firstName: text('first_name'),
 	lastName: text('last_name'),
 	passwordHash: text('password_hash').notNull(),
@@ -34,7 +35,7 @@ export const sessionTable = pgTable('session', {
 export const userAddress = pgTable('user_address', {
 	id: text('id').primaryKey().$defaultFn(() => createId()),
 	userId: text('user_id').notNull().references(() => userTable.id, { onDelete: 'cascade' }),
-	label: text('label').notNull(), // e.g., "Home"
+	label: text('label').notNull(),
 	firstName: text('first_name').notNull(),
 	lastName: text('last_name').notNull(),
 	address: text('address').notNull(),
@@ -164,8 +165,8 @@ export const productVariant = pgTable('product_variant', {
 	productId: integer('product_id').notNull().references(() => product.id, { onDelete: 'cascade' }),
 	name: text('name').notNull(),
 	sku: text('sku'),
-	priceUsd: integer('price_usd'),
-	priceZar: integer('price_zar'),
+	priceUsd: integer('price_usd'), // Base List Price (Cents)
+	priceZar: integer('price_zar'), // Base List Price (Cents)
 	stock: integer('stock'),
 	isDefault: boolean('is_default').notNull().default(false),
 });
@@ -185,6 +186,43 @@ export const productImage = pgTable('product_image', {
 	displayOrder: integer('display_order').notNull().default(0)
 });
 
+// --- NEW: MARKETING & SALES EVENTS ---
+
+export const saleEvent = pgTable('sale_event', {
+	id: text('id').primaryKey().$defaultFn(() => createId()),
+	name: text('name').notNull(), // Internal Admin Name
+	publicLabel: text('public_label'), // Shown on badges (e.g. "Summer Sale")
+	bannerText: text('banner_text'), // Optional site-wide banner
+	startsAt: timestamp('starts_at', { withTimezone: true, mode: 'date' }).notNull(),
+	endsAt: timestamp('ends_at', { withTimezone: true, mode: 'date' }).notNull(),
+	isActive: boolean('is_active').notNull().default(true), // Master kill switch
+	createdAt: timestamp('created_at').defaultNow()
+});
+
+export const salePrice = pgTable('sale_price', {
+	id: text('id').primaryKey().$defaultFn(() => createId()),
+	eventId: text('event_id').notNull().references(() => saleEvent.id, { onDelete: 'cascade' }),
+	variantId: text('variant_id').notNull().references(() => productVariant.id, { onDelete: 'cascade' }),
+	salePriceUsd: integer('sale_price_usd'), // Override Price (Cents)
+	salePriceZar: integer('sale_price_zar'), // Override Price (Cents)
+}, (t) => ({
+	// Constraint: A variant can only have one price entry per event
+	uniqueVariantEvent: { columns: [t.eventId, t.variantId] } 
+}));
+
+export const discountCode = pgTable('discount_code', {
+	id: text('id').primaryKey().$defaultFn(() => createId()),
+	code: varchar('code', { length: 50 }).notNull().unique(), // Uppercase, e.g., "SAVE20"
+	type: discountTypeEnum('type').notNull(), // 'percentage' or 'fixed'
+	value: integer('value').notNull(), // 20 for 20%, or 1000 for $10.00
+	startsAt: timestamp('starts_at', { withTimezone: true, mode: 'date' }),
+	endsAt: timestamp('ends_at', { withTimezone: true, mode: 'date' }),
+	usageLimit: integer('usage_limit'), // Total times it can be used globally
+	usageCount: integer('usage_count').notNull().default(0),
+	minOrderAmount: integer('min_order_amount'), // In base currency cents (usually USD for checks)
+	isActive: boolean('is_active').notNull().default(true)
+});
+
 // SMART LINK: Solutions <-> Products
 export const solutionsToProducts = pgTable('solutions_to_products', {
 	solutionId: integer('solution_id').notNull().references(() => solution.id, { onDelete: 'cascade' }),
@@ -200,6 +238,9 @@ export const order = pgTable('order', {
 	shippingAddressId: text('shipping_address_id').references(() => userAddress.id),
 	status: orderStatusEnum('status').notNull().default('pending'),
 	total: integer('total').notNull(),
+	subtotal: integer('subtotal'), // Added to track pre-discount amount
+	discountCodeId: text('discount_code_id').references(() => discountCode.id),
+	discountAmount: integer('discount_amount').default(0), // Amount saved in cents
 	currency: text('currency').notNull().default('USD'),
 	paymentGatewayPollUrl: text('payment_gateway_poll_url'),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
@@ -322,7 +363,8 @@ export const productRelations = relations(product, ({ one, many }) => ({
 
 export const productVariantRelations = relations(productVariant, ({ one, many }) => ({
 	product: one(product, { fields: [productVariant.productId], references: [product.id] }),
-	orderItems: many(orderItem)
+	orderItems: many(orderItem),
+	salePrices: many(salePrice)
 }));
 
 export const productFeatureRelations = relations(productFeature, ({ one }) => ({
@@ -347,12 +389,26 @@ export const solutionsToProductsRelations = relations(solutionsToProducts, ({ on
 export const orderRelations = relations(order, ({ one, many }) => ({
 	user: one(userTable, { fields: [order.userId], references: [userTable.id] }),
 	items: many(orderItem),
-	shippingAddress: one(userAddress, { fields: [order.shippingAddressId], references: [userAddress.id] })
+	shippingAddress: one(userAddress, { fields: [order.shippingAddressId], references: [userAddress.id] }),
+	discountCode: one(discountCode, { fields: [order.discountCodeId], references: [discountCode.id] })
 }));
 
 export const orderItemRelations = relations(orderItem, ({ one }) => ({
 	order: one(order, { fields: [orderItem.orderId], references: [order.id] }),
 	variant: one(productVariant, { fields: [orderItem.productVariantId], references: [productVariant.id] })
+}));
+
+export const saleEventRelations = relations(saleEvent, ({ many }) => ({
+	prices: many(salePrice)
+}));
+
+export const salePriceRelations = relations(salePrice, ({ one }) => ({
+	event: one(saleEvent, { fields: [salePrice.eventId], references: [saleEvent.id] }),
+	variant: one(productVariant, { fields: [salePrice.variantId], references: [productVariant.id] })
+}));
+
+export const discountCodeRelations = relations(discountCode, ({ many }) => ({
+	orders: many(order)
 }));
 
 export const userAddressRelations = relations(userAddress, ({ one }) => ({

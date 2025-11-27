@@ -7,14 +7,24 @@
     let { data } = $props();
 
     // Helper to display price based on selected currency
-    function getDisplayPrice(product) {
-        const variant = product.variants[0];
-        if (!variant) return 'Unavailable';
+    function getPriceDetails(product) {
+        const v = product.variants.find(variant => variant.isDefault) || product.variants[0];
+        if (!v) return null;
 
-        if ($currency === 'ZAR') {
-            return variant.priceZar ? `R ${(variant.priceZar / 100).toFixed(2)}` : 'N/A';
-        }
-        return variant.priceUsd ? `$${(variant.priceUsd / 100).toFixed(2)}` : 'N/A';
+        const isZar = $currency === 'ZAR';
+        const currentCents = isZar ? v.effectivePriceZar : v.effectivePriceUsd;
+        const originalCents = isZar ? v.compareAtPriceZar : v.compareAtPriceUsd;
+
+        if (currentCents === null) return null;
+
+        const format = (cents) => isZar ? `R ${(cents / 100).toFixed(2)}` : `$${(cents / 100).toFixed(2)}`;
+
+        return {
+            current: format(currentCents),
+            original: originalCents ? format(originalCents) : null,
+            isOnSale: v.isOnSale,
+            badge: v.saleBadge
+        };
     }
 </script>
 
@@ -26,8 +36,7 @@
 
 <PageHeader 
     title="Product Catalog" 
-    subtitle="Browse our complete inventory of hardware, licenses, and services."
-/>
+    subtitle="Browse our complete inventory of hardware, licenses, and services." />
 
 <div class="relative z-10 bg-slate-50 py-24">
     <div class="mx-auto max-w-7xl px-8">
@@ -48,9 +57,10 @@
         <!-- Grid -->
         <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {#each data.products as product}
+                {@const pricing = getPriceDetails(product)}
                 <a href={`/products/${product.slug}`} class="group relative flex flex-col overflow-hidden rounded-xl bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl">
                     <!-- Image -->
-                    <div class="aspect-[4/3] overflow-hidden bg-main/5">
+                    <div class="aspect-[4/3] overflow-hidden bg-main/5 relative">
                         {#if product.featuredImage}
                             <Image 
                                 src={product.featuredImage.displayUrl || product.featuredImage.originalUrl}
@@ -64,11 +74,16 @@
                             </div>
                         {/if}
                         
-                        <!-- Type Badge -->
-                        <div class="absolute top-4 left-4">
+                        <!-- Badges -->
+                        <div class="absolute top-4 left-4 flex flex-col gap-2 items-start">
                             <span class="rounded bg-white/90 px-2 py-1 text-xs font-bold uppercase tracking-wider text-main shadow-sm backdrop-blur">
                                 {product.type}
                             </span>
+                            {#if pricing && pricing.isOnSale}
+                                <span class="rounded bg-accent text-main px-2 py-1 text-xs font-bold uppercase tracking-wider shadow-sm animate-pulse">
+                                    {pricing.badge || 'Sale'}
+                                </span>
+                            {/if}
                         </div>
                     </div>
 
@@ -78,9 +93,18 @@
                         <p class="mt-2 text-sm text-main/60 line-clamp-2 flex-1">{product.shortDescription}</p>
                         
                         <div class="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-                            <span class="text-xl font-bold text-main">
-                                {getDisplayPrice(product)}
-                            </span>
+                            <div class="flex flex-col">
+                                {#if pricing}
+                                    {#if pricing.isOnSale}
+                                        <span class="text-xs text-slate-400 line-through">{pricing.original}</span>
+                                    {/if}
+                                    <span class="text-xl font-bold text-main {pricing.isOnSale ? 'text-accent' : ''}">
+                                        {pricing.current}
+                                    </span>
+                                {:else}
+                                    <span class="text-sm text-slate-400">Unavailable</span>
+                                {/if}
+                            </div>
                             <span class="text-sm font-bold text-accent flex items-center gap-1">
                                 View <Icon icon="mdi:arrow-right" />
                             </span>

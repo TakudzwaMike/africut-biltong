@@ -16,11 +16,28 @@
     // Take first 3 for a clean hero backdrop
     const heroImages = allProducts.slice(0, 3).map(p => p.featuredImage).filter(Boolean);
 
-    function getPrice(product) {
-        const v = product.variants[0]; 
+    // Enhanced Price Helper
+    function getPriceDetails(product) {
+        // Use the default variant or the first one
+        const v = product.variants.find(variant => variant.isDefault) || product.variants[0];
         if (!v) return null;
-        if ($currency === 'ZAR') return v.priceZar ? `R ${(v.priceZar/100).toFixed(2)}` : null;
-        return v.priceUsd ? `$${(v.priceUsd/100).toFixed(2)}` : null;
+
+        const isZar = $currency === 'ZAR';
+        
+        // Use effective prices calculated by the server loader
+        const currentCents = isZar ? v.effectivePriceZar : v.effectivePriceUsd;
+        const originalCents = isZar ? v.compareAtPriceZar : v.compareAtPriceUsd;
+
+        if (currentCents === null) return null;
+
+        const format = (cents) => isZar ? `R ${(cents / 100).toFixed(2)}` : `$${(cents / 100).toFixed(2)}`;
+
+        return {
+            current: format(currentCents),
+            original: originalCents ? format(originalCents) : null,
+            isOnSale: v.isOnSale,
+            badge: v.saleBadge
+        };
     }
 </script>
 
@@ -139,6 +156,7 @@
                 
                 <div class="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
                     {#each collections.hardware as product}
+                        {@const pricing = getPriceDetails(product)}
                         <a href={`/products/${product.slug}`} class="group block bg-transparent">
                             <!-- Card Image -->
                             <div class="aspect-square w-full overflow-hidden rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:border-accent/50 relative">
@@ -155,10 +173,17 @@
                                     <div class="flex h-full w-full items-center justify-center text-slate-300"><Icon icon="mdi:server" width="48" /></div>
                                 {/if}
                                 
-                                <!-- Price Badge (Cleaner Look) -->
-                                {#if getPrice(product)}
-                                    <div class="absolute top-3 right-3 bg-main text-white text-xs font-bold px-2.5 py-1 rounded">
-                                        {getPrice(product)}
+                                <!-- Price Badge -->
+                                {#if pricing}
+                                    <div class="absolute top-3 right-3 flex flex-col items-end gap-1">
+                                        <div class="bg-main text-white text-xs font-bold px-2.5 py-1 rounded shadow-sm">
+                                            {pricing.current}
+                                        </div>
+                                        {#if pricing.isOnSale}
+                                            <div class="bg-accent text-main text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">
+                                                {pricing.badge || 'SALE'}
+                                            </div>
+                                        {/if}
                                     </div>
                                 {/if}
                             </div>
@@ -167,6 +192,12 @@
                             <div class="mt-4">
                                 <h3 class="text-base font-bold text-main truncate group-hover:text-accent transition-colors">{product.name}</h3>
                                 <p class="text-sm text-slate-500 mt-1 line-clamp-2 leading-relaxed">{product.shortDescription}</p>
+                                
+                                {#if pricing && pricing.isOnSale}
+                                    <p class="mt-2 text-xs text-slate-400 line-through font-medium">
+                                        Was {pricing.original}
+                                    </p>
+                                {/if}
                             </div>
                         </a>
                     {/each}
@@ -198,23 +229,37 @@
                     <div class="lg:w-2/3 w-full">
                         <div class="flex gap-6 overflow-x-auto pb-8 pt-4 px-2 snap-x hide-scrollbar">
                             {#each collections.software as product}
+                                {@const pricing = getPriceDetails(product)}
                                 <a href={`/products/${product.slug}`} class="snap-center shrink-0 w-72 bg-white text-main rounded-xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group border border-white/10">
                                     <div class="aspect-video bg-slate-100 relative overflow-hidden">
-                                         {#if product.featuredImage}
+                                        {#if product.featuredImage}
                                             <Image 
-                                                src={product.featuredImage.displayUrl || product.featuredImage.originalUrl} 
-                                                alt={product.name} 
-                                                class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                                                src={product.featuredImage.displayUrl || product.featuredImage.originalUrl}
+                                                alt={product.name}
+                                                class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                             />
                                         {:else}
                                             <div class="h-full w-full flex items-center justify-center text-slate-300"><Icon icon="mdi:code-tags" width="40"/></div>
                                         {/if}
+                                        
+                                        {#if pricing && pricing.isOnSale}
+                                            <div class="absolute top-2 right-2 bg-accent text-main text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">
+                                                {pricing.badge || 'SALE'}
+                                            </div>
+                                        {/if}
                                     </div>
                                     <div class="p-5">
                                         <h4 class="font-bold text-lg line-clamp-1 group-hover:text-accent transition-colors">{product.name}</h4>
-                                        <div class="flex justify-between items-center mt-4">
+                                        <div class="flex justify-between items-end mt-4">
                                             <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">License</span>
-                                            <span class="text-main font-mono font-bold">{getPrice(product) || 'Custom'}</span>
+                                            <div class="text-right">
+                                                {#if pricing && pricing.isOnSale}
+                                                    <span class="block text-[10px] text-slate-400 line-through">{pricing.original}</span>
+                                                {/if}
+                                                <span class="text-main font-mono font-bold {pricing?.isOnSale ? 'text-accent' : ''}">
+                                                    {pricing ? pricing.current : 'Custom'}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </a>
@@ -240,14 +285,32 @@
 
                 <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
                     {#each collections.services as product}
+                        {@const pricing = getPriceDetails(product)}
                         <a href={`/products/${product.slug}`} class="group relative flex items-start gap-5 rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-accent hover:shadow-lg">
                             <div class="h-14 w-14 flex-shrink-0 flex items-center justify-center rounded-xl bg-main text-white shadow-md group-hover:bg-accent group-hover:text-main transition-colors">
                                 <Icon icon="mdi:account-wrench" width="24" />
                             </div>
-                            <div>
-                                <h4 class="text-lg font-bold text-main mb-2 group-hover:text-accent transition-colors">{product.name}</h4>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="text-lg font-bold text-main mb-2 group-hover:text-accent transition-colors">{product.name}</h4>
+                                    {#if pricing && pricing.isOnSale}
+                                        <span class="bg-accent/10 text-accent text-[10px] font-bold px-2 py-0.5 rounded">
+                                            SALE
+                                        </span>
+                                    {/if}
+                                </div>
                                 <p class="text-sm text-slate-500 leading-relaxed line-clamp-2">{product.shortDescription}</p>
-                                <span class="mt-4 inline-block text-xs font-bold uppercase tracking-wide text-main border-b border-main/20 pb-0.5 group-hover:border-accent">Book Now</span>
+                                <div class="mt-4 flex justify-between items-end border-t border-slate-50 pt-2">
+                                    <span class="text-xs font-bold uppercase tracking-wide text-main border-b border-main/20 pb-0.5 group-hover:border-accent">Book Now</span>
+                                    {#if pricing}
+                                        <div class="text-right">
+                                            {#if pricing.isOnSale}
+                                                <span class="text-[10px] text-slate-400 line-through block">{pricing.original}</span>
+                                            {/if}
+                                            <span class="font-mono text-sm font-bold">{pricing.current}</span>
+                                        </div>
+                                    {/if}
+                                </div>
                             </div>
                         </a>
                     {/each}
