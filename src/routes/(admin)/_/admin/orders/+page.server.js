@@ -12,8 +12,12 @@ export async function load({ url, locals }) {
 		throw error(403, 'Forbidden: You do not have access to Orders.');
 	}
 
+    const query = url.searchParams.get('q') || ''; // Capture query
 	const page = Number(url.searchParams.get('page')) || 1;
 	const offset = (page - 1) * ITEMS_PER_PAGE;
+
+    // Note: If you implement search filtering later, apply 'query' logic here
+    // For now, we just pass it back so the UI doesn't crash
 
 	const [orders, totalResult] = await Promise.all([
 		db.query.order.findMany({
@@ -37,7 +41,8 @@ export async function load({ url, locals }) {
 		pagination: {
 			page,
 			totalPages,
-			totalItems
-		}
+			totalItems,
+            query // FIX: Return this
+		} 
 	};
 }

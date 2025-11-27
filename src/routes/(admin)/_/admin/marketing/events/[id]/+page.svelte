@@ -7,25 +7,26 @@
 
 	let { data, form } = $props();
 	
-	// Initialize Matrix State
-	// We use a Map for O(1) access during rendering loops
-	let priceState = $state({}); 
-
-	// Hydrate state
-	// Format: { [variantId]: { usd: float, zar: float } }
-	$effect(() => {
+	// Helper to create the initial state map from data
+	function createInitialState(products, priceMap) {
 		const map = {};
-		data.products.forEach(p => {
+		products.forEach(p => {
 			p.variants.forEach(v => {
-				const existing = data.priceMap[v.id];
+				const existing = priceMap[v.id];
 				map[v.id] = {
 					usd: existing?.salePriceUsd ? existing.salePriceUsd / 100 : null,
-					zar: existing?.salePriceZar ? existing.salePriceZar / 100 : null
+					zar: existing?.salePriceZar ? existing.salePriceZar / 100 : null,
+					// Keep track of base price for calculations
+					baseUsd: v.priceUsd ? v.priceUsd / 100 : 0,
+					baseZar: v.priceZar ? v.priceZar / 100 : 0
 				};
 			});
 		});
-		priceState = map;
-	});
+		return map;
+	}
+
+	// Initialize Matrix State immediately
+	let priceState = $state(createInitialState(data.products, data.priceMap));
 
 	// Helper to prepare JSON for submission
 	let submissionData = $derived(
@@ -38,6 +39,9 @@
 
 	let isSavingEvent = $state(false);
 	let isSavingPrices = $state(false);
+    
+    // Bulk Tool State
+    let bulkPercentage = $state(20);
 
 	// Date Helper
 	function formatDateTimeLocal(date) {
@@ -46,6 +50,34 @@
 		const pad = (num) => num.toString().padStart(2, '0');
 		return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 	}
+
+    // --- BULK LOGIC ---
+    function applyBulkDiscount() {
+        if (bulkPercentage <= 0 || bulkPercentage >= 100) {
+            toast.error('Please enter a valid percentage (1-99).');
+            return;
+        }
+
+        const factor = 1 - (bulkPercentage / 100);
+        let count = 0;
+
+        for (const variantId in priceState) {
+            const item = priceState[variantId];
+            if (item.baseUsd) item.usd = parseFloat((item.baseUsd * factor).toFixed(2));
+            if (item.baseZar) item.zar = parseFloat((item.baseZar * factor).toFixed(2));
+            count++;
+        }
+        
+        toast.success(`Applied ${bulkPercentage}% discount to ${count} variants.`);
+    }
+
+    function clearPrices() {
+        if(!confirm('Clear all sale prices?')) return;
+        for (const variantId in priceState) {
+            priceState[variantId].usd = null;
+            priceState[variantId].zar = null;
+        }
+    }
 
 	function handleEventUpdate() {
 		isSavingEvent = true;
@@ -133,7 +165,10 @@
 				</div>
 
 				<div class="mt-6">
-					<SubmitButton loading={isSavingEvent} class="w-full bg-main text-light">Update Settings</SubmitButton>
+                    <!-- CHANGED: Replaced dark button with standard Accent button -->
+					<SubmitButton loading={isSavingEvent} class="w-full bg-accent text-main font-bold">
+                        Save Settings
+                    </SubmitButton>
 				</div>
 			</form>
 		</div>
@@ -148,17 +183,31 @@
 			>
 				<input type="hidden" name="prices" value={JSON.stringify(submissionData)} />
 
-				<div class="p-6 border-b border-main/10 flex items-center justify-between bg-slate-50 rounded-t-xl">
-					<div>
-						<h3 class="font-bold text-lg">Pricing Matrix</h3>
-						<p class="text-xs text-main/60">Leave fields blank to use original price.</p>
-					</div>
-					<SubmitButton loading={isSavingPrices} class="bg-accent px-6">Save Prices</SubmitButton>
-				</div>
+                <!-- Toolbar: Bulk Actions -->
+                <div class="p-4 bg-main/5 border-b border-main/10 flex flex-wrap items-center gap-4 rounded-t-xl">
+                    <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-md border border-main/10 shadow-sm">
+                        <span class="text-xs font-bold uppercase text-main/60">Bulk Discount:</span>
+                        <input 
+                            type="number" 
+                            bind:value={bulkPercentage} 
+                            class="w-12 border-0 bg-transparent p-0 text-sm font-bold text-accent focus:ring-0 text-right"
+                        />
+                        <span class="text-sm font-bold text-main">%</span>
+                    </div>
+                    <button type="button" onclick={applyBulkDiscount} class="text-xs font-bold text-main hover:text-accent uppercase tracking-wide">
+                        Apply to All
+                    </button>
+                    <div class="h-4 w-px bg-main/20 mx-2"></div>
+                    <button type="button" onclick={clearPrices} class="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wide">
+                        Clear All
+                    </button>
+                    <div class="flex-1"></div>
+                    <SubmitButton loading={isSavingPrices} class="bg-accent px-6 py-1.5 text-sm">Save Prices</SubmitButton>
+                </div>
 
 				<div class="flex-1 overflow-y-auto p-0 max-h-[800px]">
 					<table class="w-full text-left text-sm">
-						<thead class="bg-main/5 text-xs uppercase tracking-wider text-main/50 font-bold sticky top-0 z-10 backdrop-blur-sm">
+						<thead class="bg-slate-50 text-xs uppercase tracking-wider text-main/50 font-bold sticky top-0 z-10 backdrop-blur-sm shadow-sm">
 							<tr>
 								<th class="p-4 w-1/3">Product</th>
 								<th class="p-4 w-1/4">Original (USD)</th>
@@ -170,37 +219,39 @@
 							{#each data.products as product}
 								{#each product.variants as variant}
 									{@const state = priceState[variant.id]}
-									<tr class="hover:bg-main/5 transition-colors group">
-										<td class="p-4">
-											<div class="font-bold text-main">{product.name}</div>
-											<div class="text-xs text-main/60">{variant.name}</div>
-										</td>
-										<td class="p-4 font-mono text-main/50">
-											${(variant.priceUsd / 100).toFixed(2)}
-										</td>
-										<td class="p-4">
-											<div class="relative">
-												<span class="absolute left-3 top-2 text-main/40">$</span>
-												<input 
-													type="number" step="0.01"
-													bind:value={state.usd}
-													class="w-full rounded border-main/20 bg-white pl-6 py-1.5 text-sm focus:border-accent focus:ring-accent font-bold text-accent"
-													placeholder="-"
-												/>
-											</div>
-										</td>
-										<td class="p-4">
-											<div class="relative">
-												<span class="absolute left-3 top-2 text-main/40">R</span>
-												<input 
-													type="number" step="0.01"
-													bind:value={state.zar}
-													class="w-full rounded border-main/20 bg-white pl-6 py-1.5 text-sm focus:border-accent focus:ring-accent font-bold text-accent"
-													placeholder="-"
-												/>
-											</div>
-										</td>
-									</tr>
+									{#if state} <!-- Safety check -->
+										<tr class="hover:bg-main/5 transition-colors group">
+											<td class="p-4">
+												<div class="font-bold text-main">{product.name}</div>
+												<div class="text-xs text-main/60">{variant.name}</div>
+											</td>
+											<td class="p-4 font-mono text-main/50">
+												${(variant.priceUsd / 100).toFixed(2)}
+											</td>
+											<td class="p-4">
+												<div class="relative">
+													<span class="absolute left-3 top-2 text-main/40">$</span>
+													<input 
+														type="number" step="0.01"
+														bind:value={state.usd}
+														class="w-full rounded border-main/20 bg-white pl-6 py-1.5 text-sm focus:border-accent focus:ring-accent font-bold text-accent"
+														placeholder="-"
+													/>
+												</div>
+											</td>
+											<td class="p-4">
+												<div class="relative">
+													<span class="absolute left-3 top-2 text-main/40">R</span>
+													<input 
+														type="number" step="0.01"
+														bind:value={state.zar}
+														class="w-full rounded border-main/20 bg-white pl-6 py-1.5 text-sm focus:border-accent focus:ring-accent font-bold text-accent"
+														placeholder="-"
+													/>
+												</div>
+											</td>
+										</tr>
+									{/if}
 								{/each}
 							{/each}
 						</tbody>

@@ -12,10 +12,14 @@ class CartStore {
 			if (saved) {
 				try {
 					const parsed = JSON.parse(saved);
-					this.items = parsed.items || [];
+                    // FIX: Ensure this.items is ALWAYS an array, even if parsed.items is null/undefined
+					this.items = Array.isArray(parsed.items) ? parsed.items : [];
 					this.currency = parsed.currency || 'USD';
 				} catch (e) {
 					console.error('Cart load error:', e);
+                    // On error, reset to clean state
+                    this.items = [];
+                    this.currency = 'USD';
 				}
 			}
 
@@ -33,10 +37,13 @@ class CartStore {
 
 	// In Svelte 5, getters on $state fields are auto-reactive
 	get count() {
+        // Safety check
+        if (!Array.isArray(this.items)) return 0;
 		return this.items.reduce((acc, i) => acc + i.quantity, 0);
 	}
 
 	get total() {
+        if (!Array.isArray(this.items)) return 0;
 		return this.items.reduce((acc, i) => acc + (i.price * i.quantity), 0);
 	}
 
