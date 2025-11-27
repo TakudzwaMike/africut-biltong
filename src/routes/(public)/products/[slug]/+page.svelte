@@ -6,6 +6,8 @@
     import { cart } from '$lib/stores/cart.svelte.js';
     import { currency } from '$lib/stores/currency.js';
     import { toast } from '$lib/toast-service';
+    import Seo from '$lib/components/Seo.svelte'; // Import SEO
+    import JsonLD from '$lib/components/JsonLD.svelte'; // Import JsonLD
 
     let { data } = $props();
     const { product } = data;
@@ -24,13 +26,11 @@
     
     let activeImage = $derived(allImages[activeImageIndex]);
 
-    // Pricing Logic (Reactive to Currency & Variant Selection)
+    // Pricing Logic
     let pricing = $derived.by(() => {
         if (!selectedVariant) return { current: 'Unavailable', original: null };
 
         const isZar = $currency === 'ZAR';
-        
-        // Use effective prices calculated by server
         const currentCents = isZar ? selectedVariant.effectivePriceZar : selectedVariant.effectivePriceUsd;
         const originalCents = isZar ? selectedVariant.compareAtPriceZar : selectedVariant.compareAtPriceUsd;
 
@@ -43,10 +43,11 @@
 
         return {
             current: format(currentCents),
-            currentRaw: currentCents, // For Cart
+            currentRaw: currentCents,
             original: originalCents ? format(originalCents) : null,
             isOnSale: !!originalCents,
-            badge: selectedVariant.saleBadge || 'Sale'
+            badge: selectedVariant.saleBadge || 'Sale',
+            amount: (currentCents / 100).toFixed(2) // For Schema
         };
     });
 
@@ -70,14 +71,13 @@
 
         isAdding = true;
         
-        // Add to Cart Rune
         cart.addItem({
             id: product.id,
             name: product.name,
             variantId: selectedVariant.id,
             variantName: selectedVariant.name,
             image: product.featuredImage?.thumbnailUrl || product.featuredImage?.originalUrl,
-            price: pricing.currentRaw, // Use the calculated effective price
+            price: pricing.currentRaw,
             currency: $currency,
             quantity: quantity
         });
@@ -85,12 +85,40 @@
         toast.success('Added to Cart');
         setTimeout(() => isAdding = false, 500);
     }
+
+    // Schema.org Data
+    let productSchema = $derived({
+        '@context': 'https://schema.org/',
+        '@type': 'Product',
+        name: product.name,
+        image: allImages.map(img => img.originalUrl),
+        description: product.shortDescription,
+        brand: {
+            '@type': 'Brand',
+            name: 'Vision AI Tech'
+        },
+        sku: selectedVariant?.sku || product.id,
+        offers: {
+            '@type': 'Offer',
+            url: `https://vision-ai.tech/products/${product.slug}`,
+            priceCurrency: $currency,
+            price: pricing.amount,
+            availability: (product.type !== 'physical' || (selectedVariant?.stock > 0)) 
+                ? 'https://schema.org/InStock' 
+                : 'https://schema.org/OutOfStock',
+            itemCondition: 'https://schema.org/NewCondition'
+        }
+    });
 </script>
 
-<svelte:head>
-    <title>{product.name} | Vision AI Store</title>
-    <meta name="description" content={product.shortDescription} />
-</svelte:head>
+<Seo 
+    title={`${product.name} | Vision AI Store`}
+    description={product.shortDescription}
+    imageUrl={product.featuredImage?.displayUrl || product.featuredImage?.originalUrl}
+    ogType="product"
+/>
+
+<JsonLD data={productSchema} />
 
 <div class="min-h-screen bg-slate-50 pt-8 pb-24">
     <div class="mx-auto max-w-7xl px-6 lg:px-8">
@@ -108,14 +136,15 @@
             
             <!-- LEFT COLUMN: Gallery (7 cols) -->
             <div class="lg:col-span-7 space-y-4">
-                <!-- Main Image -->
+                <!-- Main Image (FIXED: Added fit="contain") -->
                 <div class="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-sm relative group">
                     {#if activeImage}
                         <Image 
                             src={activeImage.displayUrl || activeImage.originalUrl}
                             alt={product.name}
                             aspectRatio="4/3"
-                            class="h-full w-full object-contain p-8 transition-transform duration-500 group-hover:scale-105"
+                            fit="contain" 
+                            class="h-full w-full p-8 transition-transform duration-500 group-hover:scale-105"
                         />
                     {:else} 
                         <div class="flex h-full w-full items-center justify-center text-main/20">

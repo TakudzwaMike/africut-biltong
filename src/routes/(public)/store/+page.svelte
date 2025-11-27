@@ -2,6 +2,7 @@
     import Image from '$lib/components/Image.svelte';
     import Icon from '@iconify/svelte';
     import { currency } from '$lib/stores/currency';
+    import Seo from '$lib/components/Seo.svelte'; // Added SEO
 
     let { data } = $props();
     const { collections } = data;
@@ -18,13 +19,10 @@
 
     // Enhanced Price Helper
     function getPriceDetails(product) {
-        // Use the default variant or the first one
         const v = product.variants.find(variant => variant.isDefault) || product.variants[0];
         if (!v) return null;
 
         const isZar = $currency === 'ZAR';
-        
-        // Use effective prices calculated by the server loader
         const currentCents = isZar ? v.effectivePriceZar : v.effectivePriceUsd;
         const originalCents = isZar ? v.compareAtPriceZar : v.compareAtPriceUsd;
 
@@ -41,15 +39,14 @@
     }
 </script>
 
-<svelte:head>
-    <title>Store | Vision AI Tech</title>
-    <meta name="description" content="Shop enterprise-grade AI hardware, software licenses, and expert services." />
-</svelte:head>
+<Seo 
+    title="Store | Vision AI Tech"
+    description="Shop enterprise-grade AI hardware, software licenses, and expert services. Direct access to the Vision AI ecosystem."
+/>
 
 <!-- STORE HERO -->
 <section class="relative min-h-[60vh] w-full overflow-hidden bg-main text-light flex items-center">
-    
-    <!-- Subtle Background Pattern (Abstract) -->
+    <!-- Subtle Background Pattern -->
     <div class="absolute inset-0 opacity-20 pointer-events-none">
          <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15)_1px,transparent_1px)] [background-size:24px_24px]"></div>
     </div>
@@ -60,7 +57,6 @@
     <!-- Content -->
     <div class="relative z-10 mx-auto w-full max-w-7xl px-6 lg:px-8 pt-12 pb-12">
         <div class="max-w-3xl space-y-8">
-            <!-- Badge -->
             <div class="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-1 backdrop-blur-sm">
                 <div class="h-2 w-2 rounded-full bg-accent animate-pulse"></div>
                 <span class="text-xs font-bold uppercase tracking-widest text-accent">Official Store</span>
@@ -88,7 +84,7 @@
         </div>
     </div>
     
-    <!-- Hero Image/Visual (Right Side Desktop) -->
+    <!-- Hero Image -->
     <div class="absolute right-0 top-0 bottom-0 w-1/3 hidden lg:block opacity-30 mask-image-linear-to-l">
         {#if heroImages[0]}
             <Image 
@@ -158,7 +154,7 @@
                     {#each collections.hardware as product}
                         {@const pricing = getPriceDetails(product)}
                         <a href={`/products/${product.slug}`} class="group block bg-transparent">
-                            <!-- Card Image -->
+                            <!-- Card Image (FIXED: Added fit="contain" and simpler classes) -->
                             <div class="aspect-square w-full overflow-hidden rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:border-accent/50 relative">
                                 {#if product.featuredImage}
                                     <div class="h-full w-full p-6 flex items-center justify-center">
@@ -166,7 +162,8 @@
                                             src={product.featuredImage.displayUrl || product.featuredImage.originalUrl}
                                             alt={product.name}
                                             aspectRatio="1/1"
-                                            class="max-h-full w-auto object-contain transition-transform duration-500 group-hover:scale-110"
+                                            fit="contain"
+                                            class="h-full w-full transition-transform duration-500 group-hover:scale-110"
                                         />
                                     </div>
                                 {:else}
@@ -236,6 +233,7 @@
                                             <Image 
                                                 src={product.featuredImage.displayUrl || product.featuredImage.originalUrl}
                                                 alt={product.name}
+                                                fit="cover"
                                                 class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                             />
                                         {:else}
