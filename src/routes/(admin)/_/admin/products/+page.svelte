@@ -11,26 +11,73 @@
 	import DataTable from '$lib/components/admin/DataTable.svelte';
 	import Icon from '@iconify/svelte';
 
-	let { data, form } = $props();
+	let { data } = $props();
 
-	let editingProduct = $state(null);
+	// --- STATE ---
+	let editingProduct = $state(null); // If null, list view. If object, edit view.
 	let isSubmitting = $state(false);
-	let isSuccess = $state(false);
-	let isError = $state(false);
-
-	let contentJson = $state(null);
-	let galleryImages = $state([]);
-
-	// Search & Pagination State
 	let searchQuery = $state(data.pagination.query || '');
 	let searchTimeout;
 
-	const columns = [
-		{ label: 'Image', class: 'w-24' },
-		{ label: 'Name' },
-		{ label: 'Description' },
-		{ label: 'Actions', class: 'text-right' }
-	];
+	// Complex Form State
+	let contentJson = $state(null);
+	let galleryImages = $state([]);
+	let variants = $state([]);
+	let features = $state([]);
+	let selectedSolutionIds = $state(new Set());
+
+	// --- ACTIONS ---
+
+	function startCreating() {
+		// Default state for new product
+		contentJson = null;
+		galleryImages = [];
+		variants = [{ id: null, name: 'Default', sku: '', priceUsd: 0, priceZar: 0, stock: 0, isDefault: true }];
+		features = [];
+		selectedSolutionIds = new Set();
+
+		editingProduct = {
+			id: null,
+			name: '',
+			slug: '',
+			shortDescription: '',
+			type: 'physical',
+			mediaId: null,
+			ctaText: '',
+			ctaLink: ''
+		};
+	}
+
+	function startEditing(product) {
+		// Hydrate state from existing product
+		contentJson = product.longDescription;
+		
+		// Map gallery images for the manager
+		galleryImages = product.images.map(img => ({
+			mediaId: img.mediaId,
+			media: img.media // The manager expects the full media object for display
+		}));
+
+		// Deep copy variants
+        // CONVERSION: Divide cents by 100 to show Dollars/Rands in UI
+		variants = product.variants.map(v => ({ 
+            ...v,
+            priceUsd: v.priceUsd ? v.priceUsd / 100 : 0,
+            priceZar: v.priceZar ? v.priceZar / 100 : 0
+        }));
+		
+		// Deep copy features
+		features = product.features.map(f => ({ ...f }));
+
+		// Hydrate Smart Links
+		selectedSolutionIds = new Set(product.solutions.map(s => s.solutionId));
+
+		editingProduct = { ...product };
+	}
+
+	function cancelEditing() {
+		editingProduct = null;
+	}
 
 	function handleSearchInput() {
 		clearTimeout(searchTimeout);
@@ -46,56 +93,16 @@
 		}, 400);
 	}
 
-	function changePage(newPage) {
-		const url = new URL($page.url);
-		url.searchParams.set('page', newPage.toString());
-		goto(url, { noScroll: true });
-	}
-
-	function startEditing(product) {
-		editingProduct = {
-			...product,
-			priceUSD: product.prices?.USD ? (product.prices.USD / 100).toFixed(2) : '',
-			priceZAR: product.prices?.ZAR ? (product.prices.ZAR / 100).toFixed(2) : ''
-		};
-		contentJson = product.longDescription;
-		galleryImages = [...product.galleryImages];
-	}
-
-	function startCreating() {
-		editingProduct = {
-			id: null, name: '', slug: '', shortDescription: '', longDescription: null, mediaId: null,
-			ctaText: '', ctaLink: '', type: 'physical', priceUSD: '', priceZAR: '', stockQuantity: null
-		};
-		contentJson = null;
-		galleryImages = [];
-	}
-
-	function cancelEditing() {
-		editingProduct = null;
-	}
-
 	function handleSubmit() {
 		isSubmitting = true;
-		isSuccess = false;
-		isError = false;
-
-		return ({ result, update }) => {
+		return async ({ result, update }) => {
 			isSubmitting = false;
 			if (result.type === 'success') {
-				isSuccess = true;
-				toast.success(result.data?.message);
-				invalidateAll();
-				setTimeout(() => {
-					editingProduct = null;
-					isSuccess = false;
-				}, 1000);
+				toast.success('Product saved successfully!');
+				await invalidateAll();
+				editingProduct = null; // Close the panel
 			} else if (result.type === 'failure') {
-				isError = true;
-				toast.error(result.data?.message);
-				setTimeout(() => {
-					isError = false;
-				}, 2000);
+				toast.error(result.data?.message || 'Failed to save product.');
 			}
 			update({ reset: false });
 		};
@@ -111,306 +118,376 @@
 			}
 		};
 	}
+
+	// --- VARIANT LOGIC ---
+	function addVariant() {
+		variants.push({
+			id: null,
+			name: '',
+			sku: '',
+			priceUsd: 0,
+			priceZar: 0,
+			stock: 0,
+			isDefault: variants.length === 0
+		});
+	}
+
+	function removeVariant(index) {
+		if (variants.length <= 1) {
+			toast.error('Product must have at least one variant.');
+			return;
+		}
+		variants = variants.filter((_, i) => i !== index);
+	}
+
+	function setAsDefault(index) {
+		variants = variants.map((v, i) => ({ ...v, isDefault: i === index }));
+	}
+
+	// --- FEATURE LOGIC ---
+	function addFeature() {
+		features.push({ icon: 'mdi:check', text: '' });
+	}
+	
+	function removeFeature(index) {
+		features = features.filter((_, i) => i !== index);
+	}
+
+	// --- SMART LINK LOGIC ---
+	function toggleSolution(id) {
+		if (selectedSolutionIds.has(id)) {
+			selectedSolutionIds.delete(id);
+		} else {
+			selectedSolutionIds.add(id);
+		}
+	}
+
+	// --- TABLE CONFIG ---
+	function getTotalStock(variants) {
+		return variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+	}
+
+	function formatPriceRange(variants) {
+		if (!variants || variants.length === 0) return '-';
+		// Database stores cents, so divide by 100 for display
+		const prices = variants.map(v => v.priceUsd).filter(p => p !== null);
+		if (prices.length === 0) return '-';
+		const min = Math.min(...prices) / 100;
+		const max = Math.max(...prices) / 100;
+		return min === max ? `$${min.toFixed(2)}` : `$${min.toFixed(2)} - $${max.toFixed(2)}`;
+	}
+
+	const columns = [
+		{ label: 'Image', class: 'w-20' },
+		{ label: 'Name' },
+		{ label: 'Type' },
+		{ label: 'Stock' },
+		{ label: 'Price (USD)' },
+		{ label: 'Actions', class: 'text-right' }
+	];
 </script>
 
 <div class="p-8">
-	<!-- Header Row -->
+	<!-- Header & Search -->
 	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 		<div>
 			<h1 class="text-3xl font-bold tracking-tight text-main">Products</h1>
-			<p class="mt-2 text-base text-main/70">Manage your products and services for the store.</p>
+			<p class="mt-2 text-base text-main/70">Manage hardware inventory and services.</p>
 		</div>
 		
 		<div class="flex flex-col items-end gap-4 sm:flex-row">
-			<!-- Search Box -->
 			<div class="relative w-full sm:w-64">
 				<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
 					<Icon icon="mdi:magnify" class="text-main/40" />
 				</div>
-				<input
-					type="text"
-					placeholder="Search products..."
-					bind:value={searchQuery}
+				<input 
+					type="text" 
+					placeholder="Search products..." 
+					bind:value={searchQuery} 
 					oninput={handleSearchInput}
 					class="block w-full rounded-md border-0 bg-white py-2 pl-10 pr-3 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent sm:text-sm sm:leading-6"
 				/>
 			</div>
 
-			{#if !editingProduct}
-				<button
-					onclick={startCreating}
-					class="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 font-bold text-main shadow-sm transition hover:-translate-y-0.5"
-				>
-					<Icon icon="mdi:plus" />
-					<span>Create New</span>
-				</button>
-			{/if}
+            <!-- Import/Export Buttons -->
+            <a href="/_/admin/products/import" class="flex items-center justify-center gap-2 rounded-md border border-main/20 bg-white px-3 py-2 font-bold text-main shadow-sm transition hover:bg-main/5">
+                <Icon icon="mdi:file-upload" />
+            </a>
+            <a href="/_/admin/products/export" class="flex items-center justify-center gap-2 rounded-md border border-main/20 bg-white px-3 py-2 font-bold text-main shadow-sm transition hover:bg-main/5" title="Export CSV">
+                <Icon icon="mdi:file-download" />
+            </a>
+
+			<button 
+				onclick={startCreating}
+				class="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 font-bold text-main shadow-sm transition hover:-translate-y-0.5"
+			>
+				<Icon icon="mdi:plus" />
+				<span>Create New</span>
+			</button>
 		</div>
 	</div>
 
-	<!-- Add/Edit Form as a slide-over panel -->
-	{#if editingProduct}
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<div
-			onclick={cancelEditing}
-			class="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
-			role="button"
-			tabindex="0"
-		></div>
-		<div
-			class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl flex flex-col bg-light shadow-lg"
-		>
-			<form method="POST" action="?/save" class="flex h-full flex-col" use:enhance={handleSubmit}>
-				<input type="hidden" name="id" value={editingProduct.id} />
-				<!-- Ensure contentJson is valid -->
-				<input type="hidden" name="longDescription" value={JSON.stringify(contentJson || {})} />
-
-				<!-- Header -->
-				<header class="flex-shrink-0 border-b border-main/10 p-4">
-					<h2 class="text-2xl font-bold">
-						{editingProduct.id ? 'Edit Product' : 'Create New Product'}
-					</h2>
-				</header>
-
-				<!-- Scrollable Content Area -->
-				<div class="flex-grow space-y-8 overflow-y-auto p-6">
-					<!-- Core Details -->
-					<div class="space-y-4 rounded-xl border border-main/10 p-6">
-						<h3 class="text-lg font-bold">Core Details</h3>
-						<div>
-							<label for="name" class="mb-1 block font-medium text-main/80">Product Name</label>
-							<input
-								type="text"
-								id="name"
-								name="name"
-								required
-								bind:value={editingProduct.name}
-								class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-							/>
-						</div>
-						<div>
-							<label for="slug" class="mb-1 block font-medium text-main/80">Slug</label>
-							<input
-								type="text"
-								id="slug"
-								name="slug"
-								required
-								bind:value={editingProduct.slug}
-								class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-							/>
-						</div>
-						<div>
-							<label for="shortDescription" class="mb-1 block font-medium text-main/80"
-								>Short Description</label
-							>
-							<textarea
-								id="shortDescription"
-								name="shortDescription"
-								rows="3"
-								bind:value={editingProduct.shortDescription}
-								class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-							></textarea>
-						</div>
-					</div>
-
-					<!-- Store Details -->
-					<div class="space-y-4 rounded-xl border border-main/10 p-6">
-						<h3 class="text-lg font-bold">Store Details</h3>
-						<div>
-							<label for="type" class="mb-1 block font-medium text-main/80">Product Type</label>
-							<select
-								name="type"
-								id="type"
-								bind:value={editingProduct.type}
-								class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-							>
-								<option value="physical">Physical</option>
-								<option value="service">Service</option>
-								<option value="digital">Digital</option>
-							</select>
-						</div>
-						<div class="grid grid-cols-2 gap-4">
-							<div>
-								<label for="priceUSD" class="mb-1 block font-medium text-main/80">Price (USD)</label>
-								<input
-									type="number"
-									step="0.01"
-									name="priceUSD"
-									id="priceUSD"
-									bind:value={editingProduct.priceUSD}
-									placeholder="e.g., 49.99"
-									class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-								/>
-							</div>
-							<div>
-								<label for="priceZAR" class="mb-1 block font-medium text-main/80">Price (ZAR)</label>
-								<input
-									type="number"
-									step="0.01"
-									name="priceZAR"
-									id="priceZAR"
-									bind:value={editingProduct.priceZAR}
-									placeholder="e.g., 899.99"
-									class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-								/>
-							</div>
-						</div>
-						{#if editingProduct.type === 'physical'}
-							<div>
-								<label for="stockQuantity" class="mb-1 block font-medium text-main/80"
-									>Stock Quantity</label
-								>
-								<input
-									type="number"
-									name="stockQuantity"
-									id="stockQuantity"
-									bind:value={editingProduct.stockQuantity}
-									placeholder="Leave blank for infinite stock"
-									class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-								/>
-							</div>
-						{/if}
-					</div>
-
-					<!-- Featured Image -->
-					<div class="space-y-4 rounded-xl border border-main/10 p-6">
-						<h3 class="text-lg font-bold">Featured Image</h3>
-						<FeaturedImagePicker
-							mediaItems={data.mediaItems}
-							bind:selectedMediaId={editingProduct.mediaId}
-							currentImageUrl={editingProduct.featuredImage?.url}
-							currentImageAlt={editingProduct.featuredImage?.altText}
-						/>
-					</div>
-
-					<!-- Product Gallery -->
-					<div class="space-y-4 rounded-xl border border-main/10 p-6">
-						<ImageGalleryManager mediaItems={data.mediaItems} bind:galleryImages />
-					</div>
-
-					<!-- Long Description -->
-					<div class="space-y-4 rounded-xl border border-main/10 p-6">
-						<h3 class="text-lg font-bold">Long Description</h3>
-						<RichTextEditor
-							bind:content={contentJson}
-							initialContent={editingProduct.longDescription}
-						/>
-					</div>
-
-					<!-- CTA -->
-					<div class="space-y-4 rounded-xl border border-main/10 p-6">
-						<h3 class="text-lg font-bold">Call to Action (Optional)</h3>
-						<div>
-							<label for="ctaText" class="mb-1 block font-medium text-main/80">Button Text</label>
-							<input
-								type="text"
-								id="ctaText"
-								name="ctaText"
-								bind:value={editingProduct.ctaText}
-								class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-							/>
-						</div>
-						<div>
-							<label for="ctaLink" class="mb-1 block font-medium text-main/80">Button Link</label>
-							<input
-								type="text"
-								id="ctaLink"
-								name="ctaLink"
-								bind:value={editingProduct.ctaLink}
-								class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-							/>
-						</div>
-					</div>
-				</div>
-
-				<!-- Fixed Footer Buttons -->
-				<div
-					class="flex flex-shrink-0 items-center justify-end gap-4 border-t border-main/10 bg-light/80 p-4 backdrop-blur-sm"
-				>
-					<button type="button" onclick={cancelEditing} class="font-medium text-main/70"
-						>Cancel</button
-					>
-					<SubmitButton
-						type="submit"
-						loading={isSubmitting}
-						success={isSuccess}
-						error={isError}
-						class="bg-accent"
-					>
-						Save Product
-					</SubmitButton>
-				</div>
-			</form>
-		</div>
-	{/if}
-
-	<!-- Existing Products Table using DataTable -->
+	<!-- Table View -->
 	<div class:hidden={editingProduct}>
 		<DataTable 
 			items={data.products} 
 			{columns} 
-			emptyMessage="No products found. Create your first one!"
+			emptyMessage="No products found." 
 			row={productRow}
 		/>
-
-		<!-- Pagination Footer -->
-		{#if data.pagination.totalPages > 1}
-			<div class="mt-6 flex items-center justify-between border-t border-main/10 pt-6">
-				<div class="text-sm text-main/60">
-					Page <span class="font-bold text-main">{data.pagination.page}</span> of <span class="font-bold text-main">{data.pagination.totalPages}</span>
-				</div>
-				<div class="flex gap-2">
-					<button
-						onclick={() => changePage(data.pagination.page - 1)}
-						disabled={data.pagination.page <= 1}
-						class="flex items-center gap-1 rounded-md border border-main/10 bg-white px-3 py-1.5 text-sm font-medium text-main transition hover:bg-main/5 disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						<Icon icon="mdi:chevron-left" /> Previous
-					</button>
-					<button
-						onclick={() => changePage(data.pagination.page + 1)}
-						disabled={data.pagination.page >= data.pagination.totalPages}
-						class="flex items-center gap-1 rounded-md border border-main/10 bg-white px-3 py-1.5 text-sm font-medium text-main transition hover:bg-main/5 disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						Next <Icon icon="mdi:chevron-right" />
-					</button>
-				</div>
-			</div>
-		{/if}
+                 
+        <!-- Pagination -->
+        {#if data.pagination.totalPages > 1}
+            <div class="mt-6 flex items-center justify-between border-t border-main/10 pt-6">
+                <div class="text-sm text-main/60">
+                    Page <span class="font-bold text-main">{data.pagination.page}</span> of <span class="font-bold text-main">{data.pagination.totalPages}</span>
+                </div>
+                <div class="flex gap-2">
+                    <!-- Add pagination controls logic if needed in future, same as other pages -->
+                </div>
+            </div>
+        {/if}
 	</div>
+
+	<!-- EDIT / CREATE SLIDE-OVER PANEL -->
+	{#if editingProduct}
+		<!-- Backdrop -->
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<div 
+			onclick={cancelEditing} 
+			class="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity" 
+			role="button" 
+			tabindex="0"
+		></div>
+
+		<!-- Slide-Over Container -->
+		<div class="fixed inset-y-0 right-0 z-50 flex w-full max-w-4xl flex-col bg-light shadow-2xl transition-transform">
+			
+			<!-- Form Header -->
+			<div class="flex items-center justify-between border-b border-main/10 px-6 py-4 bg-white">
+				<h2 class="text-xl font-bold text-main">
+					{editingProduct.id ? 'Edit Product' : 'New Product'}
+				</h2>
+				<button onclick={cancelEditing} class="text-main/50 hover:text-main">
+					<Icon icon="mdi:close" width="24" />
+				</button>
+			</div>
+
+			<!-- Scrollable Content -->
+			<div class="flex-1 overflow-y-auto p-6 bg-slate-50">
+				<form method="POST" action="?/save" id="productForm" use:enhance={handleSubmit} class="space-y-8">
+					<input type="hidden" name="id" value={editingProduct.id || ''} />
+					
+					<!-- Serialized JSON Data -->
+					<input type="hidden" name="longDescription" value={JSON.stringify(contentJson || {})} />
+					<input type="hidden" name="variants" value={JSON.stringify(variants)} />
+					<input type="hidden" name="features" value={JSON.stringify(features)} />
+					{#each galleryImages as img}
+						<input type="hidden" name="galleryImageIds" value={img.mediaId} />
+					{/each}
+					{#each Array.from(selectedSolutionIds) as solId}
+						<input type="hidden" name="solutionIds" value={solId} />
+					{/each}
+
+					<!-- SECTION 1: Core Info -->
+					<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
+						<h3 class="text-sm font-bold uppercase tracking-wider text-main/60 mb-4">Core Details</h3>
+						<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+							<div class="md:col-span-2">
+								<label class="mb-1 block text-sm font-bold text-main/80">Product Name</label>
+								<input type="text" name="name" required bind:value={editingProduct.name} class="w-full rounded-md border-main/20 bg-main/5 px-3 py-2 text-main focus:border-accent focus:ring-accent" />
+							</div>
+							<div>
+								<label class="mb-1 block text-sm font-bold text-main/80">Slug</label>
+								<input type="text" name="slug" required bind:value={editingProduct.slug} class="w-full rounded-md border-main/20 bg-main/5 px-3 py-2 text-main focus:border-accent focus:ring-accent" />
+							</div>
+							<div>
+								<label class="mb-1 block text-sm font-bold text-main/80">Type</label>
+								<select name="type" bind:value={editingProduct.type} class="w-full rounded-md border-main/20 bg-main/5 px-3 py-2 text-main focus:border-accent focus:ring-accent">
+									<option value="physical">Physical (Hardware)</option>
+									<option value="digital">Digital (License/Software)</option>
+									<option value="service">Service (Consulting)</option>
+								</select>
+							</div>
+							<div class="md:col-span-2">
+								<label class="mb-1 block text-sm font-bold text-main/80">Short Description</label>
+								<textarea name="shortDescription" rows="2" bind:value={editingProduct.shortDescription} class="w-full rounded-md border-main/20 bg-main/5 px-3 py-2 text-main focus:border-accent focus:ring-accent"></textarea>
+							</div>
+						</div>
+					</div>
+
+					<!-- SECTION 2: Variants & Pricing -->
+					<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
+						<div class="flex items-center justify-between mb-4">
+							<h3 class="text-sm font-bold uppercase tracking-wider text-main/60">Pricing & Variants</h3>
+							<button type="button" onclick={addVariant} class="text-xs font-bold text-accent hover:underline flex items-center gap-1">
+								<Icon icon="mdi:plus" /> Add Variant
+							</button>
+						</div>
+						
+						<div class="space-y-4">
+							{#each variants as variant, i}
+								<div class="relative grid grid-cols-1 gap-4 rounded-lg border border-main/10 bg-main/5 p-4 sm:grid-cols-6">
+									<!-- Delete Button -->
+									<button type="button" onclick={() => removeVariant(i)} class="absolute right-2 top-2 text-red-500 hover:text-red-700" title="Remove Variant">
+										<Icon icon="mdi:close" />
+									</button> 
+
+									<div class="sm:col-span-2">
+										<label class="mb-1 block text-xs font-bold text-main/60">Variant Name</label>
+										<input type="text" bind:value={variant.name} placeholder="Default" class="w-full rounded border-main/20 bg-white px-2 py-1 text-sm" />
+									</div>
+									<div class="sm:col-span-2">
+										<label class="mb-1 block text-xs font-bold text-main/60">SKU</label>
+										<input type="text" bind:value={variant.sku} class="w-full rounded border-main/20 bg-white px-2 py-1 text-sm" />
+									</div>
+									<div class="sm:col-span-2">
+										<label class="mb-1 block text-xs font-bold text-main/60">Stock</label>
+										<input type="number" bind:value={variant.stock} class="w-full rounded border-main/20 bg-white px-2 py-1 text-sm" />
+									</div>
+									<div class="sm:col-span-3">
+										<label class="mb-1 block text-xs font-bold text-main/60">Price (USD)</label>
+										<div class="relative">
+											<span class="absolute left-2 top-1.5 text-xs text-main/40">$</span>
+											<!-- STEP="0.01" allows decimals -->
+											<input type="number" step="0.01" bind:value={variant.priceUsd} class="w-full rounded border-main/20 bg-white pl-5 py-1 text-sm" />
+										</div>
+									</div>
+									<div class="sm:col-span-3">
+										<label class="mb-1 block text-xs font-bold text-main/60">Price (ZAR)</label>
+										<div class="relative">
+											<span class="absolute left-2 top-1.5 text-xs text-main/40">R</span>
+											<input type="number" step="0.01" bind:value={variant.priceZar} class="w-full rounded border-main/20 bg-white pl-5 py-1 text-sm" />
+										</div>
+									</div>
+									<div class="sm:col-span-6 flex items-center gap-2">
+										<input type="radio" name="defaultVariant" checked={variant.isDefault} onchange={() => setAsDefault(i)} class="text-accent focus:ring-accent" />
+										<span class="text-xs font-medium text-main/80">Set as Default Variant</span>
+									</div>
+								</div>
+							{/each}
+						</div>
+					</div>
+
+					<!-- SECTION 3: Smart Links (Solutions) -->
+					<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
+						<h3 class="text-sm font-bold uppercase tracking-wider text-main/60 mb-4">Smart Linking</h3>
+						<p class="text-sm text-main/70 mb-4">Select the Solutions that use this product.</p>
+						
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+							{#each data.allSolutions as solution}
+								<label class="flex items-start gap-3 p-2 rounded border border-main/10 hover:bg-main/5 cursor-pointer transition-colors" class:bg-accent-light={selectedSolutionIds.has(solution.id)}>
+									<input 
+										type="checkbox" 
+										checked={selectedSolutionIds.has(solution.id)}
+										onchange={() => toggleSolution(solution.id)}
+										class="mt-1 h-4 w-4 rounded border-main/30 text-accent focus:ring-accent"
+									/>
+									<div>
+										<span class="block text-sm font-bold text-main">{solution.solutionName}</span>
+									</div>
+								</label>
+							{/each}
+						</div>
+					</div>
+
+					<!-- SECTION 4: Media -->
+					<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
+						<h3 class="text-sm font-bold uppercase tracking-wider text-main/60 mb-4">Media</h3>
+						<div class="space-y-6">
+							<FeaturedImagePicker 
+								mediaItems={data.mediaItems} 
+								bind:selectedMediaId={editingProduct.mediaId} 
+								currentImageUrl={editingProduct.featuredImage?.thumbnailUrl || editingProduct.featuredImage?.originalUrl} 
+								currentImageAlt={editingProduct.featuredImage?.altText}
+							/>
+							<div class="border-t border-main/10 pt-6">
+								<ImageGalleryManager mediaItems={data.mediaItems} bind:galleryImages />
+							</div>
+						</div>
+					</div>
+
+					<!-- SECTION 5: Features & Description -->
+					<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
+						<h3 class="text-sm font-bold uppercase tracking-wider text-main/60 mb-4">Detailed Content</h3>
+						
+						<!-- Features List -->
+						<div class="mb-8">
+							<div class="flex items-center justify-between mb-2">
+								<label class="text-sm font-bold text-main/80">Key Features</label>
+								<button type="button" onclick={addFeature} class="text-xs font-bold text-accent hover:underline">+ Add Feature</button>
+							</div>
+							<div class="space-y-2">
+								{#each features as feature, i}
+									<div class="flex gap-2">
+										<div class="relative w-1/4">
+											<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2">
+												<Icon icon={feature.icon || 'mdi:check'} class="text-main/40" />
+											</div>
+											<input type="text" bind:value={feature.icon} placeholder="Icon" class="w-full rounded border-main/20 pl-8 text-sm" />
+										</div>
+										<input type="text" bind:value={feature.text} placeholder="Description" class="flex-1 rounded border-main/20 text-sm" />
+										<button type="button" onclick={() => removeFeature(i)} class="text-red-500 px-2"><Icon icon="mdi:close" /></button>
+									</div>
+								{/each}
+							</div>
+						</div>
+
+						<!-- Rich Text -->
+						<div>
+							<label class="mb-2 block text-sm font-bold text-main/80">Long Description</label>
+							<RichTextEditor 
+								bind:content={contentJson} 
+								initialContent={editingProduct.longDescription}
+							/>
+						</div>
+					</div>
+
+					<!-- SECTION 6: CTA Overrides -->
+					<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
+						<h3 class="text-sm font-bold uppercase tracking-wider text-main/60 mb-4">Call to Action</h3>
+						<div class="grid grid-cols-2 gap-4">
+							<div>
+								<label class="mb-1 block text-xs font-bold text-main/60">Button Text</label>
+								<input type="text" bind:value={editingProduct.ctaText} placeholder="Default: Add to Cart" class="w-full rounded border-main/20 bg-main/5 px-2 py-1.5 text-sm" />
+							</div>
+							<div>
+								<label class="mb-1 block text-xs font-bold text-main/60">Button Link</label>
+								<input type="text" bind:value={editingProduct.ctaLink} placeholder="Default: /cart" class="w-full rounded border-main/20 bg-main/5 px-2 py-1.5 text-sm" />
+							</div>
+						</div>
+					</div>
+
+				</form>
+			</div>
+
+			<!-- Sticky Footer Actions -->
+			<div class="border-t border-main/10 bg-white p-4 flex justify-end gap-4">
+				<button type="button" onclick={cancelEditing} class="rounded-md border border-main/20 px-6 py-2 font-bold text-main hover:bg-main/5">Cancel</button>
+				<!-- Use form="productForm" to link button outside form tag -->
+				<SubmitButton form="productForm" type="submit" loading={isSubmitting} class="bg-accent px-8">Save Product</SubmitButton>
+			</div>
+		</div>
+	{/if}
 </div>
 
 {#snippet productRow(p)}
 	<td class="p-4">
 		{#if p.featuredImage}
-			<img
-				src={p.featuredImage.thumbnailUrl || p.featuredImage.originalUrl}
-				alt={p.featuredImage.altText}
-				class="h-10 w-16 rounded-md bg-main/5 object-cover"
-			/>
+			<img src={p.featuredImage.thumbnailUrl || p.featuredImage.originalUrl} alt={p.name} class="h-10 w-10 rounded-md object-cover bg-main/5" />
 		{:else}
-			<div
-				class="flex h-10 w-16 items-center justify-center rounded-md bg-main/5 text-xs text-main/50"
-			>
-				No Image
-			</div>
+			<div class="flex h-10 w-10 items-center justify-center rounded-md bg-main/5"><Icon icon="mdi:image-off" class="text-main/20" /></div>
 		{/if}
 	</td>
 	<td class="p-4 font-medium">{p.name}</td>
-	<td class="p-4 text-main/80">{p.shortDescription}</td>
-	<td class="p-4">
+	<td class="p-4"><span class="inline-block rounded-full bg-main/5 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-main/60">{p.type}</span></td>
+    <td class="p-4 text-sm">{p.type === 'physical' ? getTotalStock(p.variants) : '∞'}</td>
+    <td class="p-4 text-sm font-mono">{formatPriceRange(p.variants)}</td>
+	<td class="p-4 text-right">
 		<div class="flex items-center justify-end gap-2">
-			<button
-				onclick={() => startEditing(p)}
-				class="rounded-md bg-main/80 p-1.5 text-light backdrop-blur-sm hover:bg-main"
-				title="Edit Product"
-			>
-				<Icon icon="mdi:pencil" width="16" />
-			</button>
+			<button onclick={() => startEditing(p)} class="rounded-md bg-main/80 p-1.5 text-light hover:bg-main" title="Edit"><Icon icon="mdi:pencil" width="16" /></button>
 			<form method="POST" action="?/delete&id={p.id}" use:enhance={handleDelete}>
-				<button class="rounded-md bg-red-500 p-1.5 text-white hover:bg-red-600" title="Delete Product">
-					<Icon icon="mdi:trash-can-outline" width="16" />
-				</button>
+				<button class="rounded-md bg-red-500 p-1.5 text-white hover:bg-red-600" title="Delete"><Icon icon="mdi:trash-can-outline" width="16" /></button>
 			</form>
 		</div>
 	</td>

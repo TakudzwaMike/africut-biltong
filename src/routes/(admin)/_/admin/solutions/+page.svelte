@@ -1,16 +1,16 @@
 <script>
-	/** @type {import('./$types').PageData} */
-	export let data;
-	/** @type {import('./$types').ActionData} */
-	export let form;
-
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/toast-service';
 	import DataTable from '$lib/components/admin/DataTable.svelte';
 
-	$: if (form?.status === 200) {
-		toast.success('Solution deleted successfully!');
-	}
+	// FIX: Use $props()
+	let { data, form } = $props();
+
+	$effect(() => {
+		if (form?.status === 200) {
+			toast.success('Solution deleted successfully!');
+		}
+	});
 
 	const columns = [
 		{ label: 'Name' },

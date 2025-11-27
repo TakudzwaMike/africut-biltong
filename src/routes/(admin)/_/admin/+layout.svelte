@@ -2,212 +2,130 @@
 	import '../../../../app.css'
 	import { page } from '$app/state';
 	import { afterNavigate } from '$app/navigation';
-	import { navItems } from '$lib/admin/navigation.js';
-	import NavItem from '$lib/components/admin/NavItem.svelte'; 
+	import Icon from '@iconify/svelte';
+    // Import our new permissions logic
+    import { ADMIN_NAV, hasAccess } from '$lib/admin/permissions';
 
+	let { children, data } = $props();
 	let isMenuOpen = $state(false);
 
-	// Reactive variable for the logo, derived from page data.
-	// This will automatically update when the underlying data changes.
-	let logo = $derived(
-		page.data.mediaItems?.find((m) => m.id == page.data.settings?.siteLogoMediaId)
-	);
+    // Determine current active link style
+    function isActive(href) {
+        return page.url.pathname.startsWith(href);
+    }
 
 	function toggleMenu() {
 		isMenuOpen = !isMenuOpen;
 	}
 
-	// Close the mobile menu after navigation
 	afterNavigate(() => {
 		isMenuOpen = false;
 	});
+
+    // Configuration for Role Badges
+    const roleBadges = {
+        admin: { label: 'Admin', bg: 'bg-purple-600', text: 'text-purple-50', icon: 'mdi:shield-crown' },
+        store_manager: { label: 'Store Mgr', bg: 'bg-blue-600', text: 'text-blue-50', icon: 'mdi:store' },
+        content_editor: { label: 'Editor', bg: 'bg-green-600', text: 'text-green-50', icon: 'mdi:fountain-pen-tip' }
+    };
+
+    // Fallback for safety
+    const currentRole = data.user?.role || 'customer';
+    const badge = roleBadges[currentRole] || { label: 'Guest', bg: 'bg-gray-500', text: 'text-white', icon: 'mdi:account' };
 </script>
 
 <svelte:head>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="true" />
-	<link
-		href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700&display=swap"
-		rel="stylesheet"
-	/>
-	<style>
-		@media (min-width: 1024px) {
-			.admin-grid {
-				display: grid;
-				grid-template-columns: 260px 1fr;
-			}
-		}
-	</style>
+	<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700&display=swap" rel="stylesheet" />
 </svelte:head>
 
-<svelte:body class:overflow-hidden={isMenuOpen} />
+<div class="flex min-h-screen bg-light text-main font-sans">
+    
+    <!-- SIDEBAR -->
+    <aside class="fixed inset-y-0 left-0 z-50 w-64 flex-col border-r border-main/10 bg-white transition-transform duration-300 lg:translate-x-0 {isMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}">
+        
+        <!-- Brand & Role Header -->
+        <div class="flex flex-col border-b border-main/10 p-6">
+            <span class="text-xl font-bold tracking-tight text-main">Vision AI Panel</span>
+            
+            <!-- Dynamic Role Badge -->
+            <div class="mt-3 flex w-fit items-center gap-2 rounded-md {badge.bg} px-3 py-1.5 {badge.text} shadow-sm">
+                <Icon icon={badge.icon} width="16" />
+                <span class="text-xs font-bold uppercase tracking-wider">{badge.label}</span>
+            </div>
+        </div>
 
-<div class="admin-grid min-h-screen">
-	<!--
-      Desktop-Only Fixed Sidebar
-      KEY CHANGES:
-      1. `sticky top-0`: This makes the sidebar stick to the top of the viewport as you scroll the main content.
-      2. `h-screen`: This constrains the sidebar's height to be exactly the height of the screen.
-    -->
-	<aside class="hidden h-screen w-64 flex-shrink-0 flex-col border-r border-main/10 bg-main/5 lg:sticky lg:top-0 lg:flex">
-		<div class="flex h-full flex-col p-6">
-			<a href="/admin" class="flex items-center gap-3 text-xl font-bold">
-				{#if logo}
-					<img
-						src={logo.thumbnailUrl || logo.originalUrl}
-						alt={logo.altText}
-						class="h-8 w-8 rounded-md object-contain"
-					/>
-				{/if}
-				<span>{page.data.settings?.siteName || 'Vision AI'} Dashboard</span>
-			</a>
+        <!-- Navigation Loop -->
+        <nav class="flex-1 overflow-y-auto p-4 space-y-8">
+            {#each ADMIN_NAV as section}
+                <!-- Filter items based on the user's role -->
+                {@const visibleItems = section.items.filter(item => hasAccess(currentRole, item.roles))}
+                
+                {#if visibleItems.length > 0}
+                    <div>
+                        <h3 class="mb-2 px-2 text-xs font-bold uppercase tracking-wider text-main/40">{section.section}</h3>
+                        <ul class="space-y-1">
+                            {#each visibleItems as item}
+                                <li>
+                                    <a 
+                                        href={item.href} 
+                                        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors {isActive(item.href) ? 'bg-main text-light shadow-sm' : 'text-main/70 hover:bg-main/5 hover:text-main'}"
+                                    >
+                                        <Icon icon={item.icon} width="20" />
+                                        {item.label}
+                                    </a>
+                                </li>
+                            {/each}
+                        </ul>
+                    </div>
+                {/if}
+            {/each}
+        </nav>
 
-			<!--
-        Your existing `flex-grow` and `overflow-y-auto` on the nav element are PERFECT.
-        Because the parent <aside> now has a fixed height (h-screen), this overflow
-        will now correctly activate, creating a scrollbar ONLY for the navigation list.
-      -->
-			<nav class="mt-8 flex-grow overflow-y-auto">
-				<ul class="space-y-2">
-					{#each navItems as item}
-						<NavItem {item} />
-					{/each}
-				</ul>
-			</nav>
+        <!-- User Footer -->
+        <div class="border-t border-main/10 p-4">
+            <div class="flex items-center gap-3 mb-3 px-2">
+                <div class="h-8 w-8 rounded-full bg-main/10 flex items-center justify-center font-bold text-main/60 text-xs border border-main/5">
+                    {(data.user?.email?.[0] || 'U').toUpperCase()}
+                </div>
+                <div class="overflow-hidden">
+                    <p class="truncate text-sm font-bold text-main">{data.user?.firstName || 'User'}</p>
+                    <p class="truncate text-xs text-main/50">{data.user?.email}</p>
+                </div>
+            </div>
+            <form action="/logout" method="POST">
+                <button class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors">
+                    <Icon icon="mdi:logout" /> Sign Out
+                </button>
+            </form>
+        </div>
+    </aside>
 
-			<div class="mt-auto flex-shrink-0 pt-4">
-				<a href="/" class="block text-center text-sm text-main/60 hover:text-accent"
-					>← Back to Site</a
-				>
-			</div>
-		</div>
-	</aside>
+    <!-- Mobile Overlay -->
+    {#if isMenuOpen}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <div 
+            class="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden" 
+            onclick={toggleMenu} 
+            role="button" 
+            tabindex="0"
+        ></div>
+    {/if}
 
-	<!--
-    Main Content Area
-    KEY CHANGE:
-    1. `overflow-y-auto`: This tells the main content area to manage its own scrolling if its content is taller than the viewport.
-  -->
-	<div class="flex flex-1 flex-col overflow-y-auto">
-		<!-- Mobile Header -->
-		<header
-			class="flex flex-shrink-0 items-center justify-between border-b border-main/10 bg-light/80 p-4 backdrop-blur-md lg:hidden"
-		>
-			<a href="/admin" class="text-lg font-bold">{page.data.settings?.siteName || 'Admin'}</a>
-			<button onclick={toggleMenu} aria-label="Open menu" class="rounded-md p-2">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="lucide lucide-menu"
-					><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line
-						x1="4"
-						x2="20"
-						y1="18"
-						y2="18"
-					/></svg
-				>
-			</button>
-		</header>
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col lg:ml-64 transition-all duration-300">
+        <!-- Mobile Header -->
+        <header class="flex items-center justify-between border-b border-main/10 bg-white/80 px-6 py-4 backdrop-blur-md lg:hidden sticky top-0 z-30">
+            <span class="font-bold text-main">Admin Panel</span>
+            <button onclick={toggleMenu} class="text-main">
+                <Icon icon="mdi:menu" width="24" />
+            </button>
+        </header>
 
-		<main class="flex-grow">
-			<slot />
-		</main>
-	</div>
+        <main class="flex-1">
+            {@render children?.()}
+        </main>
+    </div>
+
 </div>
-
-
-<!-- Mobile Fullscreen Menu -->
-{#if isMenuOpen}
-	<button
-		onclick={toggleMenu}
-		aria-label="Close menu"
-		class="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm lg:hidden"
-	></button>
-
-	<div
-		class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-light/95 p-6 backdrop-blur-lg lg:hidden"
-	>
-		<div class="flex items-center justify-between">
-			<a href="/_/admin" class="flex items-center gap-3 text-xl font-bold">
-				{#if logo}
-					<img
-						src={logo.thumbnailUrl || logo.originalUrl}
-						alt={logo.altText}
-						class="h-8 w-8 rounded-md object-contain"
-					/>
-				{/if}
-				<span>{page.data.settings?.siteName || 'Vision AI'}</span>
-			</a>
-			<button onclick={toggleMenu} aria-label="Close menu" class="rounded-md p-2">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="lucide lucide-x"
-					><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg
-				>
-			</button>
-		</div>
-
-		<nav class="mt-8 flex-1 overflow-y-auto">
-			<ul class="space-y-2">
-				{#each navItems as item}
-					<li>
-						<a
-							href={item.href}
-							class="block rounded-md px-4 py-3 text-lg font-medium transition {page.url.pathname.startsWith(
-								item.href
-							)
-								? 'bg-accent text-main'
-								: 'text-main/70 hover:bg-main/10'}"
-						>
-							{item.label}
-						</a>
-						<!-- Special case for Blog submenu -->
-						{#if item.href === '/_/admin/blog' && page.url.pathname.startsWith('/_/admin/blog')}
-							<ul class="ml-4 mt-2 space-y-1 border-l-2 border-main/10 pl-4">
-								<li>
-									<a
-										href="/_/admin/blog"
-										class="block rounded-md px-3 py-2 text-base transition"
-										class:font-bold={page.url.pathname === '/_/admin/blog'}
-									>Posts</a
-									>
-								</li>
-								<li>
-									<a
-										href="/_/admin/blog/categories"
-										class="block rounded-md px-3 py-2 text-base transition"
-										class:font-bold={page.url.pathname.startsWith(
-											'/_/admin/blog/categories'
-										)}
-									>Categories</a
-									>
-								</li>
-							</ul>
-						{/if}
-					</li>
-				{/each}
-			</ul>
-		</nav>
-
-		<div class="mt-auto flex-shrink-0 pt-4">
-			<a href="/" class="block text-center text-sm text-main/60 hover:text-accent"
-				>← Back to Site</a
-			>
-		</div>
-	</div>
-{/if}

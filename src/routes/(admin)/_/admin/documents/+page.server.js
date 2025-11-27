@@ -1,10 +1,17 @@
 import { db } from '$lib/server/db';
 import { document, media } from '$lib/server/db/schema.js';
-import { fail } from '@sveltejs/kit';
+import { fail, error } from '@sveltejs/kit';
 import { desc, eq } from 'drizzle-orm';
 import { log } from '$lib/server/auditLog.js';
 
-export async function load() {
+const ALLOWED_ROLES = ['admin', 'content_editor'];
+
+export async function load({ locals }) {
+	// 1. Security Check
+	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+		throw error(403, 'Forbidden: You do not have permission to manage documents.');
+	}
+
 	const documents = await db.query.document.findMany({
 		orderBy: desc(document.createdAt),
 		with: {
@@ -19,24 +26,26 @@ export async function load() {
 
 export const actions = {
 	create: async ({ request, locals }) => {
+		// 2. Security Check
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
+		}
+
 		const formData = await request.formData();
 		const title = formData.get('title');
 		const description = formData.get('description');
 		const thumbnailMediaIdRaw = formData.get('thumbnailMediaId');
 		const isGated = formData.get('isGated') === 'on';
-		// 1. Get the fileUrl from the hidden input instead of the file itself
 		const fileUrl = formData.get('fileUrl');
 
 		if (!title || typeof title !== 'string') {
 			return fail(400, { message: 'Title is required.' });
 		}
-		// 2. Validate the fileUrl is present
 		if (!fileUrl) {
 			return fail(400, { message: 'A document file must be uploaded.' });
 		}
 
 		try {
-			// 3. Remove all file buffer and server-side upload logic
 			const parsedMediaId = thumbnailMediaIdRaw ? parseInt(String(thumbnailMediaIdRaw), 10) : NaN;
 
 			const dataToSave = {
@@ -44,7 +53,7 @@ export const actions = {
 				description: String(description),
 				thumbnailMediaId: !isNaN(parsedMediaId) ? parsedMediaId : null,
 				isGated: isGated,
-				fileUrl: String(fileUrl) // 4. Use the URL directly
+				fileUrl: String(fileUrl)
 			};
 
 			const [newDoc] = await db.insert(document).values(dataToSave).returning();
@@ -58,13 +67,17 @@ export const actions = {
 	},
 
 	update: async ({ request, locals }) => {
+		// 3. Security Check
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
+		}
+
 		const formData = await request.formData();
 		const id = Number(formData.get('id'));
 		const title = formData.get('title');
 		const description = formData.get('description');
 		const thumbnailMediaIdRaw = formData.get('thumbnailMediaId');
 		const isGated = formData.get('isGated') === 'on';
-		// 5. Get the fileUrl from the hidden input
 		const fileUrl = formData.get('fileUrl');
 
 		if (isNaN(id)) {
@@ -84,8 +97,6 @@ export const actions = {
 				isGated: isGated
 			};
 
-			// 6. Only add the fileUrl to the update if a new one was provided.
-			// The client sends the original URL if no new file is uploaded, so this update is safe.
 			if (fileUrl) {
 				dataToUpdate.fileUrl = String(fileUrl);
 			}
@@ -101,6 +112,11 @@ export const actions = {
 	},
 
 	delete: async ({ url, locals }) => {
+		// 4. Security Check
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
+		}
+
 		const id = url.searchParams.get('id');
 		if (!id) {
 			return fail(400, { message: 'Invalid request' });
@@ -113,9 +129,10 @@ export const actions = {
 			if (!docToDelete) {
 				return fail(404, { message: 'Document not found.' });
 			}
-			// Note: This does not delete the file from Blob storage.
+			
 			await db.delete(document).where(eq(document.id, Number(id)));
 			await log(locals.user?.id, 'delete_document', { targetId: id, data: docToDelete });
+			
 			return { success: true, message: 'Document deleted successfully.' };
 		} catch (error) {
 			console.error('Error deleting document:', error);

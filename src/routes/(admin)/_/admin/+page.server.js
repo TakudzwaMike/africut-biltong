@@ -1,20 +1,66 @@
 import { db } from '$lib/server/db';
-import { lead, order, product, blogPost } from '$lib/server/db/schema.js';
-import { count, eq } from 'drizzle-orm';
+import { lead, order, product, blogPost, productVariant, saleEvent } from '$lib/server/db/schema.js';
+import { count, eq, sum, and, lte, gte, desc } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 
 export async function load({ locals }) {
 	const start = performance.now();
+    const now = new Date();
 
-	// 1. Perform DB Queries
-	const [leadCount] = await db.select({ count: count() }).from(lead);
-	const [newLeadCount] = await db.select({ count: count() }).from(lead).where(eq(lead.status, 'new'));
-	const [orderCount] = await db.select({ count: count() }).from(order);
-	const [productCount] = await db.select({ count: count() }).from(product);
-	const [postCount] = await db.select({ count: count() }).from(blogPost);
+	// 1. Perform DB Queries in Parallel
+	const [
+        leadCountRes, 
+        newLeadCountRes, 
+        orderCountRes, 
+        productCountRes, 
+        postCountRes,
+        revenueRes,
+        lowStockRes,
+        activeEventsRes
+    ] = await Promise.all([
+        // Basic Counts
+		db.select({ count: count() }).from(lead),
+		db.select({ count: count() }).from(lead).where(eq(lead.status, 'new')),
+		db.select({ count: count() }).from(order),
+		db.select({ count: count() }).from(product),
+		db.select({ count: count() }).from(blogPost),
+        
+        // Revenue (Grouped by Currency) - This requires raw SQL usually or aggregation helpers
+        db.select({ 
+            currency: order.currency, 
+            total: sum(order.total) 
+        }).from(order).where(eq(order.status, 'paid')).groupBy(order.currency),
+
+        // Low Stock Variants (Threshold < 10)
+        db.query.productVariant.findMany({
+            where: and(
+                eq(productVariant.isDefault, false), // Often default is just a placeholder
+                lte(productVariant.stock, 10)
+            ),
+            with: { product: true },
+            limit: 5
+        }),
+
+        // Active Sales
+        db.query.saleEvent.findMany({
+            where: and(
+                eq(saleEvent.isActive, true),
+                lte(saleEvent.startsAt, now),
+                gte(saleEvent.endsAt, now)
+            ),
+            limit: 3
+        })
+	]);
 
 	const end = performance.now();
 	const dbLatency = Math.round(end - start);
+
+    // Process Revenue
+    const revenue = { USD: 0, ZAR: 0 };
+    revenueRes.forEach(row => {
+        if (row.currency === 'USD') revenue.USD = Number(row.total) || 0;
+        if (row.currency === 'ZAR') revenue.ZAR = Number(row.total) || 0;
+    });
 
 	// 2. Check Integrations
 	const health = {
@@ -45,12 +91,17 @@ export async function load({ locals }) {
 	return {
 		user: locals.user,
 		stats: {
-			totalLeads: leadCount.count,
-			newLeads: newLeadCount.count,
-			totalOrders: orderCount.count,
-			totalProducts: productCount.count,
-			totalPosts: postCount.count
+			totalLeads: leadCountRes[0].count,
+			newLeads: newLeadCountRes[0].count,
+			totalOrders: orderCountRes[0].count,
+			totalProducts: productCountRes[0].count,
+			totalPosts: postCountRes[0].count,
+            revenue
 		},
+        insights: {
+            lowStock: lowStockRes,
+            activeEvents: activeEventsRes
+        },
 		system: {
 			overallStatus,
 			checks: health

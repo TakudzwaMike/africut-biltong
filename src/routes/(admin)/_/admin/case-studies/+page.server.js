@@ -1,20 +1,22 @@
 import { db } from '$lib/server/db';
 import { caseStudy, client } from '$lib/server/db/schema.js';
 import { desc, eq, or, ilike, count } from 'drizzle-orm';
-import { fail } from '@sveltejs/kit';
+import { fail, error } from '@sveltejs/kit';
 import { log } from '$lib/server/auditLog.js';
 
 const ITEMS_PER_PAGE = 20;
+const ALLOWED_ROLES = ['admin', 'content_editor'];
 
-export async function load({ url }) {
-	// 1. Pagination & Search Params
+export async function load({ url, locals }) {
+	// 1. Security Check
+	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+		throw error(403, 'Forbidden: You do not have permission to manage case studies.');
+	}
+
 	const query = url.searchParams.get('q');
 	const page = Number(url.searchParams.get('page')) || 1;
 	const offset = (page - 1) * ITEMS_PER_PAGE;
 
-	// 2. Filters
-    // Note: Filtering by Client Name is tricky without a join in the 'where' clause.
-    // For simplicity/performance in this setup, we will search Case Study Title and Slug.
 	let filters = undefined;
 	if (query) {
 		const searchStr = `%${query}%`;
@@ -24,13 +26,11 @@ export async function load({ url }) {
 		);
 	}
 
-	// 3. Execute Queries
 	const [caseStudies, totalResult] = await Promise.all([
 		db.query.caseStudy.findMany({
 			where: filters,
 			orderBy: desc(caseStudy.id),
 			with: {
-                // We still fetch client for display
                 client: true
             },
 			limit: ITEMS_PER_PAGE,
@@ -57,6 +57,11 @@ export async function load({ url }) {
 
 export const actions = {
 	delete: async ({ url, locals }) => {
+		// 2. Security Check
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
+		}
+
 		const id = url.searchParams.get('id');
 		if (!id) {
 			return fail(400, { message: 'Invalid request' });

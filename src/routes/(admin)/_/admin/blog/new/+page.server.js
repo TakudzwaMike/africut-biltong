@@ -1,10 +1,17 @@
 import { db } from '$lib/server/db';
 import { blogPost, media, blogCategory, blogPostsToCategories } from '$lib/server/db/schema.js';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail, redirect, error } from '@sveltejs/kit';
 import { log } from '$lib/server/auditLog.js';
 import { desc } from 'drizzle-orm';
 
-export async function load() {
+const ALLOWED_ROLES = ['admin', 'content_editor'];
+
+export async function load({ locals }) {
+    // 1. Security Check (View)
+    if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+        throw error(403, 'Forbidden: You do not have permission to create blog posts.');
+    }
+
 	const mediaItems = await db.query.media.findMany({
 		orderBy: desc(media.uploadedAt)
 	});
@@ -16,15 +23,16 @@ export async function load() {
 
 export const actions = {
 	default: async ({ request, locals }) => {
+        // 2. Security Check (Action)
+        if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+            return fail(403, { message: 'Unauthorized.' });
+        }
+
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 		const { title, slug, contentJson, mediaId, publishedAt } = data;
 		const categoryIds = formData.getAll('categoryIds').map(Number);
 		const publishIntent = data.isPublished === 'on';
-
-		if (!locals.user?.id) {
-			return fail(401, { data, message: 'You must be logged in to create a post.' });
-		}
 
 		if (!title || !slug) {
 			return fail(400, { data, message: 'Title and Slug are required.' });

@@ -1,21 +1,23 @@
 import { db } from '$lib/server/db';
-import { blogPost, userTable } from '$lib/server/db/schema.js'; // Ensure userTable is imported for joining if needed, though Drizzle relations handle it often
-import { desc, eq, or, ilike, count, and } from 'drizzle-orm';
-import { fail } from '@sveltejs/kit';
+import { blogPost } from '$lib/server/db/schema.js';
+import { desc, eq, or, ilike, count } from 'drizzle-orm';
+import { fail, error } from '@sveltejs/kit';
 import { log } from '$lib/server/auditLog.js';
 
 const ITEMS_PER_PAGE = 20;
+// Define allowed roles for this section
+const ALLOWED_ROLES = ['admin', 'content_editor'];
 
-export async function load({ url }) {
-	// 1. Get Query Params
+export async function load({ url, locals }) {
+	// 1. Security Check
+	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+		throw error(403, 'Forbidden: You do not have permission to manage blog posts.');
+	}
+
 	const query = url.searchParams.get('q');
 	const page = Number(url.searchParams.get('page')) || 1;
 	const offset = (page - 1) * ITEMS_PER_PAGE;
 
-	// 2. Build Filter Conditions
-	// Note: Searching mainly on Title and Slug. 
-    // Searching joined relations (Author) in Drizzle requires slightly different syntax 
-    // or a direct join, but for simplicity/speed, filtering by Title is usually sufficient.
 	let filters = undefined;
 	if (query) {
 		const searchStr = `%${query}%`;
@@ -25,7 +27,6 @@ export async function load({ url }) {
 		);
 	}
 
-	// 3. Execute Queries
 	const [posts, totalResult] = await Promise.all([
 		db.query.blogPost.findMany({
 			where: filters,
@@ -61,6 +62,11 @@ export async function load({ url }) {
 
 export const actions = {
 	delete: async ({ url, locals }) => {
+		// 2. Security Check (Action)
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
+		}
+
 		const id = url.searchParams.get('id');
 		if (!id) {
 			return fail(400, { message: 'Invalid request' });

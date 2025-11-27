@@ -4,38 +4,29 @@ import { userTable } from '$lib/server/db/schema';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 
+const STAFF_ROLES = ['admin', 'store_manager', 'content_editor'];
+
 export const actions = {
 	default: async (event) => {
 		const formData = await event.request.formData();
-		const username = formData.get('username');
+		const email = formData.get('email');
 		const password = formData.get('password');
 
-		if (typeof username !== 'string' || username.length < 3 || username.length > 31) {
-			return fail(400, {
-				message: 'Invalid username'
-			});
-		}
-		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
-			return fail(400, {
-				message: 'Invalid password'
-			});
+		if (!email || !password) {
+			return fail(400, { message: 'Email and password are required.' });
 		}
 
 		const existingUser = await db.query.userTable.findFirst({
-			where: eq(userTable.username, username)
+			where: eq(userTable.email, String(email))
 		});
 
 		if (!existingUser) {
-			return fail(400, {
-				message: 'Incorrect username or password'
-			});
+			return fail(400, { message: 'Incorrect email or password' });
 		}
 
-		const validPassword = await auth.verifyPassword(existingUser.passwordHash, password);
+		const validPassword = await auth.verifyPassword(existingUser.passwordHash, String(password));
 		if (!validPassword) {
-			return fail(400, {
-				message: 'Incorrect username or password'
-			});
+			return fail(400, { message: 'Incorrect email or password' });
 		}
 
 		const session = await auth.createSession(existingUser.id);
@@ -45,6 +36,19 @@ export const actions = {
 			...sessionCookie.attributes
 		});
 
-		throw redirect(302, '/_/admin');
+        // Redirect Logic
+        const redirectTo = event.url.searchParams.get('redirectTo');
+
+        // If there is a specific redirect intent (e.g. they tried to go to /_/admin/products), respect it
+        if (redirectTo) {
+            throw redirect(303, redirectTo);
+        }
+
+        // Otherwise, default routing based on role
+        if (STAFF_ROLES.includes(existingUser.role)) {
+		    throw redirect(303, '/_/admin');
+        } else {
+            throw redirect(303, '/account');
+        }
 	}
 };
