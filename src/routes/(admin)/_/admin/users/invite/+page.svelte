@@ -47,11 +47,26 @@
             class="bg-accent/10 border border-accent rounded-xl p-6 mb-8 transform transition-all animate-in fade-in slide-in-from-bottom-4"
         >
             <h3 class="font-bold text-accent mb-2 flex items-center gap-2">
-                <Icon icon="mdi:check-circle" /> Invite Created Successfully!
+                <Icon
+                    icon={form.emailSent
+                        ? "mdi:check-decagram"
+                        : "mdi:check-circle"}
+                />
+                {form.emailSent
+                    ? "Invite Sent Successfully!"
+                    : "Invite Created!"}
             </h3>
-            <p class="text-sm text-main/80 mb-4">
-                Copy the link below and send it to the invitee:
-            </p>
+            {#if form.emailSent}
+                <p class="text-sm text-main/80 mb-4">
+                    An invitation email has been sent to the user. You can also
+                    manually share the link below as a fallback:
+                </p>
+            {:else}
+                <p class="text-sm text-main/80 mb-4">
+                    The invitation was created, but the email couldn't be sent.
+                    Please share this link manually:
+                </p>
+            {/if}
 
             <div class="flex gap-2">
                 <input

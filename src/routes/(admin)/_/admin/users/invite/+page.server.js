@@ -1,6 +1,7 @@
 import { AuthService } from '$lib/server/services/AuthService';
 import { fail, redirect } from '@sveltejs/kit';
 import { log } from '$lib/server/auditLog.js';
+import { sendInviteEmail } from '$lib/server/email.js';
 
 export async function load({ locals }) {
     if (locals.user.role !== 'admin') {
@@ -31,14 +32,18 @@ export const actions = {
                 inviteId: invite.id
             });
 
-            // In a real app, we'd send an email here.
-            // For now, we'll return the invite link so the admin can copy it.
             const inviteLink = `${new URL(request.url).origin}/create-account/${invite.token}`;
+
+            // Send automated email
+            const emailSent = await sendInviteEmail(email, inviteLink);
 
             return {
                 success: true,
                 inviteLink,
-                message: `Invite created for ${email}.`
+                emailSent,
+                message: emailSent
+                    ? `Invite created and sent successfully to ${email}.`
+                    : `Invite created for ${email}, but the email failed to send. You can still share the link manually.`
             };
         } catch (e) {
             console.error('Invite error:', e);
