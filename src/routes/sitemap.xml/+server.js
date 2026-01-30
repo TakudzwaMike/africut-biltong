@@ -43,8 +43,8 @@ export async function GET() {
 
 	const posts = postsResult.posts || [];
 	const products = productsResult.products || [];
-	// Solutions is array
-	// CaseStudies? If repo behaves like others, it might be array.
+	const caseStudiesArray = caseStudies.caseStudies || [];
+	const solutionsArray = solutions.solutions || [];
 
 	const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -55,7 +55,7 @@ export async function GET() {
 			.filter(p => p.isPublished) // Ensure published check if service returns all
 			.map((p) => `<url><loc>${siteUrl}/blog/${p.slug}</loc><changefreq>monthly</changefreq></url>`)
 			.join('')}
-    ${(Array.isArray(caseStudies) ? caseStudies : caseStudies.caseStudies || [])
+    ${caseStudiesArray
 			.map(
 				(cs) => `<url><loc>${siteUrl}/case-studies/${cs.slug}</loc><changefreq>monthly</changefreq></url>`
 			)
@@ -63,7 +63,7 @@ export async function GET() {
     ${products
 			.map((p) => `<url><loc>${siteUrl}/products/${p.slug}</loc><changefreq>monthly</changefreq></url>`)
 			.join('')}
-    ${solutions
+    ${solutionsArray
 			.map(
 				(s) => `<url><loc>${siteUrl}/solutions/${s.slug}</loc><changefreq>monthly</changefreq></url>`
 			)

@@ -110,6 +110,29 @@ export class AuthService {
     }
 
     /**
+     * Create a new invite.
+     * @param {string} email
+     * @param {string} role
+     * @param {string} createdBy
+     * @returns {Promise<object>}
+     */
+    async createInvite(email, role, createdBy) {
+        const token = generateId(32);
+        const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
+
+        const newInvite = await this.inviteRepo.create({
+            token,
+            email,
+            role,
+            expiresAt,
+            createdBy
+        });
+
+        logger.info(`Invite created for ${email} with role ${role}`);
+        return newInvite;
+    }
+
+    /**
      * Validate an invite token.
      * @param {string} token
      * @returns {Promise<object>} Invite object
@@ -128,23 +151,26 @@ export class AuthService {
      * @param {string} token
      * @param {string} username
      * @param {string} password
+     * @param {string} firstName
+     * @param {string} lastName
      * @returns {Promise<{ session: object, cookie: object }>}
      */
-    async completeInvite(token, username, password) {
+    async completeInvite(token, username, password, firstName, lastName) {
         const invite = await this.validateInvite(token);
 
         const userId = generateId(15);
         const passwordHash = await new Argon2id().hash(password);
 
         try {
-            // Use repository with transaction-like approach
-            // Note: For true transactions, we'd use db.transaction
-            // but for now we'll keep the logic simple
             await this.userRepo.create({
                 id: userId,
+                email: invite.email,
                 username,
+                firstName,
+                lastName,
                 passwordHash,
-                role: invite.role || 'editor'
+                role: invite.role,
+                status: 'active'
             });
 
             await this.inviteRepo.markAsUsed(invite.id);

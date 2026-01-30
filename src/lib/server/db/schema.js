@@ -323,6 +323,8 @@ export const pageContent = pgTable('page_content', {
 export const userInvite = pgTable('user_invite', {
 	id: serial('id').primaryKey(),
 	token: text('token').notNull().unique(),
+	email: varchar('email', { length: 255 }).notNull(),
+	role: userRoleEnum('role').notNull().default('content_editor'),
 	expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
 	usedAt: timestamp('used_at', { withTimezone: true, mode: 'date' }),
 	createdBy: text('created_by').references(() => userTable.id, { onDelete: 'set null' })
