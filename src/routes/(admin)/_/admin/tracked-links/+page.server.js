@@ -1,99 +1,64 @@
-import { db } from '$lib/server/db';
-import { trackedLink } from '$lib/server/db/schema.js';
-import { fail, error } from '@sveltejs/kit';
-import { desc, eq } from 'drizzle-orm';
-import { log } from '$lib/server/auditLog.js';
-import { customAlphabet } from 'nanoid';
+import { fail } from '@sveltejs/kit';
+import { TrackedLinkService } from '$lib/server/services/TrackedLinkService';
+import { log } from '$lib/server/auditLog';
 
-const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 6);
-const ALLOWED_ROLES = ['admin', 'content_editor'];
+const linkService = new TrackedLinkService();
+const ITEMS_PER_PAGE = 20;
 
-export async function load({ locals }) {
-	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
-		throw error(403, 'Forbidden: You do not have permission to manage tracked links.');
-	}
+export async function load({ url }) {
+	const page = Number(url.searchParams.get('page')) || 1;
+	const query = url.searchParams.get('q') || '';
 
-	const links = await db.query.trackedLink.findMany({
-		orderBy: desc(trackedLink.createdAt),
-		with: {
-			user: {
-				columns: {
-					username: true
-				}
-			},
-			visits: {
-				columns: {
-					id: true
-				}
-			}
-		}
+	const { links, totalItems, totalPages } = await linkService.listLinks({
+		page,
+		limit: ITEMS_PER_PAGE,
+		query
 	});
-	return { links };
+
+	return {
+		links,
+		pagination: {
+			page,
+			totalPages,
+			totalItems,
+			query
+		}
+	};
 }
 
 export const actions = {
 	create: async ({ request, locals }) => {
-		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
-			return fail(403, { message: 'Unauthorized.' });
-		}
-
 		const formData = await request.formData();
-		const destinationUrl = formData.get('destinationUrl');
-		const description = formData.get('description');
+		const slug = String(formData.get('slug'));
+		const destinationUrl = String(formData.get('destinationUrl'));
+		const description = String(formData.get('description'));
 
-		if (!destinationUrl || typeof destinationUrl !== 'string') {
-			return fail(400, { message: 'Destination URL is required.' });
-		}
+		if (!slug || !destinationUrl) return fail(400, { message: 'Slug and Destination URL are required' });
 
 		try {
-			const shortCode = nanoid();
-			const newLink = {
-				shortCode,
-				destinationUrl: String(destinationUrl),
-				description: String(description),
-				userId: locals.user.id
-			};
-
-			const [createdLink] = await db.insert(trackedLink).values(newLink).returning();
-
-			await log(locals.user?.id, 'create_tracked_link', {
-				targetId: createdLink.id,
-				data: createdLink
+			const link = await linkService.createLink(locals.user.id, {
+				slug,
+				destinationUrl,
+				description
 			});
 
-			return { success: true, message: 'Tracked link created successfully.' };
-		} catch (error) {
-			console.error('Error creating tracked link:', error);
-			return fail(500, { message: 'Could not create tracked link.' });
+			await log(locals.user.id, 'create_tracked_link', { targetId: link.id, data: { slug } });
+			return { success: true };
+		} catch (err) {
+			return fail(500, { message: 'Failed to create tracked link' });
 		}
 	},
 
-	delete: async ({ url, locals }) => {
-		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
-			return fail(403, { message: 'Unauthorized.' });
-		}
-
-		const id = url.searchParams.get('id');
-		if (!id) {
-			return fail(400, { message: 'Invalid request' });
-		}
+	delete: async ({ request, locals }) => {
+		const formData = await request.formData();
+		const id = String(formData.get('id'));
 
 		try {
-			const linkToDelete = await db.query.trackedLink.findFirst({
-				where: eq(trackedLink.id, Number(id))
-			});
-			if (!linkToDelete) {
-				return fail(404, { message: 'Link not found.' });
-			}
-			await db.delete(trackedLink).where(eq(trackedLink.id, Number(id)));
-			await log(locals.user?.id, 'delete_tracked_link', {
-				targetId: id,
-				data: linkToDelete
-			});
-			return { success: true, message: 'Link deleted successfully.' };
-		} catch (error) {
-			console.error('Error deleting tracked link:', error);
-			return fail(500, { message: 'Could not delete link.' });
+			await linkService.deleteLink(locals.user.id, id);
+			await log(locals.user.id, 'delete_tracked_link', { targetId: id });
+			return { success: true };
+		} catch (err) {
+			return fail(500, { message: 'Failed to delete tracked link' });
 		}
 	}
 };

@@ -15,6 +15,13 @@
       "when": 1764234520593,
       "tag": "0001_cultured_mysterio",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768495848275,
+      "tag": "0002_bright_vapor",
+      "breakpoints": true
     }
   ]
 }

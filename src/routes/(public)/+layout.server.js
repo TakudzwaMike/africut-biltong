@@ -1,36 +1,37 @@
-import { db } from '$lib/server/db';
-import { desc, eq } from 'drizzle-orm';
-import { location, media, siteSettings } from '$lib/server/db/schema.js';
+import { SettingsService } from '$lib/server/services/SettingsService';
+import { LocationService } from '$lib/server/services/LocationService';
+import { MediaService } from '$lib/server/services/MediaService';
 
 /** @type {import('../$types').LayoutServerLoad} */
 export async function load({ locals, request }) {
-	const allSettings = await db.query.siteSettings.findMany();
-	const settings = allSettings.reduce((acc, setting) => {
-		acc[setting.key] = setting.value;
-		return acc;
-	}, {});
+	const settingsService = new SettingsService();
+	const locationService = new LocationService();
+	const mediaService = new MediaService();
 
-	// Correctly query locations ordered by country name
-	const locations = await db.query.location.findMany({
-		orderBy: desc(location.countryName)
-	});
+	// Get all settings
+	const settings = await settingsService.getSettings();
 
-	// Get the user's country code from Vercel's header, with a fallback to 'ZA' for local dev
+	// Get locations
+	const locations = await locationService.listLocations();
+
+	// Get user's country code from Vercel's header, with fallback to 'ZA' for local dev
 	const userCountryCode = request.headers.get('x-vercel-ip-country') || 'ZA';
 
+	// Get logo media if configured
 	let logo = null;
 	const logoId = Number(settings.site_logo_media_id);
 	if (!isNaN(logoId)) {
-		logo = await db.query.media.findFirst({ where: eq(media.id, logoId) });
+		logo = await mediaService.getMedia(logoId);
 	}
 
-	const mediaItems = await db.query.media.findMany({ orderBy: desc(media.uploadedAt) });
+	// Get all media items
+	const mediaItems = await mediaService.listMedia();
 
 	return {
 		user: locals.user,
 		settings: {
 			siteName: settings.site_name || 'Vision AI Tech',
-			logo: logo, // Keep for initial load
+			logo: logo,
 			siteLogoMediaId: settings.site_logo_media_id || null,
 			brochureUrl: settings.brochure_url || null,
 			heroVideoUrl: settings.hero_video_url || null,
@@ -41,6 +42,6 @@ export async function load({ locals, request }) {
 		},
 		locations,
 		userCountryCode,
-		mediaItems // Pass all media items to the client
+		mediaItems
 	};
 }

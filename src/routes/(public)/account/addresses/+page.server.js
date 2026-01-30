@@ -1,15 +1,11 @@
-import { db } from '$lib/server/db';
-import { userAddress } from '$lib/server/db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { UserService } from '$lib/server/services/UserService';
 import { redirect, fail } from '@sveltejs/kit';
 
 export async function load({ locals }) {
     if (!locals.user) throw redirect(303, '/login');
 
-    const addresses = await db.select()
-        .from(userAddress)
-        .where(eq(userAddress.userId, locals.user.id))
-        .orderBy(desc(userAddress.isDefault));
+    const userService = new UserService();
+    const addresses = await userService.getUserAddresses(locals.user.id);
 
     return { addresses };
 }
@@ -21,7 +17,7 @@ export const actions = {
         const formData = await request.formData();
         const id = formData.get('id');
         const isDefault = formData.get('isDefault') === 'on';
-        
+
         const data = {
             label: String(formData.get('label')),
             firstName: String(formData.get('firstName')),
@@ -31,29 +27,15 @@ export const actions = {
             state: String(formData.get('state')),
             zipCode: String(formData.get('zipCode')),
             country: String(formData.get('country')),
-            isDefault: isDefault,
-            userId: locals.user.id
+            isDefault: isDefault
         };
 
         try {
-            // 1. If setting as default, unset others first
-            if (isDefault) {
-                await db.update(userAddress)
-                    .set({ isDefault: false })
-                    .where(eq(userAddress.userId, locals.user.id));
-            }
-
+            const userService = new UserService();
             if (id) {
-                // --- UPDATE ---
-                await db.update(userAddress)
-                    .set(data)
-                    .where(and(
-                        eq(userAddress.id, String(id)),
-                        eq(userAddress.userId, locals.user.id)
-                    ));
+                await userService.updateUserAddress(locals.user.id, String(id), data);
             } else {
-                // --- CREATE ---
-                await db.insert(userAddress).values(data);
+                await userService.createUserAddress(locals.user.id, data);
             }
 
             return { success: true };
@@ -71,11 +53,8 @@ export const actions = {
         const id = String(formData.get('id'));
 
         try {
-            await db.delete(userAddress)
-                .where(and(
-                    eq(userAddress.id, id),
-                    eq(userAddress.userId, locals.user.id)
-                ));
+            const userService = new UserService();
+            await userService.deleteUserAddress(locals.user.id, id);
             return { success: true };
         } catch (error) {
             return fail(500, { message: 'Failed to delete address' });

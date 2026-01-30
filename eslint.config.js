@@ -18,6 +18,20 @@ export default [
 		}
 	},
 	{
+		files: ['src/routes/**/*.server.js', 'src/routes/**/*.server.ts'],
+		rules: {
+			'no-restricted-imports': ['error', {
+				patterns: [{
+					group: ['$lib/server/db', '$lib/server/db/schema*'],
+					message: 'Controllers must not directly import the database. Use Services instead following the three-tier architecture (Controller → Service → Repository).'
+				}, {
+					group: ['$lib/server/repositories/*'],
+					message: 'Controllers must not directly import Repositories. Use Services instead following the three-tier architecture (Controller → Service → Repository).'
+				}]
+			}]
+		}
+	},
+	{
 		files: ['**/*.svelte', '**/*.svelte.js'],
 		languageOptions: { parserOptions: { svelteConfig } }
 	}

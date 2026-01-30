@@ -1,86 +1,54 @@
-import { db } from '$lib/server/db';
-import { solution } from '$lib/server/db/schema.js';
-import { desc, eq, or, ilike, count } from 'drizzle-orm';
 import { fail, error } from '@sveltejs/kit';
-import { log } from '$lib/server/auditLog.js';
+import { SolutionService } from '$lib/server/services/SolutionService';
+import { log } from '$lib/server/auditLog';
 
-const ITEMS_PER_PAGE = 20;
-const ALLOWED_ROLES = ['admin', 'content_editor'];
+const solutionService = new SolutionService();
 
-export async function load({ url, locals }) {
-	// 1. Security Check
-	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
-		throw error(403, 'Forbidden: You do not have permission to manage solutions.');
-	}
-
-	const query = url.searchParams.get('q');
-	const page = Number(url.searchParams.get('page')) || 1;
-	const offset = (page - 1) * ITEMS_PER_PAGE;
-
-	let filters = undefined;
-	if (query) {
-		const searchStr = `%${query}%`;
-		filters = or(
-			ilike(solution.solutionName, searchStr),
-			ilike(solution.shortDescription, searchStr)
-		);
-	}
-
-	const [solutions, totalResult] = await Promise.all([
-		db.query.solution.findMany({
-			where: filters,
-			orderBy: desc(solution.id),
-			limit: ITEMS_PER_PAGE,
-			offset: offset
-		}),
-		db.select({ count: count() }).from(solution).where(filters)
-	]);
-
-	const totalItems = totalResult[0].count;
-	const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-
-	return { 
-		solutions, 
-		pagination: {
-			page,
-			totalPages,
-			totalItems,
-			query
-		}
+export async function load() {
+	return {
+		solutions: await solutionService.listSolutions()
 	};
 }
 
 export const actions = {
-	delete: async ({ url, locals }) => {
-		// 2. Security Check
-		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
-			return fail(403, { message: 'Unauthorized.' });
-		}
+	create: async ({ request, locals }) => {
+		const formData = await request.formData();
+		const title = String(formData.get('title'));
+		const slug = String(formData.get('slug'));
+		const subtitle = String(formData.get('subtitle'));
+		const description = String(formData.get('description'));
+		const link = String(formData.get('link'));
+		const icon = String(formData.get('icon'));
 
-		const id = url.searchParams.get('id');
-		if (!id) {
-			return fail(400, { message: 'Invalid request' });
-		}
+		if (!title || !slug) return fail(400, { message: 'Title and Slug are required' });
 
 		try {
-			const solutionToDelete = await db.query.solution.findFirst({
-				where: eq(solution.id, Number(id))
+			const solution = await solutionService.createSolution(locals.user.id, {
+				title,
+				slug,
+				subtitle: subtitle || null,
+				description: description || null,
+				link: link || null,
+				icon: icon || null
 			});
 
-			if (!solutionToDelete) {
-				return fail(404, { message: 'Solution not found.' });
-			}
+			await log(locals.user.id, 'create_solution', { targetId: solution.id, data: { title } });
+			return { success: true };
+		} catch (err) {
+			return fail(500, { message: 'Failed to create solution' });
+		}
+	},
 
-			await db.delete(solution).where(eq(solution.id, Number(id)));
+	delete: async ({ request, locals }) => {
+		const formData = await request.formData();
+		const id = String(formData.get('id'));
 
-			await log(locals.user?.id, 'delete_solution', {
-				targetId: id,
-				data: solutionToDelete
-			});
-
-			return { status: 200, message: 'Solution deleted successfully.' };
-		} catch (error) {
-			return fail(500, { message: 'Could not delete the solution.' });
+		try {
+			await solutionService.deleteSolution(locals.user.id, id);
+			await log(locals.user.id, 'delete_solution', { targetId: id });
+			return { success: true };
+		} catch (err) {
+			return fail(500, { message: 'Failed to delete solution' });
 		}
 	}
 };

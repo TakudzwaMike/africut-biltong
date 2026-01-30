@@ -1,26 +1,29 @@
-import { db } from '$lib/server/db';
-import { auditLog } from '$lib/server/db/schema.js';
-import { desc } from 'drizzle-orm';
-import { error } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
+import { AuditLogService } from '$lib/server/services/AuditLogService';
 
-const ALLOWED_ROLES = ['admin'];
+const auditService = new AuditLogService();
+const ITEMS_PER_PAGE = 50;
 
-export async function load({ locals }) {
-	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
-		throw error(403, 'Forbidden: Only administrators can view the audit log');
-	}
+export async function load({ url }) {
+	const page = Number(url.searchParams.get('page')) || 1;
+	const action = url.searchParams.get('action') || '';
+	const userId = url.searchParams.get('userId') || '';
 
-	const logs = await db.query.auditLog.findMany({
-		orderBy: desc(auditLog.createdAt),
-		with: {
-			user: {
-				columns: {
-					username: true,
-                    email: true
-				}
-			}
-		},
-		limit: 100
+	const { logs, totalItems, totalPages } = await auditService.listLogs({
+		page,
+		limit: ITEMS_PER_PAGE,
+		action,
+		userId
 	});
-	return { logs };
+
+	return {
+		logs,
+		pagination: {
+			page,
+			totalPages,
+			totalItems,
+			action,
+			userId
+		}
+	};
 }

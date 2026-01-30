@@ -1,23 +1,22 @@
-import { db } from '$lib/server/db';
-import { discountCode } from '$lib/server/db/schema';
-import { fail, redirect, error } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
-import { log } from '$lib/server/auditLog';
+import { fail, error } from '@sveltejs/kit';
+import { ALLOWED_ROLES } from '$lib/server/services/AuthService';
+import { log } from '$lib/server/services/AuditLogService';
+import { MarketingService } from '$lib/server/services/MarketingService';
 
-const ALLOWED_ROLES = ['admin', 'store_manager'];
+
+const marketingService = new MarketingService();
 
 export async function load({ params, locals }) {
 	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
 		throw error(403, 'Forbidden');
 	}
 
-	const code = await db.query.discountCode.findFirst({
-		where: eq(discountCode.id, params.id)
-	});
-
-	if (!code) throw error(404, 'Discount code not found');
-
-	return { code };
+	try {
+		const code = await marketingService.getCodeById(params.id);
+		return { code };
+	} catch (e) {
+		throw error(404, 'Discount code not found');
+	}
 }
 
 export const actions = {
@@ -45,7 +44,7 @@ export const actions = {
 			const minOrderAmount = minOrderRaw ? Math.round(Number(minOrderRaw) * 100) : null;
 			const usageLimit = usageLimitRaw ? parseInt(String(usageLimitRaw)) : null;
 
-			await db.update(discountCode).set({
+			const updateData = {
 				code: String(codeName).toUpperCase().trim(),
 				type: String(type),
 				value,
@@ -54,7 +53,9 @@ export const actions = {
 				startsAt: startsAt ? new Date(String(startsAt)) : null,
 				endsAt: endsAt ? new Date(String(endsAt)) : null,
 				isActive
-			}).where(eq(discountCode.id, params.id));
+			};
+
+			await marketingService.updateCode(locals.user.id, params.id, updateData);
 
 			await log(locals.user.id, 'update_discount_code', { targetId: params.id, data: { code: codeName } });
 			return { success: true, message: 'Code updated.' };
@@ -71,7 +72,7 @@ export const actions = {
 	delete: async ({ params, locals }) => {
 		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) return fail(403);
 		try {
-			await db.delete(discountCode).where(eq(discountCode.id, params.id));
+			await marketingService.deleteCode(locals.user.id, params.id);
 			await log(locals.user.id, 'delete_discount_code', { targetId: params.id });
 			return { success: true, deleted: true };
 		} catch (e) {

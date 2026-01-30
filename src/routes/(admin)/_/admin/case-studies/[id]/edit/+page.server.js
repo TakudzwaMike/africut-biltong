@@ -1,10 +1,9 @@
-import { db } from '$lib/server/db';
-import { caseStudy, caseStudyResult, client } from '$lib/server/db/schema.js';
-import { fail, redirect, error } from '@sveltejs/kit';
-import { eq, desc } from 'drizzle-orm';
-import { log } from '$lib/server/auditLog.js';
+import { fail, error } from '@sveltejs/kit';
+import { ALLOWED_ROLES } from '$lib/server/services/AuthService';
+import { log } from '$lib/server/services/AuditLogService';
+import { CaseStudyService } from '$lib/server/services/CaseStudyService';
 
-const ALLOWED_ROLES = ['admin', 'content_editor'];
+const caseStudyService = new CaseStudyService();
 
 export async function load({ params, locals }) {
 	// 1. Security Check
@@ -17,20 +16,9 @@ export async function load({ params, locals }) {
 		throw error(404, 'Not found');
 	}
 
-	const cs = await db.query.caseStudy.findFirst({
-		where: eq(caseStudy.id, id),
-		with: {
-			results: true
-		}
-	});
+	const cs = await caseStudyService.getCaseStudyById(id);
 
-	if (!cs) {
-		throw error(404, 'Not found');
-	}
-
-	const clients = await db.query.client.findMany({
-		orderBy: desc(client.name)
-	});
+	const clients = await caseStudyService.listClients();
 
 	return { caseStudy: cs, clients };
 }
@@ -60,7 +48,6 @@ export const actions = {
 		}
 
 		try {
-			let resultsToInsert = [];
 			const dataToUpdate = {
 				title: String(title),
 				slug: String(slug),
@@ -69,30 +56,23 @@ export const actions = {
 				solution
 			};
 
-			await db.transaction(async (tx) => {
-				await tx.update(caseStudy).set(dataToUpdate).where(eq(caseStudy.id, id));
+			const kpiNames = formData.getAll('kpiName');
+			const kpiValues = formData.getAll('kpiValue');
+			let resultsToInsert = [];
 
-				await tx.delete(caseStudyResult).where(eq(caseStudyResult.caseStudyId, id));
+			resultsToInsert = kpiNames
+				.map((name, index) => ({
+					name: String(name),
+					value: String(kpiValues[index])
+				}))
+				.filter((r) => r.name && r.value)
+				.map((r) => ({
+					kpiName: r.name,
+					kpiValue: r.value
+				}));
 
-				const kpiNames = formData.getAll('kpiName');
-				const kpiValues = formData.getAll('kpiValue');
-
-				resultsToInsert = kpiNames
-					.map((name, index) => ({
-						name: String(name),
-						value: String(kpiValues[index])
-					}))
-					.filter((r) => r.name && r.value)
-					.map((r) => ({
-						caseStudyId: id,
-						kpiName: r.name,
-						kpiValue: r.value
-					}));
-
-				if (resultsToInsert.length > 0) {
-					await tx.insert(caseStudyResult).values(resultsToInsert);
-				}
-			});
+			// Use the new service method that handles proper transaction update
+			await caseStudyService.updateCaseStudyWithResults(locals.user.id, id, dataToUpdate, resultsToInsert);
 
 			await log(locals.user?.id, 'update_case_study', {
 				targetId: id,

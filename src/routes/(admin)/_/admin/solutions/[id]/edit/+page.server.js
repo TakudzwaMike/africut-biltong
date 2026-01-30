@@ -1,10 +1,9 @@
-import { db } from '$lib/server/db';
-import { solution, media, product, solutionsToProducts } from '$lib/server/db/schema.js';
-import { fail, redirect, error } from '@sveltejs/kit';
-import { eq, desc } from 'drizzle-orm';
-import { log } from '$lib/server/auditLog.js';
+import { fail, error } from '@sveltejs/kit';
+import { ALLOWED_ROLES } from '$lib/server/services/AuthService';
+import { log } from '$lib/server/services/AuditLogService';
+import { SolutionService } from '$lib/server/services/SolutionService';
 
-const ALLOWED_ROLES = ['admin', 'content_editor'];
+const solutionService = new SolutionService();
 
 export async function load({ params, locals }) {
 	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
@@ -16,26 +15,9 @@ export async function load({ params, locals }) {
 		throw error(404, 'Not found');
 	}
 
-	const sol = await db.query.solution.findFirst({
-		where: eq(solution.id, id),
-		with: {
-			featuredImage: true,
-			products: true
-		}
-	});
-
-	if (!sol) {
-		throw error(404, 'Not found');
-	}
-
-	const mediaItems = await db.query.media.findMany({
-		orderBy: desc(media.uploadedAt)
-	});
-
-	const allProducts = await db.query.product.findMany({
-		orderBy: desc(product.name),
-		columns: { id: true, name: true }
-	});
+	const sol = await solutionService.getSolutionById(id);
+	const mediaItems = await solutionService.listMedia();
+	const allProducts = await solutionService.listProducts();
 
 	return {
 		solution: sol,
@@ -52,7 +34,7 @@ export const actions = {
 
 		const id = Number(params.id);
 		const formData = await request.formData();
-		
+
 		const solutionName = formData.get('solutionName');
 		const slug = formData.get('slug');
 		const shortDescription = formData.get('shortDescription');
@@ -86,20 +68,7 @@ export const actions = {
 		};
 
 		try {
-			await db.transaction(async (tx) => {
-				await tx.update(solution).set(dataToUpdate).where(eq(solution.id, id));
-
-				await tx.delete(solutionsToProducts).where(eq(solutionsToProducts.solutionId, id));
-				
-				if (productIds.length > 0) {
-					await tx.insert(solutionsToProducts).values(
-						productIds.map((prodId) => ({
-							solutionId: id,
-							productId: prodId
-						}))
-					);
-				}
-			});
+			await solutionService.updateSolutionWithProducts(locals.user.id, id, dataToUpdate, productIds);
 
 			await log(locals.user?.id, 'update_solution', {
 				targetId: id,

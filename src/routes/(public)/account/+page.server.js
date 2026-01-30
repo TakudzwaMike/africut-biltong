@@ -1,8 +1,5 @@
-import { db } from '$lib/server/db';
-import { userTable } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { UserService } from '$lib/server/services/UserService';
 import { fail } from '@sveltejs/kit';
-import { log } from '$lib/server/auditLog';
 
 export const actions = {
     updateProfile: async ({ request, locals }) => {
@@ -16,20 +13,17 @@ export const actions = {
         if (!email) return fail(400, { message: 'Email is required' });
 
         try {
-            await db.update(userTable)
-                .set({ 
-                    firstName: String(firstName),
-                    lastName: String(lastName),
-                    email: String(email)
-                })
-                .where(eq(userTable.id, locals.user.id));
-
-            await log(locals.user.id, 'update_profile', { data: { email } });
+            const userService = new UserService();
+            await userService.updateUserProfile(locals.user.id, {
+                firstName: String(firstName),
+                lastName: String(lastName),
+                email: String(email)
+            });
 
             return { success: true };
         } catch (error) {
             console.error('Profile update error:', error);
-            if (error.code === '23505') { // Postgres unique constraint violation
+            if (error.message && error.message.includes('Email already')) {
                 return fail(400, { message: 'Email already in use.' });
             }
             return fail(500, { message: 'Could not update profile.' });
