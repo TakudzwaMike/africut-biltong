@@ -115,6 +115,18 @@ export const ADMIN_NAV = [
                 roles: [ROLES.ADMIN, ROLES.CONTENT_EDITOR]
             },
             {
+                label: 'Team Members',
+                href: '/_/admin/team-members',
+                icon: 'mdi:account-star',
+                roles: [ROLES.ADMIN, ROLES.CONTENT_EDITOR]
+            },
+            {
+                label: 'Partners',
+                href: '/_/admin/partners',
+                icon: 'mdi:handshake',
+                roles: [ROLES.ADMIN, ROLES.CONTENT_EDITOR]
+            },
+            {
                 label: 'Media Library',
                 href: '/_/admin/media',
                 icon: 'mdi:image-multiple',

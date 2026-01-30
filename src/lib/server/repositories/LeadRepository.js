@@ -52,13 +52,27 @@ export class LeadRepository {
         });
     }
 
-    async updateStatus(id, status) {
+    async update(id, data) {
         try {
-            await db.update(lead).set({ status }).where(eq(lead.id, id));
-            logger.info(`Updated lead ${id} status to ${status}`);
-            return true;
+            const [updated] = await db.update(lead)
+                .set(data)
+                .where(eq(lead.id, id))
+                .returning();
+            logger.info(`Updated lead: ${id}`);
+            return updated;
         } catch (error) {
             logger.error(`Error updating lead ${id}`, error);
+            throw error;
+        }
+    }
+
+    async delete(id) {
+        try {
+            await db.delete(lead).where(eq(lead.id, id));
+            logger.info(`Deleted lead: ${id}`);
+            return true;
+        } catch (error) {
+            logger.error(`Error deleting lead ${id}`, error);
             throw error;
         }
     }
