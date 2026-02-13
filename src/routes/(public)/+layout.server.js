@@ -37,7 +37,9 @@ export async function load({ locals, request }) {
 			whatsappNumber: settings.whatsapp_number || null,
 			socialLinkedIn: settings.social_linkedin || null,
 			socialX: settings.social_x || null,
-			socialFacebook: settings.social_facebook || null
+			socialFacebook: settings.social_facebook || null,
+			socialInstagram: settings.social_instagram || 'https://www.instagram.com/visionai.tech?igsh=ZnIxN2p6dWsyazAz',
+			socialTikTok: settings.social_tiktok || 'https://www.tiktok.com/@visionaitech?_r=1&_t=ZS-93mGFE3KYvl'
 		},
 		locations,
 		userCountryCode,
