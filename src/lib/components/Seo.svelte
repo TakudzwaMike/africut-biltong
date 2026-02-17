@@ -1,16 +1,19 @@
 <script>
-	import { page } from '$app/state';
+	import { page } from "$app/state";
 
 	let {
-		title = 'Vision AI Tech - Smart, Simple AI Solutions',
-		description = 'We provide smart, simple AI solutions to enhance profitability, safety, and sustainability in the mining and construction industries.',
+		title = "Vision AI Tech - Smart, Simple AI Solutions",
+		description = "Vision AI Tech provides smart, simple AI solutions to enhance profitability and safety in heavy industry. Our suite offers AI-driven PPE compliance detection for mines, predictive maintenance for hauling trucks, and real-time site hazard monitoring.",
 		imageUrl = null, // Will default to the site logo if not provided
-		ogType = 'website'
+		ogType = "website",
 	} = $props();
 
-	const siteUrl = 'https://vision-ai.tech'; // Your production domain
-	const siteName = $derived(page.data.settings?.siteName || 'Vision AI Tech');
-	const siteLogoUrl = $derived(page.data.settings?.logo?.displayUrl || page.data.settings?.logo?.originalUrl);
+	const siteUrl = "https://vision-ai.tech"; // Your production domain
+	const siteName = $derived(page.data.settings?.siteName || "Vision AI Tech");
+	const siteLogoUrl = $derived(
+		page.data.settings?.logo?.displayUrl ||
+			page.data.settings?.logo?.originalUrl,
+	);
 
 	const finalImageUrl = $derived(imageUrl || siteLogoUrl);
 	const canonicalUrl = $derived(`${siteUrl}${page.url.pathname}`);
