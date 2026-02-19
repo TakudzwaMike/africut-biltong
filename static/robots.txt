@@ -1,6 +1,21 @@
 User-agent: *
 Allow: /
 
+# AI Bot Access
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://vision-ai.tech/sitemap.xml
+
 Disallow: /_/admin/
 
 Sitemap: https://vision-ai.tech/sitemap.xml

@@ -3,6 +3,7 @@
 	import CaseStudyHighlights from "$lib/components/CaseStudyHighlights.svelte";
 	import SolutionsOverview from "$lib/components/SolutionsOverview.svelte";
 	import Image from "$lib/components/Image.svelte";
+	import CountUp from "$lib/components/CountUp.svelte";
 	import Icon from "@iconify/svelte";
 
 	let { data } = $props();
@@ -54,6 +55,52 @@
 						/>
 					{/if}
 				{/each}
+			</div>
+
+			<!-- Stats Section (Social Proof) -->
+			<div class="mt-12 pt-12 border-t border-main/5">
+				<div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+					<div class="text-center">
+						<div class="text-2xl md:text-3xl font-bold text-main">
+							<CountUp value="10k+" />
+						</div>
+						<div
+							class="text-xs font-bold uppercase tracking-wider text-main/40 mt-1"
+						>
+							PPE Checks
+						</div>
+					</div>
+					<div class="text-center">
+						<div class="text-2xl md:text-3xl font-bold text-main">
+							<CountUp value="500+" />
+						</div>
+						<div
+							class="text-xs font-bold uppercase tracking-wider text-main/40 mt-1"
+						>
+							Sites Monitored
+						</div>
+					</div>
+					<div class="text-center">
+						<div class="text-2xl md:text-3xl font-bold text-main">
+							<CountUp value="99.9%" />
+						</div>
+						<div
+							class="text-xs font-bold uppercase tracking-wider text-main/40 mt-1"
+						>
+							Uptime
+						</div>
+					</div>
+					<div class="text-center">
+						<div class="text-2xl md:text-3xl font-bold text-main">
+							<CountUp value="24/7" />
+						</div>
+						<div
+							class="text-xs font-bold uppercase tracking-wider text-main/40 mt-1"
+						>
+							Monitoring
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>

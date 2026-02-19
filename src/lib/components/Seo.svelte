@@ -24,6 +24,10 @@
 	<title>{title}</title>
 	<meta name="description" content={description} />
 	<link rel="canonical" href={canonicalUrl} />
+	<meta
+		name="robots"
+		content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+	/>
 
 	<!-- Open Graph / Facebook -->
 	<meta property="og:type" content={ogType} />
@@ -42,4 +46,9 @@
 	{#if finalImageUrl}
 		<meta name="twitter:image" content={finalImageUrl} />
 	{/if}
+
+	<!-- Additional SEO for AI and Search -->
+	<meta name="application-name" content={siteName} />
+	<meta name="apple-mobile-web-app-title" content={siteName} />
+	<meta name="format-detection" content="telephone=no" />
 </svelte:head>
