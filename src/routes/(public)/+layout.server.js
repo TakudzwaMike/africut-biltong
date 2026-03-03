@@ -36,6 +36,8 @@ export async function load({ locals, request }) {
 			heroVideoUrl: settings.hero_video_url || null,
 			whatsappNumber: settings.whatsapp_number || null,
 			socialLinkedIn: settings.social_linkedin || null,
+			socialInstagram: settings.social_instagram || null,
+			socialTikTok: settings.social_tiktok || null,
 			socialX: settings.social_x || null,
 			socialFacebook: settings.social_facebook || null
 		},
