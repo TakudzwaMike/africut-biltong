@@ -2,7 +2,7 @@
     import { enhance } from "$app/forms";
     import { toast } from "$lib/toast-service";
     import Icon from "@iconify/svelte";
-    import { confetti } from "canvas-confetti";
+    import confetti from "canvas-confetti";
 
     let { form } = $props();
     let isSubmitting = $state(false);

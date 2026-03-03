@@ -8,6 +8,10 @@ export class MediaService {
         this.repo = new MediaRepository();
     }
 
+    async getMedia(id) {
+        return this.repo.findById(id);
+    }
+
     async listMedia(params) {
         return this.repo.findAll(); // TODO: Implement pagination/filtering in Repo if needed
     }

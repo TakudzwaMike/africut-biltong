@@ -7,7 +7,7 @@
  *   onEnter?: (entry: IntersectionObserverEntry) => void;
  *   once?: boolean;
  * } & IntersectionObserverInit} [params] - Optional parameters.
- * @returns {{destroy: () => void}}
+ * @returns {{destroy: () => void} | void}
  */
 export function viewport(node, params = {}) {
 	const { onEnter, once = true, ...options } = params;

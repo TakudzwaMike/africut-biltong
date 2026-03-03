@@ -1,9 +1,9 @@
 <script>
-	import { enhance } from '$app/forms';
-	import { toast } from '$lib/toast-service';
-	import FeaturedImagePicker from '$lib/components/FeaturedImagePicker.svelte';
-	import { invalidateAll } from '$app/navigation';
-	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import { enhance } from "$app/forms";
+	import { toast } from "$lib/toast-service";
+	import FeaturedImagePicker from "$lib/components/FeaturedImagePicker.svelte";
+	import { invalidateAll } from "$app/navigation";
+	import SubmitButton from "$lib/components/SubmitButton.svelte";
 
 	let { data, form } = $props();
 
@@ -14,7 +14,9 @@
 	let isSuccess = $state(false);
 	let isError = $state(false);
 
-	let isDirty = $derived(JSON.stringify(formState) !== JSON.stringify(data.settings));
+	let isDirty = $derived(
+		JSON.stringify(formState) !== JSON.stringify(data.settings),
+	);
 
 	function handleSubmit() {
 		isSubmitting = true;
@@ -24,11 +26,11 @@
 		return async ({ result, update }) => {
 			isSubmitting = false;
 
-			if (result.type === 'success') {
+			if (result.type === "success") {
 				isSuccess = true;
 				toast.success(result.data?.message);
 				await invalidateAll();
-			} else if (result.type === 'failure') {
+			} else if (result.type === "failure") {
 				isError = true;
 				toast.error(result.data?.message);
 			}
@@ -45,7 +47,9 @@
 
 <div class="p-8">
 	<h1 class="text-3xl font-bold tracking-tight text-main">Site Settings</h1>
-	<p class="mt-2 text-base text-main/70">Manage global branding, store rates, and configuration.</p>
+	<p class="mt-2 text-base text-main/70">
+		Manage global branding, store rates, and configuration.
+	</p>
 
 	<form
 		method="POST"
@@ -53,14 +57,22 @@
 		use:enhance={handleSubmit}
 		class="mt-8 max-w-2xl space-y-6"
 	>
-		<input type="hidden" name="siteLogoMediaId" value={formState.siteLogoMediaId ?? ''} />
+		<input
+			type="hidden"
+			name="siteLogoMediaId"
+			value={formState.siteLogoMediaId ?? ""}
+		/>
 
-        <!-- Branding Card -->
+		<!-- Branding Card -->
 		<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
 			<h3 class="text-lg font-bold">Branding</h3>
 			<div class="mt-4 space-y-6">
 				<div>
-					<label for="siteName" class="mb-1 block font-medium text-main/80">Site Name</label>
+					<label
+						for="siteName"
+						class="mb-1 block font-medium text-main/80"
+						>Site Name</label
+					>
 					<input
 						type="text"
 						id="siteName"
@@ -75,47 +87,60 @@
 					<FeaturedImagePicker
 						mediaItems={data.mediaItems}
 						bind:selectedMediaId={formState.siteLogoMediaId}
-						currentImageUrl={data.logo?.thumbnailUrl || data.logo?.originalUrl}
+						currentImageUrl={data.logo?.thumbnailUrl ||
+							data.logo?.originalUrl}
 						currentImageAlt={data.logo?.altText}
-                        label="Site Logo"
+						label="Site Logo"
 					/>
 				</div>
 			</div>
 		</div>
 
-        <!-- Store Settings Card (NEW) -->
-        <div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
+		<!-- Store Settings Card (NEW) -->
+		<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
 			<h3 class="text-lg font-bold flex items-center gap-2">
-                Store Configuration
-                <span class="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent uppercase">Commerce</span>
-            </h3>
+				Store Configuration
+				<span
+					class="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent uppercase"
+					>Commerce</span
+				>
+			</h3>
 			<div class="mt-4">
-				<label for="exchangeRate" class="mb-1 block font-medium text-main/80">USD to ZAR Exchange Rate</label>
+				<label
+					for="exchangeRate"
+					class="mb-1 block font-medium text-main/80"
+					>USD to ZAR Exchange Rate</label
+				>
 				<div class="relative">
-                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <span class="text-main/50 font-bold">R</span>
-                    </div>
-                    <input
-                        type="number"
-                        step="0.01"
-                        id="exchangeRate"
-                        name="exchangeRate"
-                        bind:value={formState.exchangeRate}
-                        placeholder="18.50"
-                        class="w-full rounded-md border-0 bg-main/5 pl-8 pr-3 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-                    />
-                </div>
+					<div
+						class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"
+					>
+						<span class="text-main/50 font-bold">R</span>
+					</div>
+					<input
+						type="number"
+						step="0.01"
+						id="exchangeRate"
+						name="exchangeRate"
+						bind:value={formState.exchangeRate}
+						placeholder="18.50"
+						class="w-full rounded-md border-0 bg-main/5 pl-8 pr-3 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+					/>
+				</div>
 				<p class="mt-1 text-xs text-main/60">
-					Used to auto-calculate ZAR prices for new products if only USD is provided (and vice versa).
+					Used to auto-calculate ZAR prices for new products if only
+					USD is provided (and vice versa).
 				</p>
 			</div>
 		</div>
 
-        <!-- Brochure Card -->
+		<!-- Brochure Card -->
 		<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
 			<h3 class="text-lg font-bold">Company Brochure</h3>
 			<div class="mt-4">
-				<label for="brochure" class="mb-1 block font-medium text-main/80"
+				<label
+					for="brochure"
+					class="mb-1 block font-medium text-main/80"
 					>Upload Brochure (PDF)</label
 				>
 				{#if data.settings.brochureUrl}
@@ -140,11 +165,13 @@
 			</div>
 		</div>
 
-        <!-- Hero Video Card -->
+		<!-- Hero Video Card -->
 		<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm">
 			<h3 class="text-lg font-bold">Homepage Hero</h3>
 			<div class="mt-4">
-				<label for="heroVideoUrl" class="mb-1 block font-medium text-main/80"
+				<label
+					for="heroVideoUrl"
+					class="mb-1 block font-medium text-main/80"
 					>Background YouTube Video URL</label
 				>
 				<input
@@ -158,11 +185,15 @@
 			</div>
 		</div>
 
-        <!-- Social & Contact -->
-		<div class="rounded-xl border border-main/10 bg-white p-6 shadow-sm space-y-4">
+		<!-- Social & Contact -->
+		<div
+			class="rounded-xl border border-main/10 bg-white p-6 shadow-sm space-y-4"
+		>
 			<h3 class="text-lg font-bold">Contact & Social</h3>
 			<div>
-				<label for="whatsappNumber" class="mb-1 block font-medium text-main/80"
+				<label
+					for="whatsappNumber"
+					class="mb-1 block font-medium text-main/80"
 					>WhatsApp Number</label
 				>
 				<input
@@ -176,7 +207,9 @@
 			</div>
 			<hr class="border-main/10" />
 			<div>
-				<label for="socialLinkedIn" class="mb-1 block font-medium text-main/80"
+				<label
+					for="socialLinkedIn"
+					class="mb-1 block font-medium text-main/80"
 					>LinkedIn URL</label
 				>
 				<input
@@ -200,7 +233,9 @@
 				/>
 			</div>
 			<div>
-				<label for="socialFacebook" class="mb-1 block font-medium text-main/80"
+				<label
+					for="socialFacebook"
+					class="mb-1 block font-medium text-main/80"
 					>Facebook URL</label
 				>
 				<input
@@ -208,6 +243,34 @@
 					id="socialFacebook"
 					name="socialFacebook"
 					bind:value={formState.socialFacebook}
+					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+				/>
+			</div>
+			<div>
+				<label
+					for="socialInstagram"
+					class="mb-1 block font-medium text-main/80"
+					>Instagram URL</label
+				>
+				<input
+					type="url"
+					id="socialInstagram"
+					name="socialInstagram"
+					bind:value={formState.socialInstagram}
+					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
+				/>
+			</div>
+			<div>
+				<label
+					for="socialTikTok"
+					class="mb-1 block font-medium text-main/80"
+					>TikTok URL</label
+				>
+				<input
+					type="url"
+					id="socialTikTok"
+					name="socialTikTok"
+					bind:value={formState.socialTikTok}
 					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 				/>
 			</div>

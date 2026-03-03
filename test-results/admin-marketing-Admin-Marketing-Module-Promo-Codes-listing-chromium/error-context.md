@@ -1,0 +1,160 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: Vision AI Panel
+      - generic [ref=e7]:
+        - img [ref=e8]
+        - generic [ref=e10]: Admin
+    - navigation [ref=e11]:
+      - generic [ref=e12]:
+        - button "Overview" [ref=e13]:
+          - generic [ref=e14]: Overview
+          - img [ref=e15]
+        - list [ref=e17]:
+          - listitem [ref=e18]:
+            - link "Dashboard" [ref=e19] [cursor=pointer]:
+              - /url: /_/admin
+              - img [ref=e20]
+              - text: Dashboard
+          - listitem [ref=e22]:
+            - link "Audit Log" [ref=e23] [cursor=pointer]:
+              - /url: /_/admin/audit-log
+              - img [ref=e24]
+              - text: Audit Log
+      - generic [ref=e26]:
+        - button "Commerce" [ref=e27]:
+          - generic [ref=e28]: Commerce
+          - img [ref=e29]
+        - list [ref=e31]:
+          - listitem [ref=e32]:
+            - link "Orders" [ref=e33] [cursor=pointer]:
+              - /url: /_/admin/orders
+              - img [ref=e34]
+              - text: Orders
+          - listitem [ref=e36]:
+            - link "Products" [ref=e37] [cursor=pointer]:
+              - /url: /_/admin/products
+              - img [ref=e38]
+              - text: Products
+          - listitem [ref=e40]:
+            - link "Approvals" [ref=e41] [cursor=pointer]:
+              - /url: /_/admin/products/approvals
+              - img [ref=e42]
+              - text: Approvals
+          - listitem [ref=e44]:
+            - link "Marketing" [ref=e45] [cursor=pointer]:
+              - /url: /_/admin/marketing
+              - img [ref=e46]
+              - text: Marketing
+          - listitem [ref=e48]:
+            - link "Suppliers" [ref=e49] [cursor=pointer]:
+              - /url: /_/admin/suppliers
+              - img [ref=e50]
+              - text: Suppliers
+      - generic [ref=e52]:
+        - button "Content & Marketing" [ref=e53]:
+          - generic [ref=e54]: Content & Marketing
+          - img [ref=e55]
+        - list [ref=e57]:
+          - listitem [ref=e58]:
+            - link "Blog Posts" [ref=e59] [cursor=pointer]:
+              - /url: /_/admin/blog
+              - img [ref=e60]
+              - text: Blog Posts
+          - listitem [ref=e62]:
+            - link "Case Studies" [ref=e63] [cursor=pointer]:
+              - /url: /_/admin/case-studies
+              - img [ref=e64]
+              - text: Case Studies
+          - listitem [ref=e66]:
+            - link "Solutions" [ref=e67] [cursor=pointer]:
+              - /url: /_/admin/solutions
+              - img [ref=e68]
+              - text: Solutions
+          - listitem [ref=e70]:
+            - link "Documents" [ref=e71] [cursor=pointer]:
+              - /url: /_/admin/documents
+              - img [ref=e72]
+              - text: Documents
+          - listitem [ref=e74]:
+            - link "Leads" [ref=e75] [cursor=pointer]:
+              - /url: /_/admin/leads
+              - img [ref=e76]
+              - text: Leads
+          - listitem [ref=e78]:
+            - link "Tracked Links" [ref=e79] [cursor=pointer]:
+              - /url: /_/admin/tracked-links
+              - img [ref=e80]
+              - text: Tracked Links
+          - listitem [ref=e82]:
+            - link "Team Members" [ref=e83] [cursor=pointer]:
+              - /url: /_/admin/team-members
+              - img [ref=e84]
+              - text: Team Members
+          - listitem [ref=e86]:
+            - link "Partners" [ref=e87] [cursor=pointer]:
+              - /url: /_/admin/partners
+              - img [ref=e88]
+              - text: Partners
+          - listitem [ref=e90]:
+            - link "Media Library" [ref=e91] [cursor=pointer]:
+              - /url: /_/admin/media
+              - img [ref=e92]
+              - text: Media Library
+      - generic [ref=e94]:
+        - button "System" [ref=e95]:
+          - generic [ref=e96]: System
+          - img [ref=e97]
+        - list [ref=e99]:
+          - listitem [ref=e100]:
+            - link "Users & Staff" [ref=e101] [cursor=pointer]:
+              - /url: /_/admin/users
+              - img [ref=e102]
+              - text: Users & Staff
+          - listitem [ref=e104]:
+            - link "Site Settings" [ref=e105] [cursor=pointer]:
+              - /url: /_/admin/settings
+              - img [ref=e106]
+              - text: Site Settings
+          - listitem [ref=e108]:
+            - link "Locations" [ref=e109] [cursor=pointer]:
+              - /url: /_/admin/locations
+              - img [ref=e110]
+              - text: Locations
+    - generic [ref=e112]:
+      - generic [ref=e113]:
+        - generic [ref=e114]: A
+        - generic [ref=e115]:
+          - paragraph [ref=e116]: Biased
+          - paragraph [ref=e117]: admin@vision-ai.tech
+      - button "Sign Out" [ref=e119]:
+        - img [ref=e120]
+        - text: Sign Out
+  - main [ref=e123]:
+    - generic [ref=e124]:
+      - generic [ref=e125]:
+        - generic [ref=e126]:
+          - heading "Marketing" [level=1] [ref=e127]
+          - paragraph [ref=e128]: Manage campaigns, sales events, and discount codes.
+        - link "Create Sale Event" [ref=e130] [cursor=pointer]:
+          - /url: /_/admin/marketing/events/new
+          - img [ref=e131]
+          - generic [ref=e133]: Create Sale Event
+      - generic [ref=e134]:
+        - button "Sale Events" [ref=e135]
+        - button "Discount Codes" [active] [ref=e136]
+      - generic [ref=e137]:
+        - table [ref=e138]:
+          - rowgroup [ref=e139]:
+            - row "Name Badge Label Active Dates Actions" [ref=e140]:
+              - columnheader "Name" [ref=e141]
+              - columnheader "Badge Label" [ref=e142]
+              - columnheader "Active" [ref=e143]
+              - columnheader "Dates" [ref=e144]
+              - columnheader "Actions" [ref=e145]
+          - rowgroup
+        - paragraph [ref=e147]: No sale events created yet.
+```

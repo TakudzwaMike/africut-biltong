@@ -4,7 +4,7 @@ import { PageContentService } from '$lib/server/services/PageContentService';
 import { PartnerService } from '$lib/server/services/PartnerService';
 import { SolutionService } from '$lib/server/services/SolutionService';
 
-/** @type {import('../$types').PageServerLoad} */
+/** @type {import('./$types').PageServerLoad} */
 export async function load() {
 	const blogService = new BlogService();
 	const caseStudyService = new CaseStudyService();
@@ -40,7 +40,8 @@ export async function load() {
 	const content = (contentList || []).reduce((acc, item) => {
 		acc[item.section] = item;
 		return acc;
-	}, {});
+	}, /** @type {Record<string, any>} */({}));
+
 
 	// CaseStudyService -> { caseStudies, ... }
 	const caseStudies = caseStudiesResult.caseStudies || [];

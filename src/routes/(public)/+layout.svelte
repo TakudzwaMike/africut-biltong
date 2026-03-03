@@ -9,7 +9,7 @@
 	import JsonLD from "$lib/components/JsonLD.svelte";
 	import Seo from "$lib/components/Seo.svelte";
 
-	/** @type {import('./$types').LayoutData} */
+	/** @type {{ children?: import('svelte').Snippet, data: import('./$types').LayoutData }} */
 	const { children, data } = $props();
 
 	let isAdminRoute = $derived(page.url.pathname.startsWith("/_/admin"));
@@ -39,6 +39,13 @@
 			},
 			geoRadius: "1500000",
 		},
+		sameAs: [
+			data.settings?.socialLinkedIn,
+			data.settings?.socialX,
+			data.settings?.socialFacebook,
+			data.settings?.socialInstagram,
+			data.settings?.socialTikTok,
+		].filter(Boolean),
 	};
 
 	const websiteSchema = {
@@ -63,11 +70,7 @@
 
 <svelte:head>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link
-		rel="preconnect"
-		href="https://fonts.gstatic.com"
-		crossorigin="true"
-	/>
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
 	<link
 		href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700&display=swap"
 		rel="stylesheet"

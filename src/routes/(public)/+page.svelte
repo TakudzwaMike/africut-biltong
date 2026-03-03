@@ -4,13 +4,16 @@
 	import SolutionsOverview from "$lib/components/SolutionsOverview.svelte";
 	import Image from "$lib/components/Image.svelte";
 	import Seo from "$lib/components/Seo.svelte";
+	import CountUp from "$lib/components/CountUp.svelte";
 	import Icon from "@iconify/svelte";
 
+	/** @type {{ data: import('./$types').PageData }} */
 	let { data } = $props();
 
 	let technology = $derived(data.content?.technology);
 	let heroContent = $derived(data.content?.hero);
 
+	/** @param {any} richText */
 	function getExcerpt(richText) {
 		if (!richText?.content) return "";
 		const paragraph = richText.content.find(
@@ -19,7 +22,7 @@
 		if (!paragraph?.content) return "";
 		return (
 			paragraph.content
-				.map((node) => node.text)
+				.map((/** @type {any} */ node) => node.text)
 				.join("")
 				.substring(0, 120) + "..."
 		);
@@ -28,7 +31,7 @@
 
 <Seo
 	title="Vision AI Tech - Smart, Simple AI Solutions"
-	description="We provide smart, simple AI solutions to enhance profitability, safety, and sustainability in the mining and construction industries."
+	description="Vision AI Tech provides smart, simple AI solutions to enhance profitability and safety in heavy industry. Our suite offers AI-driven PPE compliance detection for mines, predictive maintenance for hauling trucks, and real-time site hazard monitoring."
 />
 
 {#if heroContent}
@@ -60,6 +63,52 @@
 						/>
 					{/if}
 				{/each}
+			</div>
+
+			<!-- Stats Section (Social Proof) -->
+			<div class="mt-12 pt-12 border-t border-main/5">
+				<div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+					<div class="text-center">
+						<div class="text-2xl md:text-3xl font-bold text-main">
+							<CountUp value="10k+" />
+						</div>
+						<div
+							class="text-xs font-bold uppercase tracking-wider text-main/40 mt-1"
+						>
+							PPE Checks
+						</div>
+					</div>
+					<div class="text-center">
+						<div class="text-2xl md:text-3xl font-bold text-main">
+							<CountUp value="500+" />
+						</div>
+						<div
+							class="text-xs font-bold uppercase tracking-wider text-main/40 mt-1"
+						>
+							Sites Monitored
+						</div>
+					</div>
+					<div class="text-center">
+						<div class="text-2xl md:text-3xl font-bold text-main">
+							<CountUp value="99.9%" />
+						</div>
+						<div
+							class="text-xs font-bold uppercase tracking-wider text-main/40 mt-1"
+						>
+							Uptime
+						</div>
+					</div>
+					<div class="text-center">
+						<div class="text-2xl md:text-3xl font-bold text-main">
+							<CountUp value="24/7" />
+						</div>
+						<div
+							class="text-xs font-bold uppercase tracking-wider text-main/40 mt-1"
+						>
+							Monitoring
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -108,9 +157,9 @@
 								width="32"
 							/>
 							<div>
-								<p class="font-bold">Safety First</p>
+								<p class="font-bold">AI-Driven Safety</p>
 								<p class="text-xs text-light/60">
-									ISO Compliant
+									PPE Compliance Detection
 								</p>
 							</div>
 						</div>
@@ -123,8 +172,12 @@
 								width="32"
 							/>
 							<div>
-								<p class="font-bold">Edge Computing</p>
-								<p class="text-xs text-light/60">Low Latency</p>
+								<p class="font-bold">
+									Low-Latency Hazard Monitoring
+								</p>
+								<p class="text-xs text-light/60">
+									Edge Computing Performance
+								</p>
 							</div>
 						</div>
 					</div>

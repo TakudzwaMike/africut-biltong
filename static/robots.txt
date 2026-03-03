@@ -2,8 +2,16 @@ User-agent: *
 Allow: /
 Disallow: /_/admin/
 
-# AI Crawlers
+# AI Bot Access
 User-agent: GPTBot
+Allow: /
+Disallow: /_/admin/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /_/admin/
+
+User-agent: Claude-Web
 Allow: /
 Disallow: /_/admin/
 

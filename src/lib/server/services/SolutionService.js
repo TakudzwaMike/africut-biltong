@@ -8,9 +8,10 @@ export class SolutionService {
         this.repo = new SolutionRepository();
     }
 
-    async listSolutions() {
-        return this.repo.findMany();
+    async listSolutions(params = {}) {
+        return this.repo.findMany(params);
     }
+
 
     async createSolution(userId, data) {
         try {

@@ -1,9 +1,14 @@
 import { Resend } from 'resend';
 import { RESEND_API_KEY } from '$env/static/private';
 
-const resend = new Resend(RESEND_API_KEY);
+// Guard against missing API key during build
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 const SENDER_EMAIL = 'Vision AI Tech <noreply@vision-ai.tech>';
 
+/**
+ * Sends a notification for a new lead.
+ * @param {any} lead
+ */
 export async function sendNewLeadNotification(lead) {
     const subject = `New Lead from vision-ai.tech: ${lead.firstName} ${lead.lastName}`;
     const body = `
@@ -25,6 +30,11 @@ export async function sendNewLeadNotification(lead) {
         </div>
     `;
 
+    if (!resend) {
+        console.warn('RESEND_API_KEY not set. Skipping lead notification.');
+        return;
+    }
+
     try {
         await resend.emails.send({
             from: SENDER_EMAIL,
@@ -37,6 +47,12 @@ export async function sendNewLeadNotification(lead) {
     }
 }
 
+/**
+ * Sends a document download link.
+ * @param {string} email
+ * @param {string} documentTitle
+ * @param {string} fileUrl
+ */
 export async function sendDocumentDownloadLink(email, documentTitle, fileUrl) {
     const subject = `Your Download: ${documentTitle}`;
     const body = `
@@ -55,6 +71,11 @@ export async function sendDocumentDownloadLink(email, documentTitle, fileUrl) {
         </div>
     `;
 
+    if (!resend) {
+        console.warn('RESEND_API_KEY not set. Skipping document link email.');
+        return false;
+    }
+
     try {
         await resend.emails.send({
             from: SENDER_EMAIL,
@@ -72,7 +93,7 @@ export async function sendDocumentDownloadLink(email, documentTitle, fileUrl) {
 /**
  * Sends an order confirmation receipt.
  * @param {string} email 
- * @param {object} order - Must include publicId, total, subtotal, discountAmount, currency, and items array.
+ * @param {any} order - Must include publicId, total, subtotal, discountAmount, currency, and items array.
  */
 export async function sendOrderConfirmationEmail(email, order) {
     const currencySymbol = order.currency === 'ZAR' ? 'R' : '$';
@@ -135,6 +156,11 @@ export async function sendOrderConfirmationEmail(email, order) {
         </div>
     `;
 
+    if (!resend) {
+        console.warn('RESEND_API_KEY not set. Skipping order confirmation email.');
+        return;
+    }
+
     try {
         await resend.emails.send({
             from: SENDER_EMAIL,
@@ -151,6 +177,11 @@ export async function sendOrderConfirmationEmail(email, order) {
  * Sends an invitation email to a new team member.
  * @param {string} email 
  * @param {string} inviteLink 
+ */
+/**
+ * Sends an invite email.
+ * @param {string} email
+ * @param {string} inviteLink
  */
 export async function sendInviteEmail(email, inviteLink) {
     const subject = 'You are invited to join the Vision AI Tech team';
@@ -182,6 +213,11 @@ export async function sendInviteEmail(email, inviteLink) {
             </div>
         </div>
     `;
+
+    if (!resend) {
+        console.warn('RESEND_API_KEY not set. Skipping invite email.');
+        return false;
+    }
 
     try {
         await resend.emails.send({
