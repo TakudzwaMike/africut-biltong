@@ -52,6 +52,17 @@ export class LeadRepository {
         });
     }
 
+    async create(data) {
+        try {
+            const [newLead] = await db.insert(lead).values(data).returning();
+            logger.info(`Created lead: ${newLead.id}`);
+            return newLead;
+        } catch (error) {
+            logger.error('Error creating lead', error);
+            throw error;
+        }
+    }
+
     async update(id, data) {
         try {
             const [updated] = await db.update(lead)

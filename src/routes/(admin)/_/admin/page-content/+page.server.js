@@ -6,7 +6,7 @@ const pageService = new PageContentService();
 
 export async function load() {
 	return {
-		sections: await pageService.getAllSections()
+		content: await pageService.getAllSections()
 	};
 }
 

@@ -16,8 +16,28 @@ export async function load({ locals }) {
 }
 
 export const actions = {
-	// Assuming create/update might be needed later, but only delete was visible in snippet.
-	// I will add delete properly.
+	save: async ({ request, locals }) => {
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
+		}
+		const raw = Object.fromEntries(await request.formData());
+
+		// Strip empty strings so optional/auto-generated fields don't crash Postgres
+		const data = {};
+		for (const [key, value] of Object.entries(raw)) {
+			if (value !== '') data[key] = value;
+		}
+		// Remove id for new records (it comes as empty from the hidden input)
+		if (!data.id) delete data.id;
+
+		try {
+			await locationService.createLocation(locals.user.id, data);
+			await log(locals.user?.id, 'save_location', { data });
+			return { success: true, message: 'Location saved successfully!' };
+		} catch (err) {
+			return fail(500, { message: 'Could not save the location.' });
+		}
+	},
 
 	delete: async ({ url, locals }) => {
 		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {

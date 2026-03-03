@@ -16,6 +16,17 @@ export class LeadService {
         return this.repo.findAll();
     }
 
+    async createLead(data) {
+        try {
+            const lead = await this.repo.create(data);
+            logger.info(`Lead submitted: ${lead.id}`);
+            return lead;
+        } catch (err) {
+            logger.error('Error creating lead', err);
+            throw err;
+        }
+    }
+
     async updateLeadStatus(userId, id, status) {
         try {
             const lead = await this.repo.update(id, { status });
