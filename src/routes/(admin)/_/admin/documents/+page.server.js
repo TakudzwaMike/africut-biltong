@@ -2,9 +2,11 @@ import { fail, error } from '@sveltejs/kit';
 import { ALLOWED_ROLES } from '$lib/server/services/AuthService';
 import { log } from '$lib/server/services/AuditLogService';
 import { DocumentService } from '$lib/server/services/DocumentService';
+import { MediaService } from '$lib/server/services/MediaService';
 
 
 const documentService = new DocumentService();
+const mediaService = new MediaService();
 const ITEMS_PER_PAGE = 20;
 
 export async function load({ url, locals }) {
@@ -14,23 +16,24 @@ export async function load({ url, locals }) {
 
 	const page = Number(url.searchParams.get('page')) || 1;
 	const query = url.searchParams.get('q') || '';
-	const category = url.searchParams.get('category') || 'all';
 
-	const { documents, totalItems, totalPages } = await documentService.listDocuments({
-		page,
-		limit: ITEMS_PER_PAGE,
-		query,
-		category
-	});
+	const [{ documents, totalItems, totalPages }, mediaItems] = await Promise.all([
+		documentService.listDocuments({
+			page,
+			limit: ITEMS_PER_PAGE,
+			query
+		}),
+		mediaService.listMedia()
+	]);
 
 	return {
 		documents,
+		mediaItems,
 		pagination: {
 			page,
 			totalPages,
 			totalItems,
-			query,
-			category
+			query
 		}
 	};
 }
@@ -61,13 +64,10 @@ export const actions = {
 
 			const doc = await documentService.createDocument(locals.user.id, {
 				title,
-				category,
 				fileUrl,
 				description,
 				thumbnailMediaId: !isNaN(parsedMediaId) ? parsedMediaId : null,
-				isGated: isGated,
-				size: 0, // Should be calculated or passed from upload
-				format: 'pdf' // Should be detected
+				isGated: isGated
 			});
 
 			await log(locals.user.id, 'create_document', { targetId: doc.id, data: { title } });
@@ -100,12 +100,9 @@ export const actions = {
 				title: String(title),
 				description: String(description),
 				thumbnailMediaId: !isNaN(parsedMediaId) ? parsedMediaId : null,
-				isGated: isGated
+				isGated: isGated,
+				fileUrl: fileUrl ? String(fileUrl) : undefined
 			};
-
-			if (fileUrl) {
-				dataToUpdate.fileUrl = String(fileUrl);
-			}
 
 			await documentService.updateDocument(locals.user.id, id, dataToUpdate);
 			await log(locals.user?.id, 'update_document', { targetId: id, data: dataToUpdate });

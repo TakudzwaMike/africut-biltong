@@ -492,6 +492,7 @@
 {/snippet}
 
 <style>
+	@reference "../../../../../app.css";
 	.label {
 		@apply mb-1 block text-sm font-bold text-main/80;
 	}

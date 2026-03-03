@@ -1,4 +1,4 @@
-import { fail, error } from '@sveltejs/kit';
+import { fail, error, redirect } from '@sveltejs/kit';
 import { ALLOWED_ROLES } from '$lib/server/services/AuthService';
 import { log } from '$lib/server/services/AuditLogService';
 import { BlogService } from '$lib/server/services/BlogService';

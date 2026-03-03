@@ -2,6 +2,7 @@ import { AuthService } from '$lib/server/services/AuthService';
 import { fail, redirect } from '@sveltejs/kit';
 
 const STAFF_ROLES = ['admin', 'store_manager', 'content_editor'];
+const ADMIN_EMAIL_DOMAIN = 'vision-ai.tech';
 
 export const actions = {
     default: async (event) => {
@@ -22,17 +23,29 @@ export const actions = {
             // Redirect Logic
             const redirectTo = event.url.searchParams.get('redirectTo');
 
-            // If there is a specific redirect intent (e.g. they tried to go to /_/admin/products), respect it
+            // If there is a specific redirect intent to admin, verify domain
+            if (redirectTo && redirectTo.startsWith('/_/admin')) {
+                const userEmail = user?.email || '';
+                if (user && STAFF_ROLES.includes(user.role) && userEmail.endsWith(`@${ADMIN_EMAIL_DOMAIN}`)) {
+                    throw redirect(303, redirectTo);
+                }
+                // Staff without correct domain — redirect to account
+                return fail(400, { message: 'Admin access is restricted to @vision-ai.tech email addresses.' });
+            }
+
             if (redirectTo) {
                 throw redirect(303, redirectTo);
             }
 
-            // Otherwise, default routing based on role
+            // Default routing based on role + domain
             if (user && STAFF_ROLES.includes(user.role)) {
-                throw redirect(303, '/_/admin');
-            } else {
-                throw redirect(303, '/account');
+                const userEmail = user.email || '';
+                if (userEmail.endsWith(`@${ADMIN_EMAIL_DOMAIN}`)) {
+                    throw redirect(303, '/_/admin');
+                }
             }
+
+            throw redirect(303, '/account');
 
         } catch (error) {
             if (error.status === 303) throw error; // Re-throw redirects

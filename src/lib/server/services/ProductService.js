@@ -20,10 +20,14 @@ export class ProductService {
         return this.repo.findById(id);
     }
 
+    async getProductBySlug(slug) {
+        return this.repo.findBySlug(slug);
+    }
+
     async createProduct(userId, data) {
         try {
             // Slug generation logic could move here if complex
-            const product = await this.repo.create(data);
+            const product = await this.repo.create(data, userId);
             logger.info(`User ${userId} created product ${product.id}`);
             return product;
         } catch (err) {
@@ -34,7 +38,7 @@ export class ProductService {
 
     async updateProduct(userId, id, data) {
         try {
-            const product = await this.repo.update(id, data);
+            const product = await this.repo.update(id, data, userId);
             logger.info(`User ${userId} updated product ${id}`);
             return product;
         } catch (err) {
@@ -45,7 +49,7 @@ export class ProductService {
 
     async deleteProduct(userId, id) {
         try {
-            await this.repo.delete(id);
+            await this.repo.delete(id, userId);
             logger.info(`User ${userId} deleted product ${id}`);
         } catch (err) {
             logger.error(`Error deleting product ${id}`, err);

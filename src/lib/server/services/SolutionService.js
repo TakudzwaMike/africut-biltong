@@ -50,6 +50,12 @@ export class SolutionService {
         return solution;
     }
 
+    async getSolutionBySlug(slug) {
+        const solution = await this.repo.findBySlug(slug);
+        if (!solution) throw new Error('Solution not found');
+        return solution;
+    }
+
     async listMedia() {
         return this.repo.listMedia();
     }

@@ -21,7 +21,7 @@ async function main() {
         // 1. Create Admin User (biased@project.com / password123)
         console.log('👤 Creating Admin User...');
         let adminUser;
-        const adminEmail = 'biased@project.com';
+        const adminEmail = 'admin@vision-ai.tech';
 
         try {
             // Check if exists first to avoid error log noise

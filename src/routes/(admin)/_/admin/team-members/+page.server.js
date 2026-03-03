@@ -2,46 +2,50 @@ import { fail, error } from '@sveltejs/kit';
 import { ALLOWED_ROLES } from '$lib/server/services/AuthService';
 import { log } from '$lib/server/services/AuditLogService';
 import { TeamService } from '$lib/server/services/TeamService';
+import { MediaService } from '$lib/server/services/MediaService';
 
 
 const teamService = new TeamService();
+const mediaService = new MediaService();
 
 export async function load({ locals }) {
 	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
 		throw error(403, 'Forbidden');
 	}
 
+	const [teamMembers, mediaItems] = await Promise.all([
+		teamService.listTeamMembers(),
+		mediaService.listMedia()
+	]);
+
 	return {
-		teamMembers: await teamService.listTeamMembers()
+		teamMembers,
+		mediaItems
 	};
 }
 
 export const actions = {
-	create: async ({ request, locals }) => {
+	save: async ({ request, locals }) => {
 		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
 			return fail(403, { message: 'Unauthorized.' });
 		}
 
 		const formData = await request.formData();
 		const name = formData.get('name');
-		const role = formData.get('role');
+		const title = formData.get('title') || formData.get('role'); // Fallback during transition
 		const bio = formData.get('bio');
-		const photoUrl = formData.get('photoUrl');
-		const linkedin = formData.get('linkedin');
-		const twitter = formData.get('twitter');
+		const mediaId = formData.get('mediaId');
 
-		if (!name || !role) {
-			return fail(400, { message: 'Name and Role are required.' });
+		if (!name || !title) {
+			return fail(400, { message: 'Name and Title are required.' });
 		}
 
 		try {
 			const member = await teamService.createTeamMember(locals.user.id, {
 				name: String(name),
-				role: String(role),
-				bio: String(bio),
-				photoUrl: photoUrl ? String(photoUrl) : null,
-				linkedin: linkedin ? String(linkedin) : null,
-				twitter: twitter ? String(twitter) : null
+				title: String(title),
+				bio: bio ? String(bio) : null,
+				mediaId: mediaId ? Number(mediaId) : null
 			});
 
 			await log(locals.user.id, 'create_team_member', { targetId: member.id, data: { name } });

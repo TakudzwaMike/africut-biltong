@@ -31,18 +31,26 @@ export const actions = {
 		const formData = await request.formData();
 		const title = String(formData.get('title'));
 		const slug = String(formData.get('slug'));
-		const excerpt = String(formData.get('excerpt'));
-		const content = String(formData.get('content'));
+		const contentRaw = formData.get('content');
+		const mediaId = formData.get('mediaId');
 		const status = String(formData.get('status')) || 'draft';
+
+		let contentJson = null;
+		try {
+			contentJson = contentRaw ? JSON.parse(String(contentRaw)) : null;
+		} catch (e) {
+			return fail(400, { message: 'Invalid content format.' });
+		}
 
 		try {
 			const post = await blogService.createPost(locals.user.id, {
 				title,
 				slug,
-				excerpt,
-				content,
-				status,
-				publishedAt: status === 'published' ? new Date() : null
+				contentJson,
+				mediaId: mediaId ? Number(mediaId) : null,
+				isPublished: status === 'published',
+				publishedAt: status === 'published' ? new Date() : null,
+				authorId: locals.user.id
 			});
 
 			await log(locals.user.id, 'create_post', { targetId: post.id, data: { title } });
@@ -52,14 +60,14 @@ export const actions = {
 		}
 	},
 
-	delete: async ({ request, locals }) => {
-		const formData = await request.formData();
-		const id = String(formData.get('id'));
+	delete: async ({ url, locals }) => {
+		const id = url.searchParams.get('id');
+		if (!id) return fail(400, { message: 'ID is required' });
 
 		try {
 			await blogService.deletePost(locals.user.id, id);
 			await log(locals.user.id, 'delete_post', { targetId: id });
-			return { success: true };
+			return { status: 200, success: true };
 		} catch (err) {
 			return fail(500, { message: 'Failed to delete post.' });
 		}

@@ -35,6 +35,16 @@ export class PartnerService {
         return result[0];
     }
 
+    async updatePartner(userId, id, data) {
+        try {
+            await this.repo.update(id, data);
+            logger.info(`User ${userId} updated partner ${id}`);
+        } catch (err) {
+            logger.error(`Error updating partner ${id}`, err);
+            throw err;
+        }
+    }
+
     async deletePartner(userId, id) {
         try {
             await this.repo.delete(id);

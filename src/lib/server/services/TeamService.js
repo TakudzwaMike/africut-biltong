@@ -23,6 +23,16 @@ export class TeamService {
         }
     }
 
+    async updateTeamMember(userId, id, data) {
+        try {
+            await this.repo.update(id, data);
+            logger.info(`User ${userId} updated team member ${id}`);
+        } catch (err) {
+            logger.error(`Error updating team member ${id}`, err);
+            throw err;
+        }
+    }
+
     async deleteTeamMember(userId, id) {
         try {
             await this.repo.delete(id);

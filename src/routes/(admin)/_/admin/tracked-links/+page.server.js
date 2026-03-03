@@ -29,34 +29,33 @@ export async function load({ url }) {
 export const actions = {
 	create: async ({ request, locals }) => {
 		const formData = await request.formData();
-		const slug = String(formData.get('slug'));
 		const destinationUrl = String(formData.get('destinationUrl'));
 		const description = String(formData.get('description'));
 
-		if (!slug || !destinationUrl) return fail(400, { message: 'Slug and Destination URL are required' });
+		if (!destinationUrl) return fail(400, { message: 'Destination URL is required' });
 
 		try {
 			const link = await linkService.createLink(locals.user.id, {
-				slug,
 				destinationUrl,
-				description
+				description,
+				userId: locals.user.id
 			});
 
-			await log(locals.user.id, 'create_tracked_link', { targetId: link.id, data: { slug } });
-			return { success: true };
+			await log(locals.user.id, 'create_tracked_link', { targetId: link.id, data: { destinationUrl } });
+			return { success: true, message: 'Tracked link created successfully.' };
 		} catch (err) {
 			return fail(500, { message: 'Failed to create tracked link' });
 		}
 	},
 
-	delete: async ({ request, locals }) => {
-		const formData = await request.formData();
-		const id = String(formData.get('id'));
+	delete: async ({ url, locals }) => {
+		const id = url.searchParams.get('id');
+		if (!id) return fail(400, { message: 'ID is required' });
 
 		try {
 			await linkService.deleteLink(locals.user.id, id);
 			await log(locals.user.id, 'delete_tracked_link', { targetId: id });
-			return { success: true };
+			return { success: true, message: 'Tracked link deleted successfully.' };
 		} catch (err) {
 			return fail(500, { message: 'Failed to delete tracked link' });
 		}

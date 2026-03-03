@@ -130,7 +130,7 @@ export class ProductRepository {
      * @param {object} data
      * @param {object} locals - specific mostly for audit logging user
      */
-    async create(data, locals) {
+    async create(data, userId) {
         const {
             name, slug, shortDescription, longDescription,
             mediaId, ctaText, ctaLink, type,
@@ -150,7 +150,7 @@ export class ProductRepository {
 
         const [newProduct] = await db.insert(product).values(dataToSave).returning();
 
-        await log(locals.user?.id, 'create_product', {
+        await log(userId, 'create_product', {
             targetId: newProduct.id,
             data: { name: newProduct.name }
         });
@@ -166,7 +166,7 @@ export class ProductRepository {
      * @param {object} data
      * @param {object} locals
      */
-    async update(id, data, locals) {
+    async update(id, data, userId) {
         const {
             name, slug, shortDescription, longDescription,
             mediaId, ctaText, ctaLink, type,
@@ -186,7 +186,7 @@ export class ProductRepository {
 
         await db.update(product).set(dataToSave).where(eq(product.id, id));
 
-        await log(locals.user?.id, 'update_product', {
+        await log(userId, 'update_product', {
             targetId: id,
             data: { name: dataToSave.name }
         });
@@ -201,13 +201,13 @@ export class ProductRepository {
      * @param {number} id 
      * @param {object} locals 
      */
-    async delete(id, locals) {
+    async delete(id, userId) {
         const productToDelete = await this.findById(id);
         if (!productToDelete) return false;
 
         await db.delete(product).where(eq(product.id, id));
 
-        await log(locals.user?.id, 'delete_product', { targetId: id, data: productToDelete });
+        await log(userId, 'delete_product', { targetId: id, data: productToDelete });
 
         return true;
     }

@@ -1,18 +1,39 @@
 import { db } from '$lib/server/db';
 import { document, media } from '$lib/server/db/schema.js';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, count, or, ilike, and } from 'drizzle-orm';
 import { LoggerService } from '$lib/server/services/LoggerService';
 
 const logger = LoggerService.for('DocumentRepository');
 
 export class DocumentRepository {
-    async findMany() {
-        return db.query.document.findMany({
-            orderBy: desc(document.createdAt),
-            with: {
-                thumbnail: true
-            }
-        });
+    async findMany({ page = 1, limit = 20, query = '' } = {}) {
+        const offset = (page - 1) * limit;
+
+        let filters = undefined;
+        if (query) {
+            filters = or(
+                ilike(document.title, `%${query}%`),
+                ilike(document.description, `%${query}%`)
+            );
+        }
+
+        const [documents, totalResult] = await Promise.all([
+            db.query.document.findMany({
+                where: filters,
+                orderBy: desc(document.createdAt),
+                with: {
+                    thumbnail: true
+                },
+                limit,
+                offset
+            }),
+            db.select({ count: count() }).from(document).where(filters)
+        ]);
+
+        const totalItems = totalResult[0].count;
+        const totalPages = Math.ceil(totalItems / limit);
+
+        return { documents, totalItems, totalPages };
     }
 
     async findById(id) {

@@ -159,6 +159,7 @@
 </div>
 
 <style>
+    @reference "../../../../../../app.css";
     .label {
         @apply block text-sm font-bold text-main;
     }
