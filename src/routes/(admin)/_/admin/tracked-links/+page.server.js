@@ -1,11 +1,14 @@
-import { fail } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import { TrackedLinkService } from '$lib/server/services/TrackedLinkService';
 import { log } from '$lib/server/auditLog';
 
 const linkService = new TrackedLinkService();
 const ITEMS_PER_PAGE = 20;
 
-export async function load({ url }) {
+export async function load({ url, locals }) {
+	if (!locals.user || locals.user.role !== 'admin') {
+		throw error(403, 'Forbidden');
+	}
 	const page = Number(url.searchParams.get('page')) || 1;
 	const query = url.searchParams.get('q') || '';
 
@@ -28,6 +31,9 @@ export async function load({ url }) {
 
 export const actions = {
 	create: async ({ request, locals }) => {
+		if (!locals.user || locals.user.role !== 'admin') {
+			return fail(403, { message: 'Unauthorized' });
+		}
 		const formData = await request.formData();
 		const destinationUrl = String(formData.get('destinationUrl'));
 		const description = String(formData.get('description'));
@@ -44,11 +50,15 @@ export const actions = {
 			await log(locals.user.id, 'create_tracked_link', { targetId: link.id, data: { destinationUrl } });
 			return { success: true, message: 'Tracked link created successfully.' };
 		} catch (err) {
+			console.error('[TrackedLinksActionError]', err);
 			return fail(500, { message: 'Failed to create tracked link' });
 		}
 	},
 
 	delete: async ({ url, locals }) => {
+		if (!locals.user || locals.user.role !== 'admin') {
+			return fail(403, { message: 'Unauthorized' });
+		}
 		const id = url.searchParams.get('id');
 		if (!id) return fail(400, { message: 'ID is required' });
 

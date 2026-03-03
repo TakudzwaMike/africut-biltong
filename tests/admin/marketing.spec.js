@@ -14,6 +14,8 @@ test.describe('Admin Marketing Module', () => {
     test('Promo Codes listing', async ({ page }) => {
         await page.goto('/_/admin/marketing');
         await page.click('button:has-text("Discount Codes")');
-        await expect(page.locator('th').filter({ hasText: 'Code' }).first()).toBeVisible();
+        // Wait for the table to refresh with the correct header
+        const codeHeader = page.locator('th').filter({ hasText: 'Code' }).first();
+        await expect(codeHeader).toBeVisible({ timeout: 5000 });
     });
 });
