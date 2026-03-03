@@ -6,18 +6,17 @@ const SENDER_EMAIL = 'Vision AI Tech <noreply@vision-ai.tech>';
 
 export async function sendNewLeadNotification(lead) {
     const subject = `New Lead from vision-ai.tech: ${lead.firstName} ${lead.lastName}`;
-	const body = `
+    const body = `
         <div style="font-family: sans-serif; color: #12102B;">
             <h2>New Lead Notification</h2>
             <p>A new lead has been submitted via the website contact form.</p>
             <ul style="background: #f4f4f5; padding: 20px; border-radius: 8px;">
                 <li><strong>Name:</strong> ${lead.firstName} ${lead.lastName}</li>
                 <li><strong>Email:</strong> <a href="mailto:${lead.email}">${lead.email}</a></li>
-                ${
-                    lead.solutionId 
-                        ? `<li><strong>Inquired About Solution ID:</strong> ${lead.solutionId}</li>` 
-                        : ''
-                }
+                ${lead.solutionId
+            ? `<li><strong>Inquired About Solution ID:</strong> ${lead.solutionId}</li>`
+            : ''
+        }
             </ul>
             <p><strong>Message:</strong></p>
             <blockquote style="border-left: 4px solid #C0D532; padding-left: 10px; margin-left: 0; color: #555;">
@@ -26,16 +25,16 @@ export async function sendNewLeadNotification(lead) {
         </div>
     `;
 
-	try {
-		await resend.emails.send({
-			from: SENDER_EMAIL,
-			to: ['admin@vision-ai.tech'], // Replace with real admin email
-			subject: subject,
-			html: body
-		});
-	} catch (error) {
-		console.error('Failed to send new lead notification email:', error);
-	}
+    try {
+        await resend.emails.send({
+            from: SENDER_EMAIL,
+            to: ['admin@vision-ai.tech'], // Replace with real admin email
+            subject: subject,
+            html: body
+        });
+    } catch (error) {
+        console.error('Failed to send new lead notification email:', error);
+    }
 }
 
 export async function sendDocumentDownloadLink(email, documentTitle, fileUrl) {
@@ -89,7 +88,7 @@ export async function sendOrderConfirmationEmail(email, order) {
         </tr>
     `).join('');
 
-    const discountHtml = order.discountAmount > 0 
+    const discountHtml = order.discountAmount > 0
         ? `
         <tr>
             <td colspan="2" style="padding: 5px 0; text-align: right; color: #16a34a;"><strong>Discount:</strong></td>
@@ -145,5 +144,55 @@ export async function sendOrderConfirmationEmail(email, order) {
         });
     } catch (error) {
         console.error('Failed to send order confirmation:', error);
+    }
+}
+
+/**
+ * Sends an invitation email to a new team member.
+ * @param {string} email 
+ * @param {string} inviteLink 
+ */
+export async function sendInviteEmail(email, inviteLink) {
+    const subject = 'You are invited to join the Vision AI Tech team';
+    const body = `
+        <div style="font-family: sans-serif; color: #12102B; max-width: 600px; margin: 0 auto; border: 1px solid #f0f0f0; border-radius: 12px; overflow: hidden;">
+            <div style="background-color: #12102B; padding: 30px; text-align: center;">
+                <h1 style="color: #C0D532; margin: 0; font-size: 24px;">Vision AI Tech</h1>
+            </div>
+            <div style="padding: 40px; background-color: #ffffff;">
+                <h2 style="margin-top: 0; color: #12102B;">Welcome to the team!</h2>
+                <p style="font-size: 16px; line-height: 1.6; color: #444;">
+                    You have been invited to join the administrative panel of <strong>Vision AI Tech</strong>. 
+                    Once you join, you'll be able to manage content, products, and insights.
+                </p>
+                <div style="text-align: center; margin: 35px 0;">
+                    <a href="${inviteLink}" style="background-color: #C0D532; color: #12102B; padding: 14px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 16px; display: inline-block; box-shadow: 0 4px 6px rgba(192, 213, 50, 0.2);">
+                        Accept Invitation
+                    </a>
+                </div>
+                <p style="font-size: 14px; color: #666; line-height: 1.5;">
+                    If the button above doesn't work, copy and paste the following link into your browser:
+                    <br>
+                    <span style="color: #accent; word-break: break-all;">${inviteLink}</span>
+                </p>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
+                <p style="font-size: 12px; color: #999; text-align: center; margin: 0;">
+                    This link will expire in 7 days. If you weren't expecting this invitation, you can safely ignore this email.
+                </p>
+            </div>
+        </div>
+    `;
+
+    try {
+        await resend.emails.send({
+            from: SENDER_EMAIL,
+            to: [email],
+            subject: subject,
+            html: body
+        });
+        return true;
+    } catch (error) {
+        console.error('Failed to send invite email:', error);
+        return false;
     }
 }

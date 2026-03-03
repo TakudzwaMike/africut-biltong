@@ -1,5 +1,6 @@
 <script>
     import PageHeader from '$lib/components/PageHeader.svelte';
+	import Seo from '$lib/components/Seo.svelte';
     import Image from '$lib/components/Image.svelte';
     import Icon from '@iconify/svelte';
     import { currency } from '$lib/stores/currency';
@@ -28,12 +29,11 @@
     }
 </script>
 
-<svelte:head>
-    <title>All Products | Vision AI Store</title>
-    <meta name="description" content="Full catalog of hardware and software" />
-    <meta name="robots" content="noindex, follow" />
-</svelte:head>
 
+<Seo
+	title="All Products | Vision AI Store"
+	description="Full catalog of hardware and software"
+/>
 <PageHeader 
     title="Product Catalog" 
     subtitle="Browse our complete inventory of hardware, licenses, and services." />

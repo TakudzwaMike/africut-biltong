@@ -1,10 +1,10 @@
-import { db } from '$lib/server/db';
-import { saleEvent, salePrice, product, productVariant } from '$lib/server/db/schema';
 import { fail, error } from '@sveltejs/kit';
-import { eq, desc } from 'drizzle-orm';
-import { log } from '$lib/server/auditLog';
+import { ALLOWED_ROLES } from '$lib/server/services/AuthService';
+import { log } from '$lib/server/services/AuditLogService';
+import { MarketingService } from '$lib/server/services/MarketingService';
 
-const ALLOWED_ROLES = ['admin', 'store_manager'];
+
+const marketingService = new MarketingService();
 
 export async function load({ params, locals }) {
 	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
@@ -13,33 +13,12 @@ export async function load({ params, locals }) {
 
 	const { id } = params;
 
-	// 1. Fetch Event
-	const event = await db.query.saleEvent.findFirst({
-		where: eq(saleEvent.id, id)
-	});
-
-	if (!event) throw error(404, 'Event not found');
-
-	// 2. Fetch all Products + Variants
-	const products = await db.query.product.findMany({
-		orderBy: desc(product.name),
-		with: {
-			variants: true
-		}
-	});
-
-	// 3. Fetch Existing Prices for this Event
-	const existingPrices = await db.query.salePrice.findMany({
-		where: eq(salePrice.eventId, id)
-	});
-
-	// Create a Map for easy lookup in UI: variantId -> priceObj
-	const priceMap = existingPrices.reduce((acc, item) => {
-		acc[item.variantId] = item;
-		return acc;
-	}, {});
-
-	return { event, products, priceMap };
+	try {
+		const result = await marketingService.getEventWithPrices(id);
+		return result; // Returns { event, products, priceMap }
+	} catch (e) {
+		throw error(404, 'Event not found');
+	}
 }
 
 export const actions = {
@@ -56,13 +35,15 @@ export const actions = {
 		const isActive = formData.get('isActive') === 'on';
 
 		try {
-			await db.update(saleEvent).set({
+			const updateData = {
 				name: String(name),
 				publicLabel: String(publicLabel),
 				startsAt: new Date(String(startsAt)),
 				endsAt: new Date(String(endsAt)),
 				isActive
-			}).where(eq(saleEvent.id, params.id));
+			};
+
+			await marketingService.updateEvent(locals.user.id, params.id, updateData);
 
 			await log(locals.user.id, 'update_sale_event', { targetId: params.id, data: { name, isActive } });
 			return { success: true, message: 'Event updated.' };
@@ -89,26 +70,7 @@ export const actions = {
 		}
 
 		try {
-			// Use transaction to ensure consistency
-			await db.transaction(async (tx) => {
-				// 1. Clear existing prices for this event to handle removals/updates cleanly
-				// (Optimized approach: upsert is better, but delete-insert is safer for bulk matrix logic)
-				await tx.delete(salePrice).where(eq(salePrice.eventId, params.id));
-
-				// 2. Insert valid entries
-				const validEntries = updates
-					.filter(u => (u.usd > 0 || u.zar > 0)) // Only save if at least one price is set
-					.map(u => ({
-						eventId: params.id,
-						variantId: u.variantId,
-						salePriceUsd: u.usd ? Math.round(u.usd * 100) : null, // Store as Cents
-						salePriceZar: u.zar ? Math.round(u.zar * 100) : null  // Store as Cents
-					}));
-
-				if (validEntries.length > 0) {
-					await tx.insert(salePrice).values(validEntries);
-				}
-			});
+			await marketingService.updateEventPrices(locals.user.id, params.id, updates);
 
 			await log(locals.user.id, 'update_sale_prices', { targetId: params.id, count: updates.length });
 			return { success: true, message: 'Pricing matrix saved.' };
@@ -122,7 +84,7 @@ export const actions = {
 	delete: async ({ params, locals }) => {
 		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) return fail(403);
 		try {
-			await db.delete(saleEvent).where(eq(saleEvent.id, params.id));
+			await marketingService.deleteEvent(locals.user.id, params.id);
 			await log(locals.user.id, 'delete_sale_event', { targetId: params.id });
 			return { success: true, deleted: true }; // Client should redirect
 		} catch (e) {

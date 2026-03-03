@@ -1,26 +1,15 @@
-import { db } from '$lib/server/db';
-import { saleEvent, discountCode } from '$lib/server/db/schema';
-import { desc } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
+import { MarketingService } from '$lib/server/services/MarketingService';
 
-const ALLOWED_ROLES = ['admin', 'store_manager'];
+const marketingService = new MarketingService();
 
 export async function load({ locals }) {
-	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
-		throw error(403, 'Forbidden: You do not have permission to access Marketing.');
+	if (!locals.user || locals.user.role !== 'admin') {
+		throw error(403, 'Forbidden');
 	}
 
-	const [events, codes] = await Promise.all([
-		db.query.saleEvent.findMany({
-			orderBy: desc(saleEvent.startsAt)
-		}),
-		db.query.discountCode.findMany({
-			orderBy: desc(discountCode.id)
-		})
-	]);
+	const events = await marketingService.listEvents();
+	const codes = await marketingService.listCodes();
 
-	return { 
-		events,
-		codes
-	};
+	return { events, codes };
 }

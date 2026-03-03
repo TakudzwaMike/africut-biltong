@@ -1,5 +1,6 @@
 <script>
 	import Image from '$lib/components/Image.svelte';
+	import Seo from '$lib/components/Seo.svelte';
 	import GatedDocumentModal from '$lib/components/GatedDocumentModal.svelte';
 	import CaseStudyHighlights from '$lib/components/CaseStudyHighlights.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
@@ -9,6 +10,9 @@
 	let gatedDocumentToShow = $state(null);
 </script>
 
+
+<Seo
+/>
 <PageHeader 
 	title="Resources Library"
 	subtitle="White papers, brochures, and technical documentation to help you make informed decisions."

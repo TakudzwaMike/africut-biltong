@@ -1,6 +1,4 @@
-import { db } from '$lib/server/db';
-import { product } from '$lib/server/db/schema';
-import { desc } from 'drizzle-orm';
+import { ProductService } from '$lib/server/services/ProductService';
 import { escapeCsvField } from '$lib/server/csv';
 
 export async function GET({ locals }) {
@@ -9,13 +7,8 @@ export async function GET({ locals }) {
         return new Response('Unauthorized', { status: 403 });
     }
 
-    // Fetch flattened data: Product -> Variants
-    const products = await db.query.product.findMany({
-        orderBy: desc(product.id),
-        with: {
-            variants: true
-        }
-    });
+    const productService = new ProductService();
+    const products = await productService.getAllProducts();
 
     const headers = [
         'Product ID',

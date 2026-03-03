@@ -1,19 +1,9 @@
-import { db } from '$lib/server/db';
-import { lead } from '$lib/server/db/schema';
-import { desc } from 'drizzle-orm';
+import { LeadService } from '$lib/server/services/LeadService';
 
 export async function GET() {
 	// 1. Fetch all leads
-	const leads = await db.query.lead.findMany({
-		orderBy: desc(lead.createdAt),
-		with: {
-			solution: {
-				columns: {
-					solutionName: true
-				}
-			}
-		}
-	});
+	const leadService = new LeadService();
+	const leads = await leadService.getAllLeads();
 
 	// 2. Define CSV Headers
 	const headers = [

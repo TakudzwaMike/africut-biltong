@@ -1,32 +1,31 @@
-import { db } from '$lib/server/db';
-import { blogPost, media, blogCategory, blogPostsToCategories } from '$lib/server/db/schema.js';
+import { MediaService } from '$lib/server/services/MediaService';
+import { BlogService } from '$lib/server/services/BlogService';
 import { fail, redirect, error } from '@sveltejs/kit';
-import { log } from '$lib/server/auditLog.js';
-import { desc } from 'drizzle-orm';
 
 const ALLOWED_ROLES = ['admin', 'content_editor'];
 
 export async function load({ locals }) {
-    // 1. Security Check (View)
-    if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
-        throw error(403, 'Forbidden: You do not have permission to create blog posts.');
-    }
+	// Security Check (View)
+	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+		throw error(403, 'Forbidden: You do not have permission to create blog posts.');
+	}
 
-	const mediaItems = await db.query.media.findMany({
-		orderBy: desc(media.uploadedAt)
-	});
-	const categories = await db.query.blogCategory.findMany({
-		orderBy: desc(blogCategory.name)
-	});
+	const mediaService = new MediaService();
+	const blogService = new BlogService();
+
+	// Use services instead of direct db access
+	const mediaItems = await mediaService.listMedia();
+	const categories = await blogService.listCategories();
+
 	return { mediaItems, categories };
 }
 
 export const actions = {
 	default: async ({ request, locals }) => {
-        // 2. Security Check (Action)
-        if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
-            return fail(403, { message: 'Unauthorized.' });
-        }
+		// Security Check (Action)
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
+		}
 
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
@@ -57,40 +56,30 @@ export const actions = {
 					finalIsPublished = true;
 					finalPublishedAt = scheduledDate;
 				} else {
-					// Schedule for the future, save as draft for now
+					// Schedule for the future
 					finalIsPublished = false;
 					finalPublishedAt = scheduledDate;
 				}
 			}
 
-			const valuesToInsert = {
+			const postData = {
 				authorId: locals.user.id,
 				title: String(title),
 				slug: String(slug),
 				contentJson: content,
 				isPublished: finalIsPublished,
 				publishedAt: finalPublishedAt,
-				mediaId: mediaId ? Number(mediaId) : null
+				mediaId: mediaId ? Number(mediaId) : null,
+				categoryIds
 			};
-			const [newPost] = await db.insert(blogPost).values(valuesToInsert).returning();
 
-			// Handle categories
-			if (categoryIds.length > 0) {
-				await db.insert(blogPostsToCategories).values(
-					categoryIds.map((catId) => ({
-						postId: newPost.id,
-						categoryId: catId
-					}))
-				);
-			}
+			const blogService = new BlogService();
+			await blogService.createPost(locals.user.id, postData);
 
-			await log(locals.user?.id, 'create_blog_post', {
-				targetId: newPost.id,
-				data: { ...newPost, categoryIds }
-			});
 		} catch (error) {
 			console.error('Error creating blog post:', error);
-			if (error.message.includes('duplicate key value violates unique constraint')) {
+			if (error.message.includes('duplicate key value violates unique constraint') ||
+				error.message.includes('slug')) {
 				return fail(400, { data, message: 'This slug is already in use. Please choose another.' });
 			}
 			return fail(500, { data, message: 'Could not create the blog post.' });

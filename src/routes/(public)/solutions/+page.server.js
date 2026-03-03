@@ -1,13 +1,10 @@
-import { db } from '$lib/server/db';
-import { solution } from '$lib/server/db/schema.js';
-import { desc } from 'drizzle-orm';
+import { SolutionService } from '$lib/server/services/SolutionService';
 
 export async function load() {
-	const solutions = await db.query.solution.findMany({
-		orderBy: desc(solution.id),
-		with: {
-			featuredImage: true
-		}
-	});
+	const service = new SolutionService();
+	const result = await service.listSolutions();
+	// SolutionRepository.findMany returns { solutions, ... }
+	const solutions = result.solutions || [];
+
 	return { solutions };
 }

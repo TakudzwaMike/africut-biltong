@@ -156,6 +156,7 @@ export const product = pgTable('product', {
 	type: productTypeEnum('type').notNull().default('physical'),
 	tags: text('tags').array(),
 	mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' }),
+	approvalStatus: varchar('approval_status', { length: 50 }).notNull().default('pending'), // 'draft', 'pending', 'approved', 'rejected'
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
@@ -167,6 +168,7 @@ export const productVariant = pgTable('product_variant', {
 	sku: text('sku'),
 	priceUsd: integer('price_usd'), // Base List Price (Cents)
 	priceZar: integer('price_zar'), // Base List Price (Cents)
+	shippingFlatRate: integer('shipping_flat_rate').default(0), // Shipping cost in base currency cents
 	stock: integer('stock'),
 	isDefault: boolean('is_default').notNull().default(false),
 });
@@ -184,6 +186,35 @@ export const productImage = pgTable('product_image', {
 	productId: integer('product_id').notNull().references(() => product.id, { onDelete: 'cascade' }),
 	mediaId: integer('media_id').notNull().references(() => media.id, { onDelete: 'cascade' }),
 	displayOrder: integer('display_order').notNull().default(0)
+});
+
+// --- SUPPLIER & PRICING ---
+
+export const supplier = pgTable('supplier', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	contactEmail: varchar('contact_email', { length: 255 }),
+	defaultMarkup: integer('default_markup').default(0), // Percentage x 100 (e.g. 5000 = 50.00%)? Or simple integer percentage? Let's assume integer percentage for now: 20 = 20%
+	currency: varchar('currency', { length: 3 }).notNull().default('USD'),
+	createdAt: timestamp('created_at').defaultNow()
+});
+
+export const productSupplier = pgTable('product_supplier', {
+	id: serial('id').primaryKey(),
+	variantId: text('variant_id').notNull().references(() => productVariant.id, { onDelete: 'cascade' }),
+	supplierId: integer('supplier_id').notNull().references(() => supplier.id, { onDelete: 'cascade' }),
+	supplierSku: varchar('supplier_sku', { length: 100 }),
+	rawPrice: integer('raw_price').notNull(), // Cost price in supplier currency (cents)
+	isOnFile: boolean('is_on_file').default(false), // If we have this price on file/confirmed
+	updatedAt: timestamp('updated_at').defaultNow()
+});
+
+export const currencyRate = pgTable('currency_rate', {
+	id: serial('id').primaryKey(),
+	fromCurrency: varchar('from_currency', { length: 3 }).notNull(),
+	toCurrency: varchar('to_currency', { length: 3 }).notNull(),
+	rate: integer('rate').notNull(), // Exchange rate * 1000000 (preserves 6 decimal places)
+	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow()
 });
 
 // --- NEW: MARKETING & SALES EVENTS ---
@@ -207,7 +238,7 @@ export const salePrice = pgTable('sale_price', {
 	salePriceZar: integer('sale_price_zar'), // Override Price (Cents)
 }, (t) => ({
 	// Constraint: A variant can only have one price entry per event
-	uniqueVariantEvent: { columns: [t.eventId, t.variantId] } 
+	uniqueVariantEvent: { columns: [t.eventId, t.variantId] }
 }));
 
 export const discountCode = pgTable('discount_code', {
@@ -292,6 +323,8 @@ export const pageContent = pgTable('page_content', {
 export const userInvite = pgTable('user_invite', {
 	id: serial('id').primaryKey(),
 	token: text('token').notNull().unique(),
+	email: varchar('email', { length: 255 }).notNull(),
+	role: userRoleEnum('role').notNull().default('content_editor'),
 	expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
 	usedAt: timestamp('used_at', { withTimezone: true, mode: 'date' }),
 	createdBy: text('created_by').references(() => userTable.id, { onDelete: 'set null' })
@@ -364,7 +397,13 @@ export const productRelations = relations(product, ({ one, many }) => ({
 export const productVariantRelations = relations(productVariant, ({ one, many }) => ({
 	product: one(product, { fields: [productVariant.productId], references: [product.id] }),
 	orderItems: many(orderItem),
-	salePrices: many(salePrice)
+	salePrices: many(salePrice),
+	supplierLinks: many(productSupplier)
+}));
+
+export const productSupplierRelations = relations(productSupplier, ({ one }) => ({
+	variant: one(productVariant, { fields: [productSupplier.variantId], references: [productVariant.id] }),
+	supplier: one(supplier, { fields: [productSupplier.supplierId], references: [supplier.id] })
 }));
 
 export const productFeatureRelations = relations(productFeature, ({ one }) => ({

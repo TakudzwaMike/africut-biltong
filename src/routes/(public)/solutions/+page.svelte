@@ -1,8 +1,12 @@
 <script>
 	import Image from '$lib/components/Image.svelte';
+	import Seo from '$lib/components/Seo.svelte';
 	export let data;
 </script>
 
+
+<Seo
+/>
 <div class="relative z-10">
 	<div class="mx-auto max-w-6xl px-8 py-20 sm:py-24">
 		<div class="text-center mb-20">

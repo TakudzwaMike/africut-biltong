@@ -1,26 +1,21 @@
-import { db } from '$lib/server/db';
-import { pageContent, teamMember } from '$lib/server/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { PageContentService } from '$lib/server/services/PageContentService';
+import { TeamService } from '$lib/server/services/TeamService';
 
 export async function load() {
-	const contentList = await db.query.pageContent.findMany({
-		where: eq(pageContent.page, 'about'),
-		with: {
-			media: true
-		}
-	});
+	const pageContentService = new PageContentService();
+	const teamService = new TeamService();
 
+	// Get all page content for 'about' page
+	const contentList = await pageContentService.getContentByPage('about');
+
+	// Convert array to object keyed by section
 	const content = contentList.reduce((acc, item) => {
 		acc[item.section] = item;
 		return acc;
-	}, {});
+	}, /** @type {Record<string, any>} */({}));
 
-	const teamMembers = await db.query.teamMember.findMany({
-		orderBy: desc(teamMember.id),
-		with: {
-			photo: true
-		}
-	});
+	// Get all team members
+	const teamMembers = await teamService.listTeamMembers();
 
 	return { content, teamMembers };
 }

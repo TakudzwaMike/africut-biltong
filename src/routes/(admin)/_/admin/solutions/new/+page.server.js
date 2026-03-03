@@ -1,19 +1,16 @@
-import { db } from '$lib/server/db';
-import { solution, media } from '$lib/server/db/schema.js';
-import { fail, redirect, error } from '@sveltejs/kit';
-import { log } from '$lib/server/auditLog.js';
-import { desc } from 'drizzle-orm';
+import { fail, error, redirect } from '@sveltejs/kit';
+import { ALLOWED_ROLES } from '$lib/server/services/AuthService';
+import { log } from '$lib/server/services/AuditLogService';
+import { SolutionService } from '$lib/server/services/SolutionService';
 
-const ALLOWED_ROLES = ['admin', 'content_editor'];
+const solutionService = new SolutionService();
 
 export async function load({ locals }) {
 	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
 		throw error(403, 'Forbidden: You do not have permission to create solutions.');
 	}
 
-	const mediaItems = await db.query.media.findMany({
-		orderBy: desc(media.uploadedAt)
-	});
+	const mediaItems = await solutionService.listMedia();
 	return { mediaItems };
 }
 
@@ -57,7 +54,7 @@ export const actions = {
 				ctaLink: String(ctaLink)
 			};
 
-			const [newSolution] = await db.insert(solution).values(valuesToInsert).returning();
+			const newSolution = await solutionService.createSolution(locals.user.id, valuesToInsert);
 
 			await log(locals.user?.id, 'create_solution', {
 				targetId: newSolution.id,
@@ -66,7 +63,7 @@ export const actions = {
 		} catch (error) {
 			console.error('Error creating solution:', error);
 			const { image, ...restOfData } = data;
-			if (error.message.includes('duplicate key value violates unique constraint')) {
+			if (error.message.includes('duplicate key') || error.message.includes('unique constraint')) {
 				return fail(400, {
 					data: restOfData,
 					message: 'This slug is already in use. Please choose another.'

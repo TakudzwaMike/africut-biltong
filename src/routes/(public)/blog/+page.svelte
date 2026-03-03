@@ -1,5 +1,6 @@
 <script>
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import Seo from '$lib/components/Seo.svelte';
 	import Image from '$lib/components/Image.svelte';
 	import Icon from '@iconify/svelte';
 
@@ -13,6 +14,9 @@
 	}
 </script>
 
+
+<Seo
+/>
 <PageHeader 
 	title="Latest Insights"
 	subtitle="Trends, analysis, and news from the heavy industry tech sector."
