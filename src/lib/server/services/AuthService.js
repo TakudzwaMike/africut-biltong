@@ -4,6 +4,7 @@ import * as auth from '$lib/server/auth';
 import { generateId } from 'lucia';
 import { Argon2id } from 'oslo/password';
 import { LoggerService } from '$lib/server/services/LoggerService';
+import { EmailService } from '$lib/server/services/EmailService';
 
 const logger = LoggerService.for('AuthService');
 
@@ -88,6 +89,9 @@ export class AuthService {
 
             logger.info(`User registered: ${email} (${userId})`);
 
+            // Send welcome email (non-blocking)
+            EmailService.sendWelcomeEmail(email, firstName).catch(() => { });
+
             return { session, cookie: sessionCookie };
 
         } catch (e) {
@@ -129,6 +133,10 @@ export class AuthService {
         });
 
         logger.info(`Invite created for ${email} with role ${role}`);
+
+        // Send invite email (non-blocking)
+        EmailService.sendInviteEmail(email, token, role).catch(() => { });
+
         return newInvite;
     }
 

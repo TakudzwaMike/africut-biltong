@@ -7,6 +7,7 @@
     import Icon from "@iconify/svelte";
     // Import our new permissions logic
     import { ADMIN_NAV, hasAccess } from "$lib/admin/permissions";
+    import ToastContainer from "$lib/components/ToastContainer.svelte";
 
     let { children, data } = $props();
     let isMenuOpen = $state(false);
@@ -39,13 +40,26 @@
         );
     }
 
-    // Determine current active link style
-    // Fixes double-selection bug by requiring exact match for root /_/admin
+    // Pre-calculate all available nav hrefs for specific matching
+    const allNavHrefs = ADMIN_NAV.flatMap((s) => s.items.map((i) => i.href));
+
     function isActive(href) {
+        const pathname = page.url.pathname;
+
         if (href === "/_/admin") {
-            return page.url.pathname === href;
+            return pathname === href;
         }
-        return page.url.pathname.startsWith(href);
+
+        // Check if current path matches this href
+        const isMatch = pathname.startsWith(href);
+        if (!isMatch) return false;
+
+        // If it's a match, ensure there isn't a MORE specific (longer) match in the nav
+        const hasBetterMatch = allNavHrefs.some(
+            (h) => h.length > href.length && pathname.startsWith(h),
+        );
+
+        return !hasBetterMatch;
     }
 
     function toggleMenu() {
@@ -76,6 +90,12 @@
             text: "text-green-50",
             icon: "mdi:fountain-pen-tip",
         },
+        customer: {
+            label: "Guest",
+            bg: "bg-gray-500",
+            text: "text-white",
+            icon: "mdi:account",
+        },
     };
 
     // Fallback for safety
@@ -90,11 +110,7 @@
 
 <svelte:head>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin="true"
-    />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
     <link
         href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700&display=swap"
         rel="stylesheet"
@@ -242,3 +258,5 @@
         </main>
     </div>
 </div>
+
+<ToastContainer />
