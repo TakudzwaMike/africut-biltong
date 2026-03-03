@@ -1,11 +1,15 @@
 <script>
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import Seo from '$lib/components/Seo.svelte';
 	import Icon from '@iconify/svelte';
 	import CountUp from '$lib/components/CountUp.svelte';
 
 	export let data;
 </script>
 
+
+<Seo
+/>
 <PageHeader 
 	title="Proven Results"
 	subtitle="Real-world impact. See how we've delivered measurable gains in safety and profitability for our partners."
