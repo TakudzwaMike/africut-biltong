@@ -1,22 +1,16 @@
-import { db } from '$lib/server/db';
-import { document as docTable, caseStudy as caseStudyTable } from '$lib/server/db/schema.js';
-import { desc } from 'drizzle-orm';
+import { DocumentService } from '$lib/server/services/DocumentService';
+import { CaseStudyService } from '$lib/server/services/CaseStudyService';
 
 export async function load() {
-	const documents = await db.query.document.findMany({
-		orderBy: desc(docTable.createdAt),
-		with: {
-			thumbnail: true
-		}
-	});
+	const documentService = new DocumentService();
+	const caseStudyService = new CaseStudyService();
 
-	const caseStudies = await db.query.caseStudy.findMany({
-		orderBy: desc(caseStudyTable.id),
-		with: {
-			client: true,
-			results: true
-		}
-	});
+	// Get all documents
+	const documents = await documentService.listDocuments();
+
+	// Get all case studies
+	const result = await caseStudyService.listCaseStudies();
+	const caseStudies = result.caseStudies || [];
 
 	return { documents, caseStudies };
 }

@@ -1,46 +1,22 @@
-import { db } from '$lib/server/db';
-import { solution } from '$lib/server/db/schema.js';
-import { desc, eq, or, ilike, count } from 'drizzle-orm';
 import { fail, error } from '@sveltejs/kit';
-import { log } from '$lib/server/auditLog.js';
+import { SolutionService } from '$lib/server/services/SolutionService';
+import { log } from '$lib/server/auditLog';
 
-const ITEMS_PER_PAGE = 20;
-const ALLOWED_ROLES = ['admin', 'content_editor'];
+const solutionService = new SolutionService();
 
 export async function load({ url, locals }) {
-	// 1. Security Check
-	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
-		throw error(403, 'Forbidden: You do not have permission to manage solutions.');
-	}
-
-	const query = url.searchParams.get('q');
+	const query = url.searchParams.get('q') || '';
 	const page = Number(url.searchParams.get('page')) || 1;
-	const offset = (page - 1) * ITEMS_PER_PAGE;
+	const limit = 20;
 
-	let filters = undefined;
-	if (query) {
-		const searchStr = `%${query}%`;
-		filters = or(
-			ilike(solution.solutionName, searchStr),
-			ilike(solution.shortDescription, searchStr)
-		);
-	}
+	const { solutions, totalItems, totalPages } = await solutionService.listSolutions({
+		page,
+		limit,
+		query
+	});
 
-	const [solutions, totalResult] = await Promise.all([
-		db.query.solution.findMany({
-			where: filters,
-			orderBy: desc(solution.id),
-			limit: ITEMS_PER_PAGE,
-			offset: offset
-		}),
-		db.select({ count: count() }).from(solution).where(filters)
-	]);
-
-	const totalItems = totalResult[0].count;
-	const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-
-	return { 
-		solutions, 
+	return {
+		solutions,
 		pagination: {
 			page,
 			totalPages,
@@ -51,36 +27,55 @@ export async function load({ url, locals }) {
 }
 
 export const actions = {
-	delete: async ({ url, locals }) => {
-		// 2. Security Check
-		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
-			return fail(403, { message: 'Unauthorized.' });
-		}
+	create: async ({ request, locals }) => {
+		const formData = await request.formData();
+		const solutionName = String(formData.get('solutionName'));
+		const slug = String(formData.get('slug'));
+		const shortDescription = String(formData.get('shortDescription'));
+		const longDescriptionRaw = formData.get('longDescription');
+		const ctaText = String(formData.get('ctaText'));
+		const ctaLink = String(formData.get('ctaLink'));
+		const mediaId = formData.get('mediaId');
 
-		const id = url.searchParams.get('id');
-		if (!id) {
-			return fail(400, { message: 'Invalid request' });
+		if (!solutionName || !slug) return fail(400, { message: 'Solution Name and Slug are required' });
+
+		let longDescription = null;
+		try {
+			longDescription = longDescriptionRaw ? JSON.parse(String(longDescriptionRaw)) : null;
+		} catch (e) {
+			return fail(400, { message: 'Invalid long description format' });
 		}
 
 		try {
-			const solutionToDelete = await db.query.solution.findFirst({
-				where: eq(solution.id, Number(id))
+			const solution = await solutionService.createSolution(locals.user.id, {
+				solutionName,
+				slug,
+				shortDescription: shortDescription || null,
+				longDescription,
+				ctaLink: ctaLink || null,
+				ctaText: ctaText || null,
+				mediaId: mediaId ? Number(mediaId) : null
 			});
 
-			if (!solutionToDelete) {
-				return fail(404, { message: 'Solution not found.' });
-			}
+			await log(locals.user.id, 'create_solution', { targetId: solution.id, data: { solutionName } });
+			return { success: true };
+		} catch (err) {
+			console.error('Error creating solution:', err);
+			return fail(500, { message: 'Failed to create solution' });
+		}
+	},
 
-			await db.delete(solution).where(eq(solution.id, Number(id)));
+	delete: async ({ url, locals }) => {
+		const id = url.searchParams.get('id');
 
-			await log(locals.user?.id, 'delete_solution', {
-				targetId: id,
-				data: solutionToDelete
-			});
+		if (!id) return fail(400, { message: 'ID is required' });
 
-			return { status: 200, message: 'Solution deleted successfully.' };
-		} catch (error) {
-			return fail(500, { message: 'Could not delete the solution.' });
+		try {
+			await solutionService.deleteSolution(locals.user.id, String(id));
+			await log(locals.user.id, 'delete_solution', { targetId: String(id) });
+			return { status: 200, success: true };
+		} catch (err) {
+			return fail(500, { message: 'Failed to delete solution' });
 		}
 	}
 };

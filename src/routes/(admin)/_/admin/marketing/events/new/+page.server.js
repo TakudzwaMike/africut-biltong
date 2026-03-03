@@ -1,12 +1,12 @@
-import { db } from '$lib/server/db';
-import { saleEvent } from '$lib/server/db/schema';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { log } from '$lib/server/auditLog';
+import { MarketingService } from '$lib/server/services/MarketingService';
 
+const marketingService = new MarketingService();
 const ALLOWED_ROLES = ['admin', 'store_manager'];
 
 export async function load({ locals }) {
-	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+	if (!locals.user || !ALLOWED_ROROLES.includes(locals.user.role)) {
 		throw error(403, 'Forbidden');
 	}
 	return {};
@@ -29,13 +29,12 @@ export const actions = {
 		}
 
 		try {
-			const [newEvent] = await db.insert(saleEvent).values({
-				name: String(name),
-				publicLabel: publicLabel ? String(publicLabel) : null,
-				startsAt: new Date(String(startsAt)),
-				endsAt: new Date(String(endsAt)),
-				isActive: false // Default to inactive so prices can be set first
-			}).returning();
+			const newEvent = await marketingService.createSaleEvent(locals.user.id, {
+				name,
+				publicLabel,
+				startsAt,
+				endsAt
+			});
 
 			await log(locals.user.id, 'create_sale_event', {
 				targetId: newEvent.id,
@@ -45,10 +44,8 @@ export const actions = {
 			throw redirect(303, `/_/admin/marketing/events/${newEvent.id}`);
 
 		} catch (err) {
-			// Rethrow redirect to let SvelteKit handle it
 			if (err.status === 303) throw err;
-			
-			console.error('Error creating sale event:', err);
+			if (err.status === 400) return fail(400, { message: err.body.message });
 			return fail(500, { message: 'Could not create event.' });
 		}
 	}

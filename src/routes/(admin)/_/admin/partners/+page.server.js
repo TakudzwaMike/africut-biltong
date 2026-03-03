@@ -1,82 +1,77 @@
-import { db } from '$lib/server/db';
-import { client, media } from '$lib/server/db/schema.js';
-import { desc, eq } from 'drizzle-orm';
-import { fail } from '@sveltejs/kit';
-import { log } from '$lib/server/auditLog.js';
+import { fail, error } from '@sveltejs/kit';
+import { ALLOWED_ROLES } from '$lib/server/services/AuthService';
+import { log } from '$lib/server/services/AuditLogService';
+import { PartnerService } from '$lib/server/services/PartnerService';
+import { MediaService } from '$lib/server/services/MediaService';
 
-export async function load() {
-	const clients = await db.query.client.findMany({
-		orderBy: desc(client.id),
-		with: {
-			logo: true
-		}
-	});
-	const mediaItems = await db.query.media.findMany({
-		orderBy: desc(media.uploadedAt)
-	});
-	return { clients, mediaItems };
+
+const partnerService = new PartnerService();
+const mediaService = new MediaService();
+
+export async function load({ locals }) {
+	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+		throw error(403, 'Forbidden');
+	}
+
+	const [clients, mediaItems] = await Promise.all([
+		partnerService.listPartners(),
+		mediaService.listMedia()
+	]);
+
+	return {
+		clients,
+		mediaItems
+	};
 }
 
 export const actions = {
 	save: async ({ request, locals }) => {
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
+		}
+
 		const formData = await request.formData();
-		const id = Number(formData.get('id'));
+		const id = formData.get('id');
 		const name = formData.get('name');
 		const mediaId = formData.get('mediaId');
 
-		if (!name || typeof name !== 'string') {
-			return fail(400, { message: 'Client name is required.' });
-		}
-
-		const dataToSave = {
-			name: String(name),
-			mediaId: mediaId ? Number(mediaId) : null
-		};
+		if (!name) return fail(400, { message: 'Name is required' });
 
 		try {
-			if (!id) {
-				const [newClient] = await db.insert(client).values(dataToSave).returning();
-				await log(locals.user?.id, 'create_client', {
-					targetId: newClient.id,
-					data: newClient
+			if (id) {
+				await partnerService.updatePartner(locals.user.id, Number(id), {
+					name: String(name),
+					mediaId: mediaId ? Number(mediaId) : null
 				});
+				await log(locals.user.id, 'update_client', { targetId: id, data: { name } });
+				return { success: true, message: 'Partner updated successfully.' };
 			} else {
-				await db.update(client).set(dataToSave).where(eq(client.id, id));
-				await log(locals.user?.id, 'update_client', { targetId: id, data: dataToSave });
+				const partner = await partnerService.createPartner(locals.user.id, {
+					name: String(name),
+					mediaId: mediaId ? Number(mediaId) : null
+				});
+				await log(locals.user.id, 'create_client', { targetId: partner.id, data: { name } });
+				return { success: true, message: 'Partner added successfully.' };
 			}
-			return { success: true, message: 'Client saved successfully.' };
-		} catch (error) {
-			console.error('Error saving client:', error);
-			if (error.message.includes('duplicate key value violates unique constraint')) {
-				return fail(400, { message: 'A client with this name already exists.' });
-			}
-			return fail(500, { message: 'Could not save the client.' });
+		} catch (err) {
+			return fail(500, { message: 'Failed to save partner.' });
 		}
 	},
 
 	delete: async ({ url, locals }) => {
-		const id = url.searchParams.get('id');
-		if (!id) {
-			return fail(400, { message: 'Invalid request' });
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
 		}
 
+		const id = url.searchParams.get('id');
+		if (!id) return fail(400, { message: 'Invalid request' });
+
 		try {
-			const clientToDelete = await db.query.client.findFirst({
-				where: eq(client.id, Number(id))
-			});
+			await partnerService.deletePartner(locals.user.id, Number(id));
 
-			if (!clientToDelete) {
-				return fail(404, { message: 'Client not found.' });
-			}
+			await log(locals.user?.id, 'delete_client', { targetId: id });
 
-			await db.delete(client).where(eq(client.id, Number(id)));
-
-			await log(locals.user?.id, 'delete_client', {
-				targetId: id,
-				data: clientToDelete
-			});
-
-			return { status: 200, message: 'Client deleted successfully.' };
+			return { success: true, message: 'Client deleted successfully.' };
 		} catch (error) {
 			return fail(500, { message: 'Could not delete the client.' });
 		}

@@ -1,79 +1,59 @@
-import { db } from '$lib/server/db';
-import { location } from '$lib/server/db/schema.js';
-import { fail } from '@sveltejs/kit';
-import { desc, eq } from 'drizzle-orm';
-import { log } from '$lib/server/auditLog.js';
+import { fail, error } from '@sveltejs/kit';
+import { ALLOWED_ROLES } from '$lib/server/services/AuthService';
+import { log } from '$lib/server/services/AuditLogService';
+import { LocationService } from '$lib/server/services/LocationService';
 
-export async function load() {
-	const locations = await db.query.location.findMany({
-		orderBy: desc(location.id)
-	});
-	return { locations };
+const locationService = new LocationService();
+
+export async function load({ locals }) {
+	if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+		throw error(403, 'Forbidden');
+	}
+
+	return {
+		locations: await locationService.listLocations()
+	};
 }
 
 export const actions = {
 	save: async ({ request, locals }) => {
-		const formData = await request.formData();
-		const id = Number(formData.get('id'));
-		const { countryName, countryCode, address, phoneNumber, latitude, longitude } =
-			Object.fromEntries(formData);
-
-		if (!countryName || !countryCode || !address) {
-			return fail(400, { message: 'All fields are required.' });
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
 		}
-		if (typeof countryCode !== 'string' || countryCode.length !== 2) {
-			return fail(400, { message: 'Country Code must be 2 characters (e.g., ZW).' });
-		}
+		const raw = Object.fromEntries(await request.formData());
 
-		const dataToSave = {
-			countryName: String(countryName),
-			countryCode: String(countryCode).toUpperCase(),
-			address: String(address),
-			phoneNumber: String(phoneNumber),
-			latitude: String(latitude),
-			longitude: String(longitude)
-		};
+		// Strip empty strings so optional/auto-generated fields don't crash Postgres
+		const data = {};
+		for (const [key, value] of Object.entries(raw)) {
+			if (value !== '') data[key] = value;
+		}
+		// Remove id for new records (it comes as empty from the hidden input)
+		if (!data.id) delete data.id;
 
 		try {
-			if (isNaN(id)) {
-				// Create new location
-				const [newLocation] = await db.insert(location).values(dataToSave).returning();
-				await log(locals.user?.id, 'create_location', {
-					targetId: newLocation.id,
-					data: newLocation
-				});
-			} else {
-				// Update existing location
-				await db.update(location).set(dataToSave).where(eq(location.id, id));
-				await log(locals.user?.id, 'update_location', { targetId: id, data: dataToSave });
-			}
+			await locationService.createLocation(locals.user.id, data);
+			await log(locals.user?.id, 'save_location', { data });
 			return { success: true, message: 'Location saved successfully!' };
-		} catch (error) {
-			console.error('Error saving location:', error);
-			return fail(500, { message: 'Could not save location.' });
+		} catch (err) {
+			return fail(500, { message: 'Could not save the location.' });
 		}
 	},
 
 	delete: async ({ url, locals }) => {
-		const id = url.searchParams.get('id');
-		if (!id) {
-			return fail(400, { message: 'Invalid request' });
+		if (!locals.user || !ALLOWED_ROLES.includes(locals.user.role)) {
+			return fail(403, { message: 'Unauthorized.' });
 		}
 
+		const id = url.searchParams.get('id');
+		if (!id) return fail(400, { message: 'Invalid request' });
+
 		try {
-			const locToDelete = await db.query.location.findFirst({ where: eq(location.id, Number(id)) });
+			await locationService.deleteLocation(locals.user.id, Number(id));
 
-			if (!locToDelete) {
-				return fail(404, { message: 'Location not found.' });
-			}
-
-			await db.delete(location).where(eq(location.id, Number(id)));
-			await log(locals.user?.id, 'delete_location', { targetId: id, data: locToDelete });
+			await log(locals.user?.id, 'delete_location', { targetId: id });
 
 			return { success: true, message: 'Location deleted successfully!' };
 		} catch (error) {
-			console.error('Error deleting location:', error);
-
 			return fail(500, { message: 'Could not delete the location.' });
 		}
 	}

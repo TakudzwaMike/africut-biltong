@@ -1,32 +1,23 @@
 <script>
-	import { enhance } from '$app/forms';
-	import { toast } from '$lib/toast-service';
-	import { invalidateAll } from '$app/navigation';
-	import SubmitButton from '$lib/components/SubmitButton.svelte';
-	import QRCode from 'qrcode';
-	import Icon from '@iconify/svelte';
-	import DataTable from '$lib/components/admin/DataTable.svelte';
+	import { enhance } from "$app/forms";
+	import { toast } from "$lib/toast-service";
+	import { invalidateAll } from "$app/navigation";
+	import SubmitButton from "$lib/components/SubmitButton.svelte";
+	import QRCode from "qrcode";
+	import Icon from "@iconify/svelte";
+	import DataTable from "$lib/components/admin/DataTable.svelte";
 
 	let { data, form } = $props();
 
 	let isSubmitting = $state(false);
 	let showingQrCodeForLink = $state(null);
 
-	$effect(() => {
-		if (form?.success && form.form?.action.includes('?/create')) {
-			toast.success(form.message);
-			invalidateAll();
-		} else if (form?.message && form.form?.action.includes('?/create')) {
-			toast.error(form.message);
-		}
-	});
-
 	function handleDelete() {
 		return ({ result }) => {
-			if (result.type === 'success' && result.data?.success) {
+			if (result.type === "success" && result.data?.success) {
 				toast.success(result.data.message);
 				invalidateAll();
-			} else if (result.type === 'failure') {
+			} else if (result.type === "failure") {
 				toast.error(result.data?.message);
 			}
 		};
@@ -35,9 +26,9 @@
 	async function generateQrCode(text) {
 		try {
 			return await QRCode.toDataURL(text, {
-				errorCorrectionLevel: 'H',
+				errorCorrectionLevel: "H",
 				margin: 2,
-				width: 256
+				width: 256,
 			});
 		} catch (err) {
 			console.error(err);
@@ -47,22 +38,24 @@
 
 	function copyToClipboard(text) {
 		navigator.clipboard.writeText(text).then(
-			() => toast.success('Link copied!'),
-			() => toast.error('Failed to copy link.')
+			() => toast.success("Link copied!"),
+			() => toast.error("Failed to copy link."),
 		);
 	}
 
 	const columns = [
-		{ label: 'Description' },
-		{ label: 'Tracked Link' },
-		{ label: 'Destination' },
-		{ label: 'Clicks' },
-		{ label: 'Actions', class: 'text-right' }
+		{ label: "Description" },
+		{ label: "Tracked Link" },
+		{ label: "Destination" },
+		{ label: "Clicks" },
+		{ label: "Actions", class: "text-right" },
 	];
 </script>
 
 <div class="p-8">
-	<h1 class="text-3xl font-bold tracking-tight text-main">Tracked Links & QR Codes</h1>
+	<h1 class="text-3xl font-bold tracking-tight text-main">
+		Tracked Links & QR Codes
+	</h1>
 	<p class="mt-2 text-base text-main/70">
 		Generate short links and QR codes to track campaign performance.
 	</p>
@@ -75,19 +68,33 @@
 			class="rounded-xl border border-main/10 p-6"
 			use:enhance={() => {
 				isSubmitting = true;
-				return ({ result }) => {
+				return async ({ result, update }) => {
 					isSubmitting = false;
-					if (result.type === 'success') {
-						const formEl = document.querySelector('form[action="?/create"]');
+					if (result.type === "success") {
+						toast.success(
+							result.data?.message ||
+								"Tracked link created successfully.",
+						);
+						const formEl = document.querySelector(
+							'form[action="?/create"]',
+						);
 						formEl?.reset();
+						await invalidateAll();
+					} else if (result.type === "failure") {
+						toast.error(
+							result.data?.message || "Failed to create link.",
+						);
 					}
+					update({ reset: false });
 				};
 			}}
 		>
 			<h3 class="text-lg font-bold">Create New Link</h3>
 			<div class="mt-4 space-y-4">
 				<div>
-					<label for="destinationUrl" class="mb-1 block font-medium text-main/80"
+					<label
+						for="destinationUrl"
+						class="mb-1 block font-medium text-main/80"
 						>Destination URL</label
 					>
 					<input
@@ -100,7 +107,9 @@
 					/>
 				</div>
 				<div>
-					<label for="description" class="mb-1 block font-medium text-main/80"
+					<label
+						for="description"
+						class="mb-1 block font-medium text-main/80"
 						>Description (for internal tracking)</label
 					>
 					<input
@@ -114,16 +123,20 @@
 				</div>
 			</div>
 			<div class="mt-6">
-				<SubmitButton type="submit" loading={isSubmitting} class="bg-accent px-6 py-2">
+				<SubmitButton
+					type="submit"
+					loading={isSubmitting}
+					class="bg-accent px-6 py-2"
+				>
 					Generate Link
 				</SubmitButton>
 			</div>
 		</form>
 	</div>
 
-	<DataTable 
-		items={data.links} 
-		{columns} 
+	<DataTable
+		items={data.links}
+		{columns}
 		emptyMessage="No tracked links found. Create your first one!"
 		row={linkRow}
 	/>
@@ -134,7 +147,9 @@
 	<td class="p-4 align-top">
 		<p class="font-bold">{link.description}</p>
 		<p class="text-xs text-main/60">
-			By {link.user.username} on {new Date(link.createdAt).toLocaleDateString()}
+			By {link.user.username} on {new Date(
+				link.createdAt,
+			).toLocaleDateString()}
 		</p>
 	</td>
 	<td class="p-4 align-top">
@@ -142,8 +157,7 @@
 			<a
 				href={fullUrl}
 				target="_blank"
-				class="font-mono text-sm text-accent underline"
-				>{fullUrl}</a
+				class="font-mono text-sm text-accent underline">{fullUrl}</a
 			>
 			<button
 				type="button"
@@ -188,7 +202,11 @@
 				action="?/delete&id={link.id}"
 				use:enhance={handleDelete}
 				onsubmit={(e) => {
-					if (!confirm('Are you sure you want to permanently delete this link?')) {
+					if (
+						!confirm(
+							"Are you sure you want to permanently delete this link?",
+						)
+					) {
 						e.preventDefault();
 					}
 				}}
@@ -213,7 +231,7 @@
 		role="dialog"
 		aria-modal="true"
 		onclick={() => (showingQrCodeForLink = null)}
-		onkeydown={(e) => e.key === 'Escape' && (showingQrCodeForLink = null)}
+		onkeydown={(e) => e.key === "Escape" && (showingQrCodeForLink = null)}
 		tabindex="-1"
 	>
 		<div
@@ -222,9 +240,15 @@
 			role="document"
 			tabindex="0"
 		>
-			<h3 class="text-lg font-bold">{showingQrCodeForLink.description}</h3>
+			<h3 class="text-lg font-bold">
+				{showingQrCodeForLink.description}
+			</h3>
 			{#await generateQrCode(fullUrl) then qrCodeDataUrl}
-				<img src={qrCodeDataUrl} alt="QR Code" class="mx-auto my-4 rounded-lg" />
+				<img
+					src={qrCodeDataUrl}
+					alt="QR Code"
+					class="mx-auto my-4 rounded-lg"
+				/>
 			{/await}
 			<div
 				class="flex items-center justify-center gap-2 rounded-md bg-main/5 p-2 font-mono text-sm"

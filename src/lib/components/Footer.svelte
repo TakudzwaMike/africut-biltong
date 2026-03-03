@@ -90,6 +90,28 @@
 							<Icon icon="mdi:facebook" width="24" />
 						</a>
 					{/if}
+					{#if settings?.socialInstagram}
+						<a
+							href={settings.socialInstagram}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="text-light/70 hover:text-accent transition-colors"
+							aria-label="Instagram"
+						>
+							<Icon icon="mdi:instagram" width="24" />
+						</a>
+					{/if}
+					{#if settings?.socialTikTok}
+						<a
+							href={settings.socialTikTok}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="text-light/70 hover:text-accent transition-colors"
+							aria-label="TikTok"
+						>
+							<Icon icon="mdi:tiktok" width="24" />
+						</a>
+					{/if}
 				</div>
 			</div>
 
