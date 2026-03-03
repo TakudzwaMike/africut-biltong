@@ -1,7 +1,7 @@
 # Vision AI Tech
 
 ## Overview
-This project is built with SvelteKit and uses Drizzle ORM for database interactions. It follows a **Repository Pattern** for data access and a **Strategy Pattern** for payment processing logic, ensuring separation of concerns and testability.
+This project is built with SvelteKit and uses Drizzle ORM for database interactions. It follows a **Repository Pattern** for data access and a **Strategy Pattern** for payment processing logic, ensuring separation of concerns and testability
 
 ## Architecture
 
