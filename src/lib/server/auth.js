@@ -20,7 +20,8 @@ const lucia = new Lucia(adapter, {
 			email: attributes.email,
 			role: attributes.role,
 			firstName: attributes.firstName,
-			lastName: attributes.lastName
+			lastName: attributes.lastName,
+			profileImageId: attributes.profileImageId
 		};
 	}
 });

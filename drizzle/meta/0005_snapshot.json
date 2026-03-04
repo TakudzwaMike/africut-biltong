@@ -1,6 +1,6 @@
 {
-  "id": "f9827b2b-11ea-4ca6-9c56-c9c77e8eaac4",
-  "prevId": "e9827b2b-11ea-4ca6-9c56-c9c77e8eaac3",
+  "id": "21aae827-57e1-43e0-bf87-a85da1786794",
+  "prevId": "f9827b2b-11ea-4ca6-9c56-c9c77e8eaac4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2545,10 +2545,30 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "profile_image_id": {
+          "name": "profile_image_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "user_profile_image_id_media_id_fk": {
+          "name": "user_profile_image_id_media_id_fk",
+          "tableFrom": "user",
+          "tableTo": "media",
+          "columnsFrom": [
+            "profile_image_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "user_email_unique": {

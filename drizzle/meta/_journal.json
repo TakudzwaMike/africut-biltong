@@ -36,6 +36,13 @@
       "when": 1772610000000,
       "tag": "0004_ensure_all_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1772621418201,
+      "tag": "0005_panoramic_fixer",
+      "breakpoints": true
     }
   ]
 }

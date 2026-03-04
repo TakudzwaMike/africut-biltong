@@ -7,7 +7,7 @@ const supportedCurrencies = ['USD', 'ZAR'];
 
 function createCurrencyStore() {
     let initialCurrency = 'USD';
-    
+
     if (browser) {
         const saved = localStorage.getItem(CURRENCY_STORAGE_KEY);
         if (saved && supportedCurrencies.includes(saved)) {
@@ -23,7 +23,7 @@ function createCurrencyStore() {
             if (supportedCurrencies.includes(newCurrency)) {
                 // Clear the cart to prevent mixed-currency orders
                 cart.clear();
-                
+
                 set(newCurrency);
                 if (browser) {
                     localStorage.setItem(CURRENCY_STORAGE_KEY, newCurrency);
@@ -35,3 +35,21 @@ function createCurrencyStore() {
 }
 
 export const currency = createCurrencyStore();
+
+export const currencyRates = writable({
+    USD_TO_ZAR: 18.5,
+    ZAR_TO_USD: 0.054,
+    USD: 1,
+    ZAR: 1
+});
+
+if (browser) {
+    fetch('/api/v1/currency-rates')
+        .then(res => res.json())
+        .then(data => {
+            if (data.rates) {
+                currencyRates.set(data.rates);
+            }
+        })
+        .catch(console.error);
+}

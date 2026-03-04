@@ -24,6 +24,7 @@ export const userTable = pgTable('user', {
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 	inviteToken: text('invite_token'),
 	inviteTokenExpiresAt: timestamp('invite_token_expires_at', { withTimezone: true, mode: 'date' }),
+	profileImageId: integer('profile_image_id').references(() => media.id, { onDelete: 'set null' }),
 });
 
 export const sessionTable = pgTable('session', {
