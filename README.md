@@ -45,10 +45,10 @@ This application follows a **three-tier layered architecture** (Controller → S
 Payment processing logic is abstracted using the Strategy pattern.
 - **Service**: `PaymentService` (manages strategy selection).
 - **Strategies**: `PaynowStrategy`, `PaystackStrategy` (encapsulate provider-specific logic).
-- **Express Checkout**: Mobile money transactions are supported via `initiateExpressTransaction`.
+- **Express Checkout**: Mobile money transactions are supported via `initiateExpressTransaction`
 
 ### Logger Service
-A centralized `LoggerService` provides standard logging across the system (Info, Warn, Error).
+A centralized `LoggerService` provides standard logging across the system (Info, Warn, Error)
 
 ## Development Setup
 
