@@ -292,34 +292,6 @@
 					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
 				/>
 			</div>
-			<div>
-				<label
-					for="socialInstagram"
-					class="mb-1 block font-medium text-main/80"
-					>Instagram URL</label
-				>
-				<input
-					type="url"
-					id="socialInstagram"
-					name="socialInstagram"
-					bind:value={formState.socialInstagram}
-					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-				/>
-			</div>
-			<div>
-				<label
-					for="socialTikTok"
-					class="mb-1 block font-medium text-main/80"
-					>TikTok URL</label
-				>
-				<input
-					type="url"
-					id="socialTikTok"
-					name="socialTikTok"
-					bind:value={formState.socialTikTok}
-					class="w-full rounded-md border-0 bg-main/5 px-3.5 py-2 text-main shadow-sm ring-1 ring-inset ring-main/10 focus:ring-2 focus:ring-inset focus:ring-accent"
-				/>
-			</div>
 		</div>
 
 		{#if form?.message && !form.success}
