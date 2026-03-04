@@ -5,7 +5,7 @@ This project is built with SvelteKit and uses Drizzle ORM for database interacti
 
 ## Architecture
 
-This application follows a **three-tier layered architecture** (Controller → Service → Repository → Database) to ensure separation of concerns, maintainability, and testability.
+This application follows a **three-tier layered architecture** (Controller → Service → Repository → Database) to ensure separation of concerns, maintainability, and testability
 
 ### Layered Architecture
 
