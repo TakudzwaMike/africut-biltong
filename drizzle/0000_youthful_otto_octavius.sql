@@ -326,130 +326,162 @@ CREATE TABLE IF NOT EXISTS "user" (
 	CONSTRAINT "user_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
+ALTER TABLE "audit_log" ADD COLUMN IF NOT EXISTS "user_id" text;
 DO $$ BEGIN
     ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "blog_post" ADD COLUMN IF NOT EXISTS "author_id" text NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "blog_post" ADD CONSTRAINT "blog_post_author_id_user_id_fk" FOREIGN KEY ("author_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "blog_post" ADD COLUMN IF NOT EXISTS "media_id" integer;
 DO $$ BEGIN
     ALTER TABLE "blog_post" ADD CONSTRAINT "blog_post_media_id_media_id_fk" FOREIGN KEY ("media_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "blog_posts_to_categories" ADD COLUMN IF NOT EXISTS "post_id" integer NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "blog_posts_to_categories" ADD CONSTRAINT "blog_posts_to_categories_post_id_blog_post_id_fk" FOREIGN KEY ("post_id") REFERENCES "public"."blog_post"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "blog_posts_to_categories" ADD COLUMN IF NOT EXISTS "category_id" integer NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "blog_posts_to_categories" ADD CONSTRAINT "blog_posts_to_categories_category_id_blog_category_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."blog_category"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "case_study" ADD COLUMN IF NOT EXISTS "client_id" integer;
 DO $$ BEGIN
     ALTER TABLE "case_study" ADD CONSTRAINT "case_study_client_id_client_id_fk" FOREIGN KEY ("client_id") REFERENCES "public"."client"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "case_study_result" ADD COLUMN IF NOT EXISTS "case_study_id" integer NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "case_study_result" ADD CONSTRAINT "case_study_result_case_study_id_case_study_id_fk" FOREIGN KEY ("case_study_id") REFERENCES "public"."case_study"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "client" ADD COLUMN IF NOT EXISTS "media_id" integer;
 DO $$ BEGIN
     ALTER TABLE "client" ADD CONSTRAINT "client_media_id_media_id_fk" FOREIGN KEY ("media_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "document" ADD COLUMN IF NOT EXISTS "thumbnail_media_id" integer;
 DO $$ BEGIN
     ALTER TABLE "document" ADD CONSTRAINT "document_thumbnail_media_id_media_id_fk" FOREIGN KEY ("thumbnail_media_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "gated_document_lead" ADD COLUMN IF NOT EXISTS "document_id" integer NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "gated_document_lead" ADD CONSTRAINT "gated_document_lead_document_id_document_id_fk" FOREIGN KEY ("document_id") REFERENCES "public"."document"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "lead" ADD COLUMN IF NOT EXISTS "solution_id" integer;
 DO $$ BEGIN
     ALTER TABLE "lead" ADD CONSTRAINT "lead_solution_id_solution_id_fk" FOREIGN KEY ("solution_id") REFERENCES "public"."solution"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "link_visit" ADD COLUMN IF NOT EXISTS "link_id" integer NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "link_visit" ADD CONSTRAINT "link_visit_link_id_tracked_link_id_fk" FOREIGN KEY ("link_id") REFERENCES "public"."tracked_link"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "order" ADD COLUMN IF NOT EXISTS "user_id" text NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "order" ADD CONSTRAINT "order_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "order" ADD COLUMN IF NOT EXISTS "shipping_address_id" text;
 DO $$ BEGIN
     ALTER TABLE "order" ADD CONSTRAINT "order_shipping_address_id_user_address_id_fk" FOREIGN KEY ("shipping_address_id") REFERENCES "public"."user_address"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "order_item" ADD COLUMN IF NOT EXISTS "order_id" text NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "order_item" ADD CONSTRAINT "order_item_order_id_order_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."order"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "order_item" ADD COLUMN IF NOT EXISTS "product_variant_id" text;
 DO $$ BEGIN
     ALTER TABLE "order_item" ADD CONSTRAINT "order_item_product_variant_id_product_variant_id_fk" FOREIGN KEY ("product_variant_id") REFERENCES "public"."product_variant"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "page_content" ADD COLUMN IF NOT EXISTS "media_id" integer;
 DO $$ BEGIN
     ALTER TABLE "page_content" ADD CONSTRAINT "page_content_media_id_media_id_fk" FOREIGN KEY ("media_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "password_reset_token" ADD COLUMN IF NOT EXISTS "user_id" text NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "password_reset_token" ADD CONSTRAINT "password_reset_token_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "product" ADD COLUMN IF NOT EXISTS "media_id" integer;
 DO $$ BEGIN
     ALTER TABLE "product" ADD CONSTRAINT "product_media_id_media_id_fk" FOREIGN KEY ("media_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "product_feature" ADD COLUMN IF NOT EXISTS "product_id" integer NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "product_feature" ADD CONSTRAINT "product_feature_product_id_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."product"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "product_image" ADD COLUMN IF NOT EXISTS "product_id" integer NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "product_image" ADD CONSTRAINT "product_image_product_id_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."product"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "product_image" ADD COLUMN IF NOT EXISTS "media_id" integer NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "product_image" ADD CONSTRAINT "product_image_media_id_media_id_fk" FOREIGN KEY ("media_id") REFERENCES "public"."media"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "product_variant" ADD COLUMN IF NOT EXISTS "product_id" integer NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "product_variant" ADD CONSTRAINT "product_variant_product_id_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."product"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "session" ADD COLUMN IF NOT EXISTS "user_id" text NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "solution" ADD COLUMN IF NOT EXISTS "media_id" integer;
 DO $$ BEGIN
     ALTER TABLE "solution" ADD CONSTRAINT "solution_media_id_media_id_fk" FOREIGN KEY ("media_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "solutions_to_products" ADD COLUMN IF NOT EXISTS "solution_id" integer NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "solutions_to_products" ADD CONSTRAINT "solutions_to_products_solution_id_solution_id_fk" FOREIGN KEY ("solution_id") REFERENCES "public"."solution"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "solutions_to_products" ADD COLUMN IF NOT EXISTS "product_id" integer NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "solutions_to_products" ADD CONSTRAINT "solutions_to_products_product_id_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."product"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "team_member" ADD COLUMN IF NOT EXISTS "media_id" integer;
 DO $$ BEGIN
     ALTER TABLE "team_member" ADD CONSTRAINT "team_member_media_id_media_id_fk" FOREIGN KEY ("media_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "testimonial" ADD COLUMN IF NOT EXISTS "client_id" integer NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "testimonial" ADD CONSTRAINT "testimonial_client_id_client_id_fk" FOREIGN KEY ("client_id") REFERENCES "public"."client"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "tracked_link" ADD COLUMN IF NOT EXISTS "user_id" text NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "tracked_link" ADD CONSTRAINT "tracked_link_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "user_address" ADD COLUMN IF NOT EXISTS "user_id" text NOT NULL;
 DO $$ BEGIN
     ALTER TABLE "user_address" ADD CONSTRAINT "user_address_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 --> statement-breakpoint
+ALTER TABLE "user_invite" ADD COLUMN IF NOT EXISTS "created_by" text;
 DO $$ BEGIN
     ALTER TABLE "user_invite" ADD CONSTRAINT "user_invite_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$;
