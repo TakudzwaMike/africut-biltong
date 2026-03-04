@@ -75,7 +75,7 @@ A centralized `LoggerService` provides standard logging across the system (Info,
    ```
 
 ## Testing
-Core business logic in Repositories and Services is tested using Vitest.
+Core business logic in Repositories and Services is tested using Vitest
 
 ### Running Tests
 To run all tests:
