@@ -13,9 +13,13 @@ test.describe('Admin Marketing Module', () => {
 
     test('Promo Codes listing', async ({ page }) => {
         await page.goto('/_/admin/marketing');
-        await page.click('button:has-text("Discount Codes")');
-        // Wait for the tab content to render and the table header to appear
-        await page.waitForLoadState('networkidle');
+
+        // Wait for and click the tab using a more reliable locator
+        const discountTab = page.getByRole('button', { name: 'Discount Codes' });
+        await expect(discountTab).toBeVisible();
+        await discountTab.click();
+
+        // Wait for the specific header "Code" to appear, meaning the content has switched
         const codeHeader = page.locator('th').filter({ hasText: 'Code' }).first();
         await expect(codeHeader).toBeVisible({ timeout: 10000 });
     });

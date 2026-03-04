@@ -71,6 +71,34 @@ export class EmailService {
             logger.error('Error sending invite email', err);
         }
     }
+
+    /**
+     * Send a password reset email with a link to reset the password.
+     */
+    static async sendPasswordResetEmail(to, resetUrl) {
+        if (!resend) {
+            logger.warn(`[DRY RUN] Password reset email would be sent to ${to}`);
+            return;
+        }
+
+        try {
+            const { data, error } = await resend.emails.send({
+                from: FROM_ADDRESS,
+                to,
+                subject: 'Reset your Vision AI password',
+                html: buildPasswordResetHtml(resetUrl)
+            });
+
+            if (error) {
+                logger.error('Failed to send password reset email', error);
+                return;
+            }
+
+            logger.info(`Password reset email sent to ${to} (id: ${data?.id})`);
+        } catch (err) {
+            logger.error('Error sending password reset email', err);
+        }
+    }
 }
 
 function buildWelcomeHtml(firstName) {
@@ -134,6 +162,44 @@ function buildInviteHtml(email, inviteUrl, role) {
         <p style="color:#666;font-size:13px;line-height:1.5;margin:24px 0 0;">
             If the button doesn't work, copy and paste this URL into your browser:<br>
             <a href="${inviteUrl}" style="color:#00e5a0;word-break:break-all;">${inviteUrl}</a>
+        </p>
+        <hr style="border:none;border-top:1px solid #222;margin:32px 0;">
+        <p style="color:#555;font-size:12px;text-align:center;margin:0;">
+            &copy; ${new Date().getFullYear()} Vision AI Technologies. All rights reserved.
+        </p>
+    </div>
+</body>
+</html>`;
+}
+
+function buildPasswordResetHtml(resetUrl) {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <div style="max-width:560px;margin:40px auto;padding:40px 32px;background:#111;border-radius:16px;border:1px solid #222;">
+        <div style="text-align:center;margin-bottom:32px;">
+            <h1 style="color:#00e5a0;font-size:28px;margin:0;">Vision AI</h1>
+        </div>
+        <h2 style="color:#fff;font-size:22px;margin:0 0 16px;">Reset Your Password</h2>
+        <p style="color:#aaa;font-size:15px;line-height:1.6;margin:0 0 8px;">
+            We received a request to reset your password. Click the button below to choose a new one.
+        </p>
+        <p style="color:#aaa;font-size:15px;line-height:1.6;margin:0 0 24px;">
+            This link expires in 1 hour. If you didn't request this, you can safely ignore this email.
+        </p>
+        <div style="text-align:center;margin:32px 0;">
+            <a href="${resetUrl}" style="display:inline-block;background:#00e5a0;color:#0a0a0a;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;font-size:15px;">
+                Reset Password
+            </a>
+        </div>
+        <p style="color:#666;font-size:13px;line-height:1.5;margin:24px 0 0;">
+            If the button doesn't work, copy and paste this URL into your browser:<br>
+            <a href="${resetUrl}" style="color:#00e5a0;word-break:break-all;">${resetUrl}</a>
         </p>
         <hr style="border:none;border-top:1px solid #222;margin:32px 0;">
         <p style="color:#555;font-size:12px;text-align:center;margin:0;">

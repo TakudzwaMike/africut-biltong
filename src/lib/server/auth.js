@@ -39,6 +39,10 @@ export async function invalidateSession(sessionId) {
 	await lucia.invalidateSession(sessionId);
 }
 
+export async function invalidateUserSessions(userId) {
+	await lucia.invalidateUserSessions(userId);
+}
+
 export async function hashPassword(password) {
 	return await new Argon2id().hash(password);
 }

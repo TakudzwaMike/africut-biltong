@@ -1,5 +1,6 @@
 import { UserRepository } from '$lib/server/repositories/UserRepository';
 import { UserInviteRepository } from '$lib/server/repositories/UserInviteRepository';
+import { PasswordResetRepository } from '$lib/server/repositories/PasswordResetRepository';
 import * as auth from '$lib/server/auth';
 import { generateId } from 'lucia';
 import { Argon2id } from 'oslo/password';
@@ -24,6 +25,7 @@ export class AuthService {
     constructor() {
         this.userRepo = new UserRepository();
         this.inviteRepo = new UserInviteRepository();
+        this.resetRepo = new PasswordResetRepository();
     }
 
     /**
@@ -197,5 +199,77 @@ export class AuthService {
             }
             throw new Error('Could not create your account.');
         }
+    }
+
+    /**
+     * Request a password reset. Sends an email with a reset link.
+     * Always returns success (even if email not found) for security.
+     * @param {string} email
+     * @param {string} origin - The site origin URL for building the reset link
+     * @returns {Promise<boolean>}
+     */
+    async requestPasswordReset(email, origin) {
+        const user = await this.userRepo.findByEmail(email);
+
+        if (!user) {
+            // Don't reveal that the email doesn't exist
+            logger.info(`Password reset requested for unknown email: ${email}`);
+            return true;
+        }
+
+        try {
+            const token = await this.resetRepo.create(user.id);
+            const resetUrl = `${origin}/reset-password/${token.id}`;
+
+            await EmailService.sendPasswordResetEmail(user.email, resetUrl);
+            logger.info(`Password reset email sent to ${user.email}`);
+            return true;
+        } catch (err) {
+            logger.error('Error creating password reset token', err);
+            throw new Error('Failed to process password reset request.');
+        }
+    }
+
+    /**
+     * Reset a user's password using a valid token.
+     * @param {string} tokenId
+     * @param {string} newPassword
+     * @returns {Promise<boolean>}
+     */
+    async resetPassword(tokenId, newPassword) {
+        const token = await this.resetRepo.findValidToken(tokenId);
+
+        if (!token) {
+            throw new Error('This password reset link is invalid or has expired.');
+        }
+
+        try {
+            const passwordHash = await auth.hashPassword(newPassword);
+            await this.userRepo.update(token.userId, { passwordHash });
+
+            // Clean up: delete the used token
+            await this.resetRepo.delete(tokenId);
+
+            // Invalidate all existing sessions for security
+            await auth.invalidateUserSessions(token.userId);
+
+            logger.info(`Password reset completed for user ${token.userId}`);
+            return true;
+        } catch (err) {
+            logger.error('Error resetting password', err);
+            throw new Error('Failed to reset password.');
+        }
+    }
+
+    /**
+     * Resend an invite by creating a fresh token and re-sending the email.
+     * @param {string} email
+     * @param {string} role
+     * @param {string} createdBy - Admin user ID
+     * @returns {Promise<object>}
+     */
+    async resendInvite(email, role, createdBy) {
+        // Create a brand new invite (old one will remain but won't conflict)
+        return this.createInvite(email, role, createdBy);
     }
 }
