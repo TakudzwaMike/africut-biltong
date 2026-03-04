@@ -29,6 +29,13 @@
       "when": 1769774014121,
       "tag": "0003_empty_the_renegades",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1772610000000,
+      "tag": "0004_ensure_all_tables",
+      "breakpoints": true
     }
   ]
 }
