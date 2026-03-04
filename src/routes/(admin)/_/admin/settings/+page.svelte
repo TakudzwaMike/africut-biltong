@@ -106,11 +106,29 @@
 				>
 			</h3>
 			<div class="mt-4">
-				<label
-					for="exchangeRate"
-					class="mb-1 block font-medium text-main/80"
-					>USD to ZAR Exchange Rate</label
-				>
+				<div class="flex items-center justify-between mb-1">
+					<label
+						for="exchangeRate"
+						class="block font-medium text-main/80"
+						>USD to ZAR Exchange Rate</label
+					>
+					{#if data.liveWiseRate}
+						<button
+							type="button"
+							onclick={(e) => {
+								e.preventDefault();
+								formState.exchangeRate =
+									data.liveWiseRate.toFixed(2);
+							}}
+							class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors flex items-center"
+							title="Click to sync this input with the live Wise Rate"
+						>
+							<span class="mr-1">Live Wise Rate:</span> R {data.liveWiseRate.toFixed(
+								2,
+							)} — Sync
+						</button>
+					{/if}
+				</div>
 				<div class="relative">
 					<div
 						class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"

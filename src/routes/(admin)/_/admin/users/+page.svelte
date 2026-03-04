@@ -233,6 +233,14 @@
     </td>
     <td class="p-4 text-right">
         <div class="flex items-center justify-end gap-1">
+            <!-- Edit Profile -->
+            <a
+                href="/_/admin/users/{u.id}"
+                class="text-accent hover:text-accent/80 p-2"
+                title="Edit User Profile"
+            >
+                <Icon icon="mdi:pencil-outline" width="20" />
+            </a>
             <!-- Send Password Reset -->
             <form
                 method="POST"

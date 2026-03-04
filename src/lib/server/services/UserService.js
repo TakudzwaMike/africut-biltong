@@ -9,6 +9,10 @@ export class UserService {
         this.userRepo = new UserRepository();
     }
 
+    async getUserById(userId) {
+        return this.userRepo.findById(userId);
+    }
+
     /**
      * Get paginated users with filters.
      * @param {Object} options

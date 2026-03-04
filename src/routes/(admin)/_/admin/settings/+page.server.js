@@ -2,6 +2,7 @@ import { fail } from '@sveltejs/kit';
 import { SettingsService } from '$lib/server/services/SettingsService';
 import { log } from '$lib/server/auditLog';
 import { MediaService } from '$lib/server/services/MediaService';
+import { WiseService } from '$lib/server/services/WiseService';
 
 const settingsService = new SettingsService();
 const mediaService = new MediaService();
@@ -15,10 +16,20 @@ export async function load() {
 		logo = await mediaService.getMedia(settings.siteLogoMediaId);
 	}
 
+	// Fetch Live Wise Rate
+	const wiseService = new WiseService();
+	let liveWiseRate = null;
+	try {
+		liveWiseRate = await wiseService.getRate('USD', 'ZAR');
+	} catch (e) {
+		console.error('Failed to fetch live Wise rate in Admin Settings', e);
+	}
+
 	return {
 		settings,
 		logo,
-		mediaItems
+		mediaItems,
+		liveWiseRate
 	};
 }
 
