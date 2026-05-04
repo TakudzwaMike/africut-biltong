@@ -1,20 +1,30 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Africut Biltong
 
-# Run and deploy your AI Studio app
+Welcome to the Africut Biltong e-commerce frontend. This project is built with React, Vite, and Tailwind CSS.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/9dd6ac93-64e3-45b4-b9ef-c7ed0af5d3a7
+- Modern, responsive design
+- Product catalog and details
+- Shopping cart functionality
 
-## Run Locally
+## Getting Started
 
-**Prerequisites:**  Node.js
+To run the project locally, ensure you have Node.js installed.
 
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Build for Production
+
+To build the project for production, run:
+```bash
+npm run build
+```
