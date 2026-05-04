@@ -32,21 +32,25 @@ const Navbar = () => {
   return (
     <>
       <nav className={cn(
-        "fixed left-0 right-0 z-50 transition-all duration-300 px-6 lg:px-12",
-        isScrolled ? "top-0 py-4 bg-brand-timber/95 backdrop-blur-md shadow-2xl border-b border-white/5" : "top-8 py-6 bg-transparent"
+        "fixed left-0 right-0 z-50 transition-all duration-300 px-4 lg:px-12",
+        isScrolled ? "top-0 py-3 bg-brand-timber/95 backdrop-blur-md shadow-2xl border-b border-white/5" : "top-10 py-5 bg-transparent"
       )}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Mobile Menu Toggle */}
           <button 
             onClick={() => setIsMobileMenuOpen(true)}
-            className="lg:hidden p-2 text-brand-cream"
+            className="lg:hidden p-1.5 text-brand-cream"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="w-5 h-5" />
           </button>
 
           {/* Logo */}
           <Link to="/" className="flex items-center group">
-            <img src="/images/logo.png" alt="Africut Biltong Logo" className="h-12 lg:h-16 w-auto object-contain mix-blend-screen" />
+            <img 
+              src="/images/logo.png" 
+              alt="Africut Biltong Logo" 
+              className="h-10 lg:h-16 w-auto object-contain brightness-110" 
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -64,19 +68,19 @@ const Navbar = () => {
           </div>
 
           {/* Icons */}
-          <div className="flex items-center space-x-5 text-brand-cream">
-            <button className="hover:text-brand-rust transition-all duration-300 p-1 hover:scale-110 active:scale-95">
-              <Search className="w-5 h-5" />
+          <div className="flex items-center space-x-3 lg:space-x-5 text-brand-cream">
+            <button className="hover:text-brand-rust transition-all duration-300 p-1">
+              <Search className="w-4 h-4 lg:w-5 lg:h-5" />
             </button>
-            <button className="hover:text-brand-rust transition-all duration-300 p-1 hover:scale-110 active:scale-95">
-              <User className="w-5 h-5" />
+            <button className="hover:text-brand-rust transition-all duration-300 p-1">
+              <User className="w-4 h-4 lg:w-5 lg:h-5" />
             </button>
             <button 
               onClick={() => setIsOpen(true)}
-              className="relative p-2 hover:bg-white/5 rounded-full transition-all group hover:scale-110 active:scale-95"
+              className="relative p-1.5 hover:bg-white/5 rounded-full transition-all group"
             >
-              <ShoppingBag className="w-5 h-5" />
-              <span className="absolute top-1 right-1 bg-brand-rust text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full group-hover:animate-pulse">
+              <ShoppingBag className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="absolute top-0 right-0 bg-brand-rust text-white text-[8px] font-black w-3.5 h-3.5 flex items-center justify-center rounded-full">
                 {cartCount}
               </span>
             </button>
@@ -91,12 +95,12 @@ const Navbar = () => {
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 bg-brand-timber z-[100] p-8 flex flex-col"
+            className="fixed inset-0 bg-brand-timber z-[100] p-6 flex flex-col"
           >
-            <div className="flex justify-between items-center mb-12">
-               <img src="/images/logo.png" alt="Africut Biltong Logo" className="h-10 w-auto object-contain mix-blend-screen" />
-               <button onClick={() => setIsMobileMenuOpen(false)} className="text-brand-cream">
-                 <X className="w-8 h-8" />
+            <div className="flex justify-between items-center mb-10">
+               <img src="/images/logo.png" alt="Africut Biltong Logo" className="h-10 w-auto object-contain" />
+               <button onClick={() => setIsMobileMenuOpen(false)} className="text-brand-cream p-2">
+                 <X className="w-7 h-7" />
                </button>
             </div>
             <div className="flex flex-col space-y-8">

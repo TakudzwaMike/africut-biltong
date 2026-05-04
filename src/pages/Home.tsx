@@ -12,43 +12,43 @@ const Home = () => {
     <div className="flex flex-col">
       {/* Hero Section - Split Layout */}
       <section className="relative min-h-[90vh] lg:h-[100vh] grid grid-cols-12 gap-0 overflow-hidden bg-brand-timber">
-        <div className="col-span-12 lg:col-span-12 p-6 md:p-8 lg:p-24 flex flex-col justify-center items-center z-20 pt-32 text-center relative">
+        <div className="col-span-12 lg:col-span-12 p-4 md:p-8 lg:p-24 flex flex-col justify-center items-center z-20 pt-40 text-center relative">
           <div className="absolute inset-0 z-0 h-full w-full pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]"></div>
           
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: 'easeOut' }}
-            className="max-w-4xl"
+            className="max-w-4xl w-full"
           >
-            <div className="flex items-center justify-center gap-3 mb-8">
-              <span className="h-[2px] w-8 md:w-12 bg-brand-rust"></span>
-              <span className="text-brand-rust text-[10px] md:text-sm font-black uppercase tracking-[0.4em] italic">The Authentic Cut</span>
-              <span className="h-[2px] w-8 md:w-12 bg-brand-rust"></span>
+            <div className="flex items-center justify-center gap-3 mb-6 md:mb-8">
+              <span className="h-[1px] w-6 md:w-12 bg-brand-rust"></span>
+              <span className="text-brand-rust text-[9px] md:text-sm font-black uppercase tracking-[0.4em] italic">The Authentic Cut</span>
+              <span className="h-[1px] w-6 md:w-12 bg-brand-rust"></span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl lg:text-9xl font-black leading-[0.9] lg:leading-[0.85] mb-8 lg:mb-12 tracking-tighter text-brand-cream uppercase italic">
+            <h1 className="text-[12vw] md:text-7xl lg:text-9xl font-black leading-[1] lg:leading-[0.85] mb-6 lg:mb-12 tracking-tighter text-brand-cream uppercase italic">
               The Real<br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-br from-brand-rust to-brand-spiced">Taste of Jozi.</span>
             </h1>
             
-                  <p className="text-lg md:text-xl text-brand-cream/90 mb-10 lg:mb-14 max-w-xl mx-auto font-bold leading-relaxed italic">
-                    "Authentic, hand-cured, and spiced to perfection. This is not just biltong—it's a Johannesburg legacy."
-                  </p>
+            <p className="text-base md:text-xl text-brand-cream/80 mb-10 lg:mb-14 max-w-xl mx-auto font-bold leading-relaxed italic px-4">
+              "Authentic, hand-cured, and spiced to perfection. This is not just biltong—it's a Johannesburg legacy."
+            </p>
             
-            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <div className="flex flex-col sm:flex-row justify-center gap-4 md:gap-6 px-4">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
                 <Link 
                   to="/shop" 
-                  className="w-full sm:w-auto bg-brand-rust text-white px-10 md:px-12 py-5 md:py-6 font-black text-sm uppercase tracking-[0.2em] hover:bg-brand-spiced transition-all shadow-3xl rounded-sm italic block text-center"
+                  className="bg-brand-rust text-white px-10 md:px-12 py-5 md:py-6 font-black text-xs md:text-sm uppercase tracking-[0.2em] hover:bg-brand-spiced transition-all shadow-3xl rounded-sm italic block text-center"
                 >
                   Order Fresh Batch
                 </Link>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
                 <Link 
                   to="/about" 
-                  className="w-full sm:w-auto border-2 border-brand-cream/20 text-brand-cream px-10 md:px-12 py-5 md:py-6 font-black text-sm uppercase tracking-[0.2em] hover:bg-brand-cream hover:text-brand-timber transition-all rounded-sm italic block text-center"
+                  className="border-2 border-brand-cream/20 text-brand-cream px-10 md:px-12 py-5 md:py-6 font-black text-xs md:text-sm uppercase tracking-[0.2em] hover:bg-brand-cream hover:text-brand-timber transition-all rounded-sm italic block text-center"
                 >
                   Our Heritage
                 </Link>

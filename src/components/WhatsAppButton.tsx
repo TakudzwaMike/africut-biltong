@@ -8,7 +8,7 @@ const WhatsAppButton = () => {
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
 
   return (
-    <div className="fixed bottom-8 right-8 z-[150]">
+    <div className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-[150]">
       <motion.a
         href={whatsappUrl}
         target="_blank"
@@ -28,12 +28,12 @@ const WhatsAppButton = () => {
         }}
         whileHover={{ scale: 1.1, repeat: 0 }}
         whileTap={{ scale: 0.95 }}
-        className="bg-[#25D366] text-white p-4 rounded-full shadow-2xl flex items-center justify-center group cursor-pointer"
+        className="bg-[#25D366] text-white p-3 md:p-4 rounded-full shadow-2xl flex items-center justify-center group cursor-pointer"
       >
         <span className="max-w-0 overflow-hidden group-hover:max-w-[200px] group-hover:ml-3 transition-all duration-500 whitespace-nowrap font-bold uppercase tracking-widest text-[10px]">
           WhatsApp Order
         </span>
-        <MessageCircle className="w-6 h-6" />
+        <MessageCircle className="w-5 h-5 md:w-6 md:h-6" />
       </motion.a>
     </div>
   );
