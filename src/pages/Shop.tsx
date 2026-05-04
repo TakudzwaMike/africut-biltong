@@ -20,8 +20,8 @@ const Shop = () => {
                            product.description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     }).sort((a, b) => {
-      if (sortBy === 'price-low') return a.price - b.price;
-      if (sortBy === 'price-high') return b.price - a.price;
+      if (sortBy === 'price-low') return (a.prices[100] || 0) - (b.prices[100] || 0);
+      if (sortBy === 'price-high') return (b.prices[100] || 0) - (a.prices[100] || 0);
       return 0; // Default or popular
     });
   }, [activeCategory, searchQuery, sortBy]);

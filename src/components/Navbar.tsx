@@ -46,9 +46,7 @@ const Navbar = () => {
 
           {/* Logo */}
           <Link to="/" className="flex items-center group">
-            <span className="text-2xl lg:text-3xl font-black font-sans text-brand-cream tracking-tighter uppercase">
-              AFRICUT<span className="text-brand-rust ml-0.5">.</span>
-            </span>
+            <img src="/images/logo.png" alt="Africut Biltong Logo" className="h-12 lg:h-16 w-auto object-contain mix-blend-screen" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -96,7 +94,7 @@ const Navbar = () => {
             className="fixed inset-0 bg-brand-timber z-[100] p-8 flex flex-col"
           >
             <div className="flex justify-between items-center mb-12">
-               <span className="text-2xl font-black text-brand-cream tracking-tighter uppercase">AFRICUT<span className="text-brand-rust">.</span></span>
+               <img src="/images/logo.png" alt="Africut Biltong Logo" className="h-10 w-auto object-contain mix-blend-screen" />
                <button onClick={() => setIsMobileMenuOpen(false)} className="text-brand-cream">
                  <X className="w-8 h-8" />
                </button>

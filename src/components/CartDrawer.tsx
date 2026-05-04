@@ -76,7 +76,7 @@ const CartDrawer = () => {
                       <div>
                         <div className="flex justify-between items-start">
                           <h3 className="text-sm font-black tracking-tight text-brand-timber uppercase italic leading-none mb-1">{item.name}</h3>
-                          <p className="text-sm font-black text-brand-rust italic">R{((item.price * (item.selectedWeight / 100)) * item.quantity).toFixed(2)}</p>
+                          <p className="text-sm font-black text-brand-rust italic">R{((item.prices[item.selectedWeight] || 0) * item.quantity).toFixed(2)}</p>
                         </div>
                         <p className="text-[9px] text-brand-timber/40 uppercase font-black tracking-widest italic">
                           {item.selectedWeight}g • {item.selectedFlavor}

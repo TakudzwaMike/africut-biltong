@@ -2,7 +2,7 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  price: number; // Base price for 100g
+  prices: Record<number, number>;
   category: 'biltong' | 'droewors' | 'snapstix' | 'specialty' | 'game';
   flavors: string[];
   image: string;

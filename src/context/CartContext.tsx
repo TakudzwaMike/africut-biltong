@@ -66,7 +66,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearCart = () => setCart([]);
 
-  const cartTotal = cart.reduce((total, item) => total + (item.price * (item.selectedWeight / 100)) * item.quantity, 0);
+  const cartTotal = cart.reduce((total, item) => total + (item.prices[item.selectedWeight] || 0) * item.quantity, 0);
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
 
   return (

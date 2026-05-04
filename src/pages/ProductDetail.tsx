@@ -12,7 +12,8 @@ const ProductDetail = () => {
   const product = PRODUCTS.find(p => p.id === id);
   const { addToCart } = useCart();
 
-  const [selectedWeight, setSelectedWeight] = useState(250);
+  const defaultWeight = product ? Number(Object.keys(product.prices)[0]) : 250;
+  const [selectedWeight, setSelectedWeight] = useState(defaultWeight);
   const [selectedFlavor, setSelectedFlavor] = useState('');
   const [quantity, setQuantity] = useState(1);
 
@@ -23,8 +24,8 @@ const ProductDetail = () => {
 
   if (!product) return <div className="pt-40 text-center text-brand-cream font-black uppercase">Product Not Found</div>;
 
-  const weights = [100, 250, 500, 1000];
-  const totalPrice = (product.price * (selectedWeight / 100)) * quantity;
+  const weights = Object.keys(product.prices).map(Number).sort((a,b) => a-b);
+  const totalPrice = (product.prices[selectedWeight as keyof typeof product.prices] || 0) * quantity;
 
   return (
     <div className="pt-40 pb-24 px-6 lg:px-12 bg-brand-timber min-h-screen text-brand-cream">

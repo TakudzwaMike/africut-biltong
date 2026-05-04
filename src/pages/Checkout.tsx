@@ -187,7 +187,7 @@ const Checkout = () => {
                           <p className="text-[9px] text-brand-cream/30 uppercase font-black tracking-widest italic">{item.quantity}x • {item.selectedWeight}g • {item.selectedFlavor}</p>
                        </div>
                     </div>
-                    <p className="text-xs font-black italic">R{((item.price * (item.selectedWeight/100)) * item.quantity).toFixed(2)}</p>
+                    <p className="text-xs font-black italic">R{((item.prices[item.selectedWeight] || 0) * item.quantity).toFixed(2)}</p>
                   </div>
                 ))}
               </div>

@@ -13,9 +13,8 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 relative z-10">
         {/* Brand Column */}
         <div className="space-y-8">
-          <Link to="/" className="flex flex-col group">
-            <span className="text-3xl font-black tracking-tighter uppercase italic leading-none">AFRICUT</span>
-            <span className="text-[10px] uppercase font-black tracking-[0.3em] text-brand-rust -mt-1 italic">Butchers • Jozi</span>
+          <Link to="/" className="flex flex-col group mb-2">
+            <img src="/images/logo.png" alt="Africut Biltong Logo" className="h-24 w-auto object-contain mix-blend-screen self-start -ml-2" />
           </Link>
           <p className="text-brand-cream/70 text-sm leading-relaxed max-w-xs font-medium italic">
             Premium South African biltong, handcrafted in Johannesburg and delivered nationwide. Authentic flavors, expertly dried.

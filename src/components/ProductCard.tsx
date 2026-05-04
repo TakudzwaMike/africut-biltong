@@ -82,7 +82,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="flex justify-between items-start mb-4">
           <p className="text-[10px] text-brand-rust font-black uppercase tracking-widest italic">{product.category}</p>
           <div className="text-right">
-            <span className="text-2xl font-black text-brand-cream tracking-tighter italic">R{product.price}</span>
+            <span className="text-2xl font-black text-brand-cream tracking-tighter italic">R{product.prices[100]}</span>
             <span className="text-[10px] text-brand-cream/30 ml-1 font-black uppercase">/ 100g</span>
           </div>
         </div>
