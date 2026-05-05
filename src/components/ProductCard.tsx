@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Heart, ShoppingBag } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Plus, Heart, ShoppingBag, X, Minus, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
 import { cn } from '../lib/utils';
@@ -12,15 +12,129 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectedWeight, setSelectedWeight] = useState<number>(Object.keys(product.prices).map(Number).sort((a,b) => a-b)[0]);
+  const [selectedFlavor, setSelectedFlavor] = useState(product.flavors[0]);
+  const [quantity, setQuantity] = useState(1);
+
+  const handleConfirmAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToCart(product, selectedWeight, selectedFlavor, quantity);
+    setIsSelecting(false);
+    setQuantity(1);
+  };
+
+  const weights = Object.keys(product.prices).map(Number).sort((a,b) => a-b);
 
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
+      whileHover={isSelecting ? {} : { scale: 1.02 }}
       viewport={{ once: true }}
-      className="group relative flex flex-col h-full bg-brand-surface border border-white/5 rounded-2xl overflow-hidden hover:border-brand-rust/50 transition-all duration-500 shadow-2xl hover:shadow-brand-rust/20"
+      className="group relative flex flex-col h-full bg-brand-surface border border-white/5 rounded-2xl overflow-hidden hover:border-brand-rust/50 transition-all duration-500 shadow-2xl hover:shadow-brand-rust/20 min-h-[450px]"
     >
+      {/* Selection Overlay */}
+      <AnimatePresence>
+        {isSelecting && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="absolute inset-0 z-40 bg-brand-timber p-6 flex flex-col"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h4 className="text-xs font-black uppercase tracking-widest text-brand-rust italic">Select Options</h4>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsSelecting(false); }}
+                className="text-brand-cream/40 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar">
+              {/* Weight Selector */}
+              <div className="space-y-3">
+                <label className="text-[9px] uppercase font-black tracking-widest text-brand-cream/30 italic">Select Size</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {weights.map(w => (
+                    <button
+                      key={w}
+                      onClick={(e) => { e.stopPropagation(); setSelectedWeight(w); }}
+                      className={cn(
+                        "py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all italic",
+                        selectedWeight === w 
+                          ? "bg-brand-rust text-white border-brand-rust" 
+                          : "bg-white/5 text-brand-cream/40 border-white/10 hover:border-brand-rust/50"
+                      )}
+                    >
+                      {w >= 1000 ? `${w/1000}kg` : `${w}g`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Flavor Selector */}
+              <div className="space-y-3">
+                <label className="text-[9px] uppercase font-black tracking-widest text-brand-cream/30 italic">Select Flavor</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {product.flavors.map(f => (
+                    <button
+                      key={f}
+                      onClick={(e) => { e.stopPropagation(); setSelectedFlavor(f); }}
+                      className={cn(
+                        "py-2.5 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all italic text-left flex justify-between items-center",
+                        selectedFlavor === f 
+                          ? "bg-brand-cream text-brand-timber border-brand-cream" 
+                          : "bg-white/5 text-brand-cream/40 border-white/10 hover:border-brand-rust/50"
+                      )}
+                    >
+                      <span>{f}</span>
+                      {selectedFlavor === f && <Check className="w-3 h-3" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quantity Selector */}
+              <div className="space-y-3">
+                <label className="text-[9px] uppercase font-black tracking-widest text-brand-cream/30 italic">Quantity</label>
+                <div className="flex items-center space-x-4 bg-white/5 w-fit rounded-xl p-2 border border-white/10">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setQuantity(q => Math.max(1, q - 1)); }}
+                    className="text-brand-cream/40 hover:text-brand-rust transition-colors"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs font-black text-brand-cream w-8 text-center">{quantity}</span>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setQuantity(q => q + 1); }}
+                    className="text-brand-cream/40 hover:text-brand-rust transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <div className="flex justify-between items-end mb-4">
+                <span className="text-[9px] font-black uppercase tracking-widest text-brand-cream/30 italic">Total</span>
+                <span className="text-2xl font-black text-brand-rust italic">R{((product.prices[selectedWeight as keyof typeof product.prices] || 0) * quantity).toFixed(2)}</span>
+              </div>
+              <button 
+                onClick={handleConfirmAdd}
+                className="w-full bg-brand-rust text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center space-x-2 shadow-2xl hover:bg-brand-spiced transition-all"
+              >
+                <span>Confirm Add</span>
+                <ShoppingBag className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="relative aspect-[4/5] overflow-hidden">
         <Link to={`/product/${product.id}`} className="block w-full h-full">
           <img 
@@ -69,7 +183,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Quick Add Button */}
         <div className="absolute inset-x-4 bottom-4 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
           <button 
-            onClick={() => addToCart(product, 100, product.flavors[0])}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsSelecting(true); }}
             className="w-full bg-brand-rust text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center space-x-2 shadow-2xl hover:bg-brand-spiced transition-all transform active:scale-95"
           >
             <span>Add to Cart</span>
