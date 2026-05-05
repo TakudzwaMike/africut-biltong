@@ -202,7 +202,7 @@ const ProductDetail = () => {
                      <div className="space-y-4">
                         <h5 className="text-brand-rust font-black uppercase tracking-widest text-xs italic">Delivery & Packaging</h5>
                         <p className="text-[10px] text-brand-cream/30 leading-relaxed font-black uppercase tracking-tighter italic">Vacuum-sealed for freshness and delivered in secure boxes within 24-48 hours.</p>
-                        <img src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop" alt="Delivery Packaging" className="rounded-xl opacity-60 mt-2" />
+                        <img src="/images/packets.png" alt="Delivery Packaging" className="rounded-xl opacity-60 mt-2" />
                      </div>
                  </div>
               </div>
