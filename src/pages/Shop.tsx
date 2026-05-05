@@ -73,7 +73,7 @@ const Shop = () => {
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-rust" strokeWidth={3} />
                 <input 
                   type="text" 
-                  placeholder="Search meat batches..."
+                  placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-brand-timber border border-white/10 rounded-full py-4 pl-14 pr-6 text-[10px] font-black uppercase tracking-widest text-brand-cream placeholder:text-brand-cream/20 focus:ring-2 focus:ring-brand-rust focus:border-brand-rust transition-all outline-none italic"
@@ -87,7 +87,7 @@ const Shop = () => {
         <div className="flex items-center justify-between mb-10 text-brand-cream/20 text-[10px] font-black tracking-[0.2em] uppercase italic">
            <div className="flex items-center space-x-3">
               <span className="h-[1px] w-8 bg-brand-rust"></span>
-              <span>Available Batches: {filteredProducts.length}</span>
+              <span>Products Found: {filteredProducts.length}</span>
            </div>
         </div>
 
@@ -116,7 +116,7 @@ const Shop = () => {
                 <div className="absolute inset-0 rounded-full border-t-2 border-brand-rust animate-spin opacity-20"></div>
               </div>
               <div className="max-w-md">
-                <h3 className="text-3xl font-black text-brand-cream mb-4 tracking-tighter uppercase italic">No Batches Found.</h3>
+                <h3 className="text-3xl font-black text-brand-cream mb-4 tracking-tighter uppercase italic">No Products Found.</h3>
                 <p className="text-brand-cream/40 text-sm font-medium italic">Our butchers couldn't find a matching cut. Try searching for "Original", "Chilli", or "Sticks".</p>
               </div>
               <motion.button 
@@ -129,7 +129,7 @@ const Shop = () => {
                 }}
                 className="bg-brand-rust text-white px-10 py-4 rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-brand-spiced transition-all shadow-2xl italic"
               >
-                Reset Butcher Tools
+                Reset Filters
               </motion.button>
             </motion.div>
           )}

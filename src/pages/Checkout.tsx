@@ -22,8 +22,8 @@ const Checkout = () => {
   if (cart.length === 0 && !isOrdered) {
     return (
       <div className="pt-40 pb-24 px-6 bg-brand-timber min-h-screen text-brand-cream flex flex-col items-center justify-center text-center">
-        <h2 className="text-4xl font-black uppercase italic tracking-tighter mb-6">No Batch Selected.</h2>
-        <Link to="/shop" className="bg-brand-rust text-white px-10 py-4 rounded-full font-black uppercase italic tracking-widest text-[10px]">Start Selection</Link>
+        <h2 className="text-4xl font-black uppercase italic tracking-tighter mb-6">Your cart is empty.</h2>
+        <Link to="/shop" className="bg-brand-rust text-white px-10 py-4 rounded-full font-black uppercase italic tracking-widest text-[10px]">Start Shopping</Link>
       </div>
     );
   }
@@ -49,14 +49,14 @@ const Checkout = () => {
             <CheckCircle2 className="w-12 h-12 text-white" />
           </div>
           <div className="space-y-4">
-            <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">Batch Dispatched.</h1>
-            <p className="text-brand-cream/40 font-medium italic">Your order has been recorded in the Jozi archives. Check your email for the shipment manifest.</p>
+            <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">Order Placed Successfully!</h1>
+            <p className="text-brand-cream/40 font-medium italic">Thank you for your purchase. We've sent a confirmation email with your order details.</p>
           </div>
           <Link 
             to="/" 
             className="inline-block bg-brand-rust text-white px-12 py-5 rounded-full font-black uppercase italic tracking-widest text-xs shadow-3xl hover:bg-brand-spiced transition-all"
           >
-            Return to HQ
+            Back to Home
           </Link>
         </motion.div>
       </div>
@@ -68,10 +68,10 @@ const Checkout = () => {
       <div className="max-w-7xl mx-auto px-6">
         <Link to="/shop" className="inline-flex items-center space-x-2 text-brand-cream/40 hover:text-brand-rust transition-colors mb-12 uppercase text-[10px] font-black tracking-widest italic leading-none">
            <ChevronLeft className="w-4 h-4" />
-           <span>Adjust Selection</span>
+           <span>Back to Shop</span>
         </Link>
 
-        <h1 className="text-6xl font-black tracking-tighter mb-16 uppercase italic leading-none">The Disbursement.</h1>
+        <h1 className="text-6xl font-black tracking-tighter mb-16 uppercase italic leading-none">Checkout</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
           {/* Checkout Form */}
@@ -80,7 +80,7 @@ const Checkout = () => {
               <section className="space-y-8">
                 <div className="flex items-center space-x-4 border-b border-white/5 pb-4">
                   <span className="w-8 h-8 rounded-full bg-brand-rust text-white flex items-center justify-center font-black text-xs italic">01</span>
-                  <h3 className="text-xs font-black uppercase tracking-widest italic">Identity Details</h3>
+                  <h3 className="text-xs font-black uppercase tracking-widest italic">Customer Information</h3>
                 </div>
                 <div className="grid grid-cols-1 gap-6">
                   <div className="space-y-2">
@@ -89,7 +89,7 @@ const Checkout = () => {
                       required
                       type="email" 
                       className="w-full bg-brand-surface border border-white/5 rounded-2xl p-5 text-sm font-medium italic focus:border-brand-rust/50 focus:outline-none transition-all placeholder:text-brand-cream/10"
-                      placeholder="e.g. butcher@jozi.com"
+                      placeholder="e.g. customer@example.com"
                       value={formData.email}
                       onChange={e => setFormData({...formData, email: e.target.value})}
                     />
@@ -122,7 +122,7 @@ const Checkout = () => {
               <section className="space-y-8">
                 <div className="flex items-center space-x-4 border-b border-white/5 pb-4">
                   <span className="w-8 h-8 rounded-full bg-brand-rust text-white flex items-center justify-center font-black text-xs italic">02</span>
-                  <h3 className="text-xs font-black uppercase tracking-widest italic">Dispatch Location</h3>
+                  <h3 className="text-xs font-black uppercase tracking-widest italic">Shipping Address</h3>
                 </div>
                 <div className="space-y-6">
                   <div className="space-y-2">
@@ -165,7 +165,7 @@ const Checkout = () => {
                 className="w-full bg-brand-rust text-white py-8 rounded-3xl font-black uppercase italic tracking-[0.2em] text-sm shadow-3xl hover:bg-brand-spiced transition-all transform active:scale-[0.98] flex items-center justify-center space-x-4"
               >
                 <ShieldCheck className="w-5 h-5" />
-                <span>Finalize Batch Disbursement</span>
+                <span>Place Order</span>
               </button>
             </form>
           </div>
@@ -173,7 +173,7 @@ const Checkout = () => {
           {/* Order Summary */}
           <div className="lg:col-span-5">
             <div className="bg-brand-surface border border-white/5 p-10 rounded-[3rem] sticky top-32">
-              <h4 className="text-xs font-black uppercase tracking-widest text-brand-rust italic mb-10 pb-4 border-b border-white/5">Order Manifest</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-brand-rust italic mb-10 pb-4 border-b border-white/5">Order Summary</h4>
               
               <div className="space-y-8 mb-12 max-h-[40vh] overflow-y-auto no-scrollbar pr-4">
                 {cart.map(item => (
@@ -204,7 +204,7 @@ const Checkout = () => {
               </div>
 
               <div className="flex justify-between items-end">
-                <span className="text-[10px] font-black uppercase tracking-widest italic">Total Disbursement</span>
+                <span className="text-[10px] font-black uppercase tracking-widest italic">Order Total</span>
                 <span className="text-5xl font-black text-brand-rust italic tracking-tighter leading-none">R{cartTotal.toFixed(2)}</span>
               </div>
 

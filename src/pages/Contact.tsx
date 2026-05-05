@@ -11,12 +11,12 @@ const Contact = () => {
           {/* Info Side */}
           <div className="space-y-16">
             <div>
-              <span className="text-brand-rust text-[10px] font-black uppercase tracking-[0.4em] mb-4 block italic">The Butcher's Helpline</span>
+              <span className="text-brand-rust text-[10px] font-black uppercase tracking-[0.4em] mb-4 block italic">Customer Support</span>
               <h1 className="text-6xl lg:text-8xl font-black tracking-tighter mb-8 leading-[0.9] uppercase italic">
                 Whatever you need,<br />The Herd is here.
               </h1>
               <p className="text-brand-cream/40 text-lg leading-relaxed max-w-md font-medium italic">
-                Questions about a batch? Bulk order inquiries? Or just want to talk about biltong? Drop us a message and our butchers will get back to you.
+                Questions about an order? Bulk order inquiries? Or just want to talk about biltong? Drop us a message and our team will get back to you.
               </p>
             </div>
 
@@ -24,28 +24,28 @@ const Contact = () => {
                <div className="space-y-4">
                   <div className="flex items-center space-x-3 text-brand-rust">
                     <Mail className="w-4 h-4" />
-                    <span className="text-[10px] uppercase font-black tracking-widest italic">Dispatch Desk</span>
+                    <span className="text-[10px] uppercase font-black tracking-widest italic">Email Us</span>
                   </div>
                   <p className="text-lg font-black text-brand-cream tracking-tighter italic">hello@africutbiltong.co.za</p>
                </div>
                <div className="space-y-4">
                   <div className="flex items-center space-x-3 text-brand-rust">
                     <Phone className="w-4 h-4" />
-                    <span className="text-[10px] uppercase font-black tracking-widest italic">Butcher Line</span>
+                    <span className="text-[10px] uppercase font-black tracking-widest italic">Call Us</span>
                   </div>
                   <p className="text-lg font-black text-brand-cream tracking-tighter italic">+27 (81) 645-0133</p>
                </div>
                <div className="space-y-4">
                   <div className="flex items-center space-x-3 text-brand-rust">
                     <MapPin className="w-4 h-4" />
-                    <span className="text-[10px] uppercase font-black tracking-widest italic">Jozi Batch HQ</span>
+                    <span className="text-[10px] uppercase font-black tracking-widest italic">Our Location</span>
                   </div>
                   <p className="text-lg font-black text-brand-cream tracking-tighter italic">Johannesburg, South Africa</p>
                </div>
                <div className="space-y-4">
                   <div className="flex items-center space-x-3 text-brand-rust">
                     <Truck className="w-4 h-4" />
-                    <span className="text-[10px] uppercase font-black tracking-widest italic">Fleet Support</span>
+                    <span className="text-[10px] uppercase font-black tracking-widest italic">Delivery</span>
                   </div>
                   <p className="text-lg font-black text-brand-cream tracking-tighter italic">Nationwide Delivery</p>
                </div>
@@ -68,11 +68,11 @@ const Contact = () => {
 
           {/* Form Side */}
           <div className="bg-brand-surface p-12 lg:p-16 rounded-[3rem] shadow-3xl border border-white/5">
-             <h2 className="text-4xl font-black tracking-tighter mb-12 text-brand-cream leading-tight uppercase italic">Send A Batch Query.</h2>
+             <h2 className="text-4xl font-black tracking-tighter mb-12 text-brand-cream leading-tight uppercase italic">Send Us A Message.</h2>
              <form className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                    <div className="space-y-3">
-                      <label className="text-[10px] uppercase font-black tracking-widest text-brand-rust ml-1 italic">Butcher Name</label>
+                      <label className="text-[10px] uppercase font-black tracking-widest text-brand-rust ml-1 italic">Your Name</label>
                       <input 
                         type="text" 
                         placeholder="Thabo Molefe" 
@@ -80,7 +80,7 @@ const Contact = () => {
                       />
                    </div>
                    <div className="space-y-3">
-                      <label className="text-[10px] uppercase font-black tracking-widest text-brand-rust ml-1 italic">Dispatch Email</label>
+                      <label className="text-[10px] uppercase font-black tracking-widest text-brand-rust ml-1 italic">Your Email</label>
                       <input 
                         type="email" 
                         placeholder="thabo@gmail.com" 
@@ -89,12 +89,12 @@ const Contact = () => {
                    </div>
                 </div>
                 <div className="space-y-3">
-                   <label className="text-[10px] uppercase font-black tracking-widest text-brand-rust ml-1 italic">Matter Of Request</label>
+                   <label className="text-[10px] uppercase font-black tracking-widest text-brand-rust ml-1 italic">Subject</label>
                    <select className="w-full bg-brand-timber border border-white/10 rounded-2xl p-5 text-sm font-black text-brand-cream focus:ring-2 focus:ring-brand-rust focus:border-brand-rust outline-none italic appearance-none">
-                      <option className="bg-brand-surface text-brand-cream">General Support Batch</option>
+                      <option className="bg-brand-surface text-brand-cream">General Inquiry</option>
                       <option className="bg-brand-surface text-brand-cream">Bulk / Corporate Quote</option>
-                      <option className="bg-brand-surface text-brand-cream">Order Tracking Dispatch</option>
-                      <option className="bg-brand-surface text-brand-cream">Reseller Inquiry HQ</option>
+                      <option className="bg-brand-surface text-brand-cream">Order Tracking</option>
+                      <option className="bg-brand-surface text-brand-cream">Reseller Inquiry</option>
                    </select>
                 </div>
                 <div className="space-y-3">
@@ -106,7 +106,7 @@ const Contact = () => {
                    />
                 </div>
                 <button className="w-full bg-brand-rust text-white py-7 rounded-full font-black uppercase tracking-widest text-sm flex items-center justify-center space-x-3 group hover:bg-brand-spiced transition-all duration-300 shadow-3xl transform active:scale-[0.98] italic">
-                   <span>Submit Batch Inquiry</span>
+                   <span>Send Message</span>
                    <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                 </button>
              </form>

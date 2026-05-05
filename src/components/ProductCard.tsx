@@ -72,7 +72,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             onClick={() => addToCart(product, 100, product.flavors[0])}
             className="w-full bg-brand-rust text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center space-x-2 shadow-2xl hover:bg-brand-spiced transition-all transform active:scale-95"
           >
-            <span>Fresh Batch Add</span>
+            <span>Add to Cart</span>
             <Plus className="w-4 h-4" />
           </button>
         </div>

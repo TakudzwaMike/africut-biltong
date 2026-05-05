@@ -34,9 +34,9 @@ const Footer = () => {
 
         {/* Quick Links */}
         <div>
-          <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-8 text-brand-rust italic">The Market</h4>
+          <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-8 text-brand-rust italic">Shop</h4>
           <ul className="space-y-4">
-            <li><Link to="/shop" className="text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">All Batches</Link></li>
+            <li><Link to="/shop" className="text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">Shop All</Link></li>
             <li><Link to="/shop?category=game" className="text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">Wild Game</Link></li>
             <li><Link to="/shop?category=droewors" className="text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">Droëwors</Link></li>
             <li><Link to="/shop?category=snapstix" className="text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">Snapstix</Link></li>
@@ -45,19 +45,19 @@ const Footer = () => {
 
         {/* Customer Support */}
         <div>
-          <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-8 text-brand-rust italic">Assistance</h4>
+          <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-8 text-brand-rust italic">Support</h4>
           <ul className="space-y-4">
             <li><Link to="/faq" className="text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">General FAQ</Link></li>
-            <li><Link to="/delivery" className="text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">Shipment Logs</Link></li>
-            <li><Link to="/contact" className="text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">Contact Dispatch</Link></li>
-            <li><Link to="/bulk" className="text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">Bulk Requisitions</Link></li>
+            <li><Link to="/delivery" className="text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">Shipping Info</Link></li>
+            <li><Link to="/contact" className="text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">Contact Us</Link></li>
+            <li><Link to="/bulk" className="text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">Bulk Orders</Link></li>
           </ul>
         </div>
 
         {/* Newsletter */}
         <div className="space-y-8">
-          <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-8 text-brand-rust italic">Herd Intel</h4>
-          <p className="text-brand-cream/60 text-sm font-medium italic">Stay updated on our latest batches and exclusive drops.</p>
+          <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-8 text-brand-rust italic">Newsletter</h4>
+          <p className="text-brand-cream/60 text-sm font-medium italic">Stay updated on our latest products and exclusive drops.</p>
           <div className="relative group">
             <input 
               type="email" 
@@ -71,11 +71,11 @@ const Footer = () => {
           <div className="pt-4 flex items-center space-x-6 text-[10px] text-brand-cream/20 uppercase font-black tracking-widest italic">
             <div className="flex items-center space-x-2">
               <Truck className="w-3 h-3 text-brand-rust" />
-              <span>Jozi Dispatched</span>
+              <span>Nationwide Delivery</span>
             </div>
             <div className="flex items-center space-x-2">
               <ShieldCheck className="w-3 h-3 text-brand-rust" />
-              <span>Secured Hooks</span>
+              <span>Secure Payment</span>
             </div>
           </div>
         </div>

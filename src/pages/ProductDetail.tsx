@@ -32,7 +32,7 @@ const ProductDetail = () => {
       <div className="max-w-7xl mx-auto">
         <Link to="/shop" className="inline-flex items-center space-x-2 text-brand-cream/40 hover:text-brand-rust transition-colors mb-12 uppercase text-[10px] font-black tracking-widest italic">
            <ChevronLeft className="w-4 h-4" />
-           <span>Back to Batch List</span>
+           <span>Back to Shop</span>
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 mb-32">
@@ -51,7 +51,7 @@ const ProductDetail = () => {
                 />
                 <div className="absolute top-8 right-8">
                    <div className="w-16 h-16 rounded-full bg-brand-rust text-white flex items-center justify-center font-black italic text-[10px] uppercase shadow-2xl rotate-12">
-                      New<br/>Batch
+                      New<br/>Arrival
                    </div>
                 </div>
              </motion.div>
@@ -73,7 +73,7 @@ const ProductDetail = () => {
                   </span>
                   <div className="flex items-center text-brand-rust scale-90 origin-left">
                     {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
-                    <span className="ml-3 text-brand-cream/30 font-black uppercase tracking-tighter text-xs italic">120+ Batch Reviews</span>
+                    <span className="ml-3 text-brand-cream/30 font-black uppercase tracking-tighter text-xs italic">120+ Reviews</span>
                   </div>
                </div>
                <h1 className="text-6xl lg:text-8xl font-black tracking-tighter mb-6 leading-[0.85] uppercase italic">{product.name}</h1>
@@ -87,7 +87,7 @@ const ProductDetail = () => {
                {/* Weight Selector */}
                <div>
                   <div className="flex justify-between items-end mb-6">
-                    <label className="text-[10px] uppercase font-black tracking-widest text-brand-rust italic">Choose Your Weight</label>
+                    <label className="text-[10px] uppercase font-black tracking-widest text-brand-rust italic">Select Size</label>
                     <span className="text-[10px] text-brand-cream/20 font-black italic uppercase tracking-tighter">Scale Calibration: 100g base</span>
                   </div>
                   <div className="flex flex-wrap gap-4">
@@ -111,7 +111,7 @@ const ProductDetail = () => {
 
                {/* Flavor Selector */}
                <div className="space-y-6">
-                  <label className="text-[10px] uppercase font-black tracking-widest text-brand-rust italic block">Infusion Type</label>
+                  <label className="text-[10px] uppercase font-black tracking-widest text-brand-rust italic block">Select Flavor</label>
                   <div className="grid grid-cols-2 gap-4">
                     {product.flavors.map(f => (
                       <button
@@ -146,7 +146,7 @@ const ProductDetail = () => {
                     className="flex-1 bg-brand-rust text-white py-6 rounded-full font-black uppercase tracking-widest text-sm flex items-center justify-center space-x-3 hover:bg-brand-spiced transition-all duration-300 shadow-3xl transform active:scale-[0.98]"
                   >
                     <ShoppingBag className="w-5 h-5" />
-                    <span>Add to Butcher's Pack</span>
+                    <span>Add to Cart</span>
                   </button>
                </div>
             </div>
@@ -213,7 +213,7 @@ const ProductDetail = () => {
         <section className="mb-24">
            <div className="flex justify-between items-end mb-16 border-b border-white/5 pb-8">
               <h2 className="text-5xl font-black tracking-tighter uppercase text-brand-cream italic">Pairs Perfectly.</h2>
-              <Link to="/shop" className="text-[10px] font-black uppercase tracking-widest border-b border-brand-rust pb-1 text-brand-rust italic">View All Batches</Link>
+              <Link to="/shop" className="text-[10px] font-black uppercase tracking-widest border-b border-brand-rust pb-1 text-brand-rust italic">View All Products</Link>
            </div>
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {PRODUCTS.filter(p => p.id !== product.id).slice(0, 4).map(p => (

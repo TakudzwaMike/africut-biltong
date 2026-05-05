@@ -37,7 +37,7 @@ const CartDrawer = () => {
             <div className="p-8 border-b border-white/5 flex justify-between items-center bg-brand-timber text-brand-cream">
               <div className="flex items-center space-x-3">
                 <ShoppingBag className="w-5 h-5 text-brand-rust" />
-                <h2 className="text-xl font-black tracking-tighter uppercase italic">Your Batch</h2>
+                <h2 className="text-xl font-black tracking-tighter uppercase italic">Shopping Cart</h2>
               </div>
               <button 
                 onClick={() => setIsOpen(false)} 
@@ -54,15 +54,15 @@ const CartDrawer = () => {
                     <ShoppingBag className="w-8 h-8 text-brand-rust/40" />
                   </div>
                   <div className="space-y-2">
-                    <p className="text-brand-timber font-black uppercase tracking-tighter text-xl italic">Empty Hooks.</p>
-                    <p className="text-brand-timber/30 text-xs font-black uppercase tracking-widest leading-loose">We haven't started your selection yet. Jozi is waiting.</p>
+                    <p className="text-brand-timber font-black uppercase tracking-tighter text-xl italic">Your cart is empty.</p>
+                    <p className="text-brand-timber/30 text-xs font-black uppercase tracking-widest leading-loose">Browse our selection and find something you love.</p>
                   </div>
                   <Link 
                     to="/shop" 
                     onClick={() => setIsOpen(false)}
                     className="bg-brand-rust text-white px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-brand-spiced transition-all shadow-3xl"
                   >
-                    Explore Shop
+                    Start Shopping
                   </Link>
                 </div>
               ) : (
@@ -130,14 +130,14 @@ const CartDrawer = () => {
                     onClick={handleCheckout}
                     className="w-full bg-brand-rust text-white py-6 rounded-2xl flex items-center justify-center space-x-3 group hover:bg-brand-spiced transition-all duration-300 shadow-3xl transform active:scale-[0.98]"
                   >
-                    <span className="uppercase font-black tracking-[0.2em] text-xs italic">Secure Disbursement</span>
+                    <span className="uppercase font-black tracking-[0.2em] text-xs italic">Proceed to Checkout</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button 
                     onClick={() => setIsOpen(false)}
                     className="w-full text-center text-[9px] uppercase font-black tracking-widest text-brand-cream/30 hover:text-brand-rust transition-colors italic"
                   >
-                    Continue Batch Selection
+                    Continue Shopping
                   </button>
                 </div>
               </div>

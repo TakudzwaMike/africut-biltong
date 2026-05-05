@@ -42,7 +42,7 @@ const Home = () => {
                   to="/shop" 
                   className="bg-brand-rust text-white px-10 md:px-12 py-5 md:py-6 font-black text-xs md:text-sm uppercase tracking-[0.2em] hover:bg-brand-spiced transition-all shadow-3xl rounded-sm italic block text-center"
                 >
-                  Order Fresh Batch
+                  Shop Now
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
@@ -235,7 +235,7 @@ const Home = () => {
       <section className="py-24 bg-brand-timber text-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
            <div className="text-center mb-20">
-              <span className="text-brand-rust text-xs font-black uppercase tracking-[0.3em] mb-4 block italic">Batch Reports</span>
+              <span className="text-brand-rust text-xs font-black uppercase tracking-[0.3em] mb-4 block italic">Customer Reviews</span>
               <h2 className="text-4xl lg:text-7xl font-black tracking-tighter uppercase italic leading-none">Approved by Connoisseurs</h2>
            </div>
 
@@ -305,7 +305,7 @@ const Home = () => {
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                <div className="text-white">
                   <h2 className="text-4xl lg:text-7xl font-black tracking-tighter leading-[0.9] mb-6 uppercase italic">
-                    Hungry yet?<br />Get 15% Off Your First Batch.
+                    Hungry yet?<br />Get 15% Off Your First Order.
                   </h2>
                   <p className="text-white/80 max-w-md text-lg leading-relaxed font-medium italic">
                     Join our exclusive membership for early access to limited edition drops, subscription discounts, and biltong news.
