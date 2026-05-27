@@ -11,6 +11,6 @@ jobs:
     steps:
       - name: Call Publish Endpoint
         run: |
-          curl -X GET ${{ secrets.SITE_URL }}/api/cron/publish-post \
+          curl --fail -X GET ${{ secrets.SITE_URL }}/api/cron/publish-post \
           -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
           -H "Content-Type: application/json"
