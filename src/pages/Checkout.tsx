@@ -31,11 +31,7 @@ const Checkout = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
-    if (!paystackKey) {
-      alert("Paystack Public Key is not configured. Please check your environment variables.");
-      return;
-    }
+    const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_live_73239c12b24d20f04440820c385734aa2919d817';
 
     const handler = (window as any).PaystackPop.setup({
       key: paystackKey,
