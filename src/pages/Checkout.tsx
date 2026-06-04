@@ -30,11 +30,48 @@ const Checkout = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate order processing
-    setTimeout(() => {
-      setIsOrdered(true);
-      clearCart();
-    }, 1500);
+    
+    const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
+    if (!paystackKey) {
+      alert("Paystack Public Key is not configured. Please check your environment variables.");
+      return;
+    }
+
+    const handler = (window as any).PaystackPop.setup({
+      key: paystackKey,
+      email: formData.email,
+      amount: Math.round(cartTotal * 100), // in cents
+      currency: 'ZAR',
+      ref: `AFR-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+      metadata: {
+        custom_fields: [
+          {
+            display_name: "Customer Name",
+            variable_name: "customer_name",
+            value: `${formData.firstName} ${formData.lastName}`
+          },
+          {
+            display_name: "Phone Number",
+            variable_name: "phone_number",
+            value: formData.phone
+          },
+          {
+            display_name: "Delivery Address",
+            variable_name: "delivery_address",
+            value: `${formData.address}, ${formData.city}, ${formData.postalCode}`
+          }
+        ]
+      },
+      callback: function(response: any) {
+        setIsOrdered(true);
+        clearCart();
+      },
+      onClose: function() {
+        alert('Payment was cancelled. Please try again to complete your order.');
+      }
+    });
+
+    handler.openIframe();
   };
 
   if (isOrdered) {
@@ -83,16 +120,29 @@ const Checkout = () => {
                   <h3 className="text-xs font-black uppercase tracking-widest italic">Customer Information</h3>
                 </div>
                 <div className="grid grid-cols-1 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-brand-cream/30 italic">Email Address</label>
-                    <input 
-                      required
-                      type="email" 
-                      className="w-full bg-brand-surface border border-white/5 rounded-2xl p-5 text-sm font-medium italic focus:border-brand-rust/50 focus:outline-none transition-all placeholder:text-brand-cream/10"
-                      placeholder="e.g. customer@example.com"
-                      value={formData.email}
-                      onChange={e => setFormData({...formData, email: e.target.value})}
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-brand-cream/30 italic">Email Address</label>
+                      <input 
+                        required
+                        type="email" 
+                        className="w-full bg-brand-surface border border-white/5 rounded-2xl p-5 text-sm font-medium italic focus:border-brand-rust/50 focus:outline-none transition-all placeholder:text-brand-cream/10"
+                        placeholder="e.g. customer@example.com"
+                        value={formData.email}
+                        onChange={e => setFormData({...formData, email: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-brand-cream/30 italic">Phone Number</label>
+                      <input 
+                        required
+                        type="tel" 
+                        className="w-full bg-brand-surface border border-white/5 rounded-2xl p-5 text-sm font-medium italic focus:border-brand-rust/50 focus:outline-none transition-all placeholder:text-brand-cream/10"
+                        placeholder="e.g. +27 82 123 4567"
+                        value={formData.phone}
+                        onChange={e => setFormData({...formData, phone: e.target.value})}
+                      />
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -164,8 +214,8 @@ const Checkout = () => {
                 type="submit"
                 className="w-full bg-brand-rust text-white py-8 rounded-3xl font-black uppercase italic tracking-[0.2em] text-sm shadow-3xl hover:bg-brand-spiced transition-all transform active:scale-[0.98] flex items-center justify-center space-x-4"
               >
-                <ShieldCheck className="w-5 h-5" />
-                <span>Place Order</span>
+                <CreditCard className="w-5 h-5" />
+                <span>Pay Now</span>
               </button>
             </form>
           </div>
