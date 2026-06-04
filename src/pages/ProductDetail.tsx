@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { ChevronLeft, Star, ShoppingBag, Truck, RefreshCw, ShieldCheck, Heart, Share2, Info, Plus, Minus } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ChevronLeft, Star, ShoppingBag, Truck, ShieldCheck, Plus, Minus, Zap } from 'lucide-react';
 import { PRODUCTS } from '../constants';
 import { useCart } from '../context/CartContext';
 import { cn } from '../lib/utils';
@@ -172,6 +172,54 @@ const ProductDetail = () => {
                   </div>
                </div>
             </div>
+
+            {/* Chilli Deal Promo - shown when Chilli flavor selected on Beef Biltong */}
+            <AnimatePresence>
+              {product.id === 'bt-01' && selectedFlavor === 'Chilli' && (() => {
+                const deal = PRODUCTS.find(p => p.id === 'chilli-deal');
+                if (!deal) return null;
+                return (
+                  <motion.div
+                    key="chilli-deal-promo"
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="mt-6 rounded-[2rem] overflow-hidden border border-brand-rust/30 shadow-2xl"
+                  >
+                    <div className="grid grid-cols-5 items-stretch">
+                      <div className="col-span-2 relative overflow-hidden min-h-[160px]">
+                        <img src="/images/chilli_deal.jpg" alt="Chilli 3-Pack Deal" className="w-full h-full object-cover object-top" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-brand-timber/80" />
+                      </div>
+                      <div className="col-span-3 bg-brand-surface p-5 flex flex-col justify-between space-y-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Zap className="w-3 h-3 text-brand-rust" />
+                            <span className="text-[9px] font-black uppercase tracking-widest text-brand-rust italic">Hot Deal</span>
+                          </div>
+                          <p className="text-sm font-black uppercase italic tracking-tight text-brand-cream leading-tight">
+                            Buy 3 Chilli Packs<br />
+                            <span className="text-brand-rust text-lg">R85</span>
+                            <span className="text-brand-cream/30 text-xs line-through ml-2">R105</span>
+                          </p>
+                          <p className="text-[10px] text-brand-cream/50 italic mt-1">Save R20 on the bundle!</p>
+                        </div>
+                        <motion.button
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.96 }}
+                          onClick={() => addToCart(deal, 300, 'Chilli', 1)}
+                          className="w-full bg-brand-rust text-white py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-brand-spiced transition-all italic cursor-pointer"
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>Grab the Deal</span>
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })()}
+            </AnimatePresence>
+
           </div>
         </div>
 

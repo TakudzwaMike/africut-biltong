@@ -113,10 +113,49 @@ const Home = () => {
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
-            {featuredProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
+            {/* Flyer Column */}
+            <div className="lg:col-span-4 flex flex-col justify-between space-y-6">
+              <motion.div 
+                whileHover={{ scale: 1.02 }}
+                className="bg-brand-surface rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl relative group aspect-[3/4] flex-grow"
+              >
+                <img 
+                  src="/images/best_sellers_promo.jpg" 
+                  alt="Our Best Sellers Flyer" 
+                  className="w-full h-full object-cover grayscale-[15%] group-hover:grayscale-0 transition-all duration-700"
+                />
+              </motion.div>
+              {/* Quick links to products mentioned on the flyer */}
+              <div className="bg-brand-paper p-6 rounded-2xl border border-brand-timber/5 space-y-3 shadow-md">
+                <span className="text-[10px] text-brand-rust font-black uppercase tracking-widest block italic">Featured in Flyer:</span>
+                <div className="flex flex-col gap-2">
+                  <Link 
+                    to="/product/bt-01" 
+                    className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-brand-timber hover:text-brand-rust transition-colors italic border-b border-brand-timber/10 pb-1"
+                  >
+                    <span>Beef Biltong (Chilli) • R35/Pack</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                  <Link 
+                    to="/product/sp-03" 
+                    className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-brand-timber hover:text-brand-rust transition-colors italic"
+                  >
+                    <span>Babalas Mix • R120/Tub</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Products Column */}
+            <div className="lg:col-span-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 h-full">
+                {featuredProducts.slice(0, 3).map(product => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>

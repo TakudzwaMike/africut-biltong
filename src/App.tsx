@@ -12,6 +12,8 @@ import Contact from './pages/Contact';
 import About from './pages/About';
 import FAQ from './pages/FAQ';
 import Checkout from './pages/Checkout';
+import Corporate from './pages/Corporate';
+import Subscription from './pages/Subscription';
 import WhatsAppButton from './components/WhatsAppButton';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -34,8 +36,8 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/checkout" element={<Checkout />} />
-              <Route path="/subscription" element={<div className="pt-32 text-center h-screen font-display text-4xl">Subscription Packs - Coming Soon</div>} />
-              <Route path="/corporate" element={<div className="pt-32 text-center h-screen font-display text-4xl">Corporate Orders - Coming Soon</div>} />
+              <Route path="/subscription" element={<Subscription />} />
+              <Route path="/corporate" element={<Corporate />} />
               <Route path="/delivery" element={<div className="pt-32 text-center h-screen font-display text-4xl">Delivery Tracking - Coming Soon</div>} />
             </Routes>
           </main>

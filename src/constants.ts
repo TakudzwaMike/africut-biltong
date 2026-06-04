@@ -174,6 +174,24 @@ export const PRODUCTS: Product[] = [
     category: 'specialty',
     flavors: ['Original', 'Chilli'],
     image: '/images/board.png',
+  },
+  {
+    id: 'chilli-deal',
+    name: 'Beef Biltong (Chilli) - 3 Pack Deal',
+    description: 'Special Buy 3 Promotion. Spicy & Tasty Chilli Biltong packs.',
+    prices: { 300: 85.00 },
+    category: 'specialty',
+    flavors: ['Chilli'],
+    image: '/images/chilli_deal.jpg'
+  },
+  {
+    id: 'sub-pack-monthly',
+    name: 'Monthly Subscription Box',
+    description: 'A curated selection of premium biltong, droëwors, and snacks delivered monthly.',
+    prices: { 1000: 699.00 },
+    category: 'specialty',
+    flavors: ['Mixed Cures', 'Original Only', 'Chilli Only'],
+    image: '/images/subscription_promo.jpg'
   }
 ];
 
