@@ -62,7 +62,7 @@ const Corporate = () => {
           </h1>
           <p className="text-brand-cream/60 font-medium italic text-lg leading-relaxed">
             Elevate your corporate gifting and event catering with Johannesburg's premium handcrafted biltong. 
-            We offer custom branding, bulk rates, and express nationwide delivery.
+            We offer custom branding, bulk rates, and express delivery within Gauteng.
           </p>
         </div>
 
@@ -88,7 +88,7 @@ const Corporate = () => {
               <div className="space-y-3 text-sm font-medium italic text-brand-cream/80">
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-brand-rust" />
-                  <span>Call/WhatsApp: 063 973 5240</span>
+                  <span>Call/WhatsApp: +27 81 645 0133</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-brand-rust" />
@@ -300,8 +300,8 @@ const Corporate = () => {
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-brand-timber flex-shrink-0 mt-0.5" />
                   <div>
-                    <h5 className="font-black uppercase tracking-wider text-xs italic">Nationwide Delivery</h5>
-                    <p className="text-[10px] text-white/70 italic mt-0.5">Vacuum-sealed freshness shipped straight to your desk anywhere in SA.</p>
+                    <h5 className="font-black uppercase tracking-wider text-xs italic">Gauteng Delivery</h5>
+                    <p className="text-[10px] text-white/70 italic mt-0.5">Vacuum-sealed freshness shipped straight to your desk anywhere in Gauteng.</p>
                   </div>
                 </div>
               </div>

@@ -11,7 +11,7 @@ const AnnouncementBar = () => {
         </div>
         <div className="flex items-center space-x-2 flex-shrink-0">
           <Truck className="w-2.5 h-2.5" />
-          <span className="text-[8px] font-black uppercase tracking-widest italic">Nationwide Delivery Over R500</span>
+          <span className="text-[8px] font-black uppercase tracking-widest italic">Gauteng Delivery Over R500</span>
         </div>
         <div className="flex items-center space-x-2 flex-shrink-0">
           <Award className="w-2.5 h-2.5" />

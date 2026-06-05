@@ -214,7 +214,7 @@ export const REVIEWS = [
     id: '3',
     user: 'Pieter v.d.M',
     rating: 4,
-    comment: 'Great Droëwors and fast nationwide delivery. Highly recommend.',
+    comment: 'Great Droëwors and fast Gauteng delivery. Highly recommend.',
     date: '2024-03-15'
   }
 ];

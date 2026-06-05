@@ -84,7 +84,7 @@ const Home = () => {
           </motion.div>
           <motion.div whileHover={{ scale: 1.05 }} className="flex flex-col gap-2 lg:border-l lg:border-white/10 lg:pl-10 items-center lg:items-start text-center lg:text-left group cursor-default">
             <div className="text-[10px] font-black uppercase tracking-widest text-brand-cream/60 italic group-hover:text-white transition-colors">Reach</div>
-            <div className="text-3xl sm:text-4xl lg:text-3xl xl:text-4xl font-black italic leading-none tracking-tight uppercase group-hover:text-brand-timber transition-colors">Nationwide</div>
+            <div className="text-3xl sm:text-4xl lg:text-3xl xl:text-4xl font-black italic leading-none tracking-tight uppercase group-hover:text-brand-timber transition-colors">Gauteng Only</div>
             <div className="text-[10px] text-white/90 mt-1 uppercase font-black tracking-widest italic group-hover:text-white transition-colors">Delivery Over R500*</div>
           </motion.div>
           <motion.div whileHover={{ scale: 1.05 }} className="flex flex-col gap-2 lg:border-l lg:border-white/10 lg:pl-10 items-center lg:items-start text-center lg:text-left group cursor-default">
@@ -243,7 +243,7 @@ const Home = () => {
                <div>
                   <span className="text-brand-rust text-[10px] font-black uppercase tracking-[0.3em] mb-4 block italic">The Johannesburg Craft</span>
                   <h2 className="text-4xl lg:text-7xl font-black tracking-tighter leading-[0.9] mb-8 uppercase italic text-brand-cream">
-                    Handcrafted in Jozi.<br />Devoured Nationwide.
+                    Handcrafted in Jozi.<br />Devoured across Gauteng.
                   </h2>
                   <p className="text-brand-cream/80 leading-relaxed text-lg mb-8 font-medium italic">
                     At Africut, we believe in the transparency of our process. From the selection of spice pods to the precision of the cut, every step is handled with mastery in our Johannesburg facility.

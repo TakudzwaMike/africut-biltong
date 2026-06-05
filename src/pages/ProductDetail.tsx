@@ -159,7 +159,7 @@ const ProductDetail = () => {
                   </div>
                   <div>
                     <h4 className="text-xs font-black uppercase tracking-widest mb-1 text-brand-cream italic">Fast Dispatch</h4>
-                    <p className="text-[10px] text-brand-cream/30 leading-relaxed font-black uppercase tracking-tighter">Johannesburg to Nationwide.</p>
+                    <p className="text-[10px] text-brand-cream/30 leading-relaxed font-black uppercase tracking-tighter">Johannesburg to all of Gauteng.</p>
                   </div>
                </div>
                <div className="flex items-start space-x-5">

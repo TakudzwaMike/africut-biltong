@@ -59,6 +59,29 @@ const Checkout = () => {
         ]
       },
       callback: function(response: any) {
+        // Send email with order details via FormSubmit
+        const orderSummary = cart.map(item => `${item.quantity}x ${item.name} (${item.selectedWeight}g, ${item.selectedFlavor}) - R${((item.prices[item.selectedWeight] || 0) * item.quantity).toFixed(2)}`).join('\n');
+        
+        fetch('https://formsubmit.co/ajax/sales@africutbiltong.co.za', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            phone: formData.phone,
+            address: `${formData.address}, ${formData.city}, ${formData.postalCode}`,
+            order_total: `R${cartTotal.toFixed(2)}`,
+            order_details: orderSummary,
+            _subject: `New Order Received - R${cartTotal.toFixed(2)}`,
+            _template: 'table'
+          })
+        }).then(res => res.json())
+          .then(data => console.log('Order email sent', data))
+          .catch(err => console.error('Failed to send email', err));
+
         setIsOrdered(true);
         clearCart();
       },
@@ -206,13 +229,31 @@ const Checkout = () => {
                 </div>
               </section>
 
-              <button 
-                type="submit"
-                className="w-full bg-brand-rust text-white py-8 rounded-3xl font-black uppercase italic tracking-[0.2em] text-sm shadow-3xl hover:bg-brand-spiced transition-all transform active:scale-[0.98] flex items-center justify-center space-x-4"
-              >
-                <CreditCard className="w-5 h-5" />
-                <span>Pay Now</span>
-              </button>
+              <div className="space-y-4">
+                {cartTotal < 250 && (
+                  <div className="bg-brand-rust/20 border border-brand-rust/50 rounded-2xl p-4 text-center">
+                    <p className="text-brand-cream font-black uppercase tracking-widest text-xs italic">
+                      Minimum order value is R250.
+                    </p>
+                    <p className="text-brand-cream/50 font-medium text-[10px] uppercase tracking-wider italic mt-1">
+                      Please add R{(250 - cartTotal).toFixed(2)} more to your cart to checkout.
+                    </p>
+                  </div>
+                )}
+                
+                <button 
+                  type="submit"
+                  disabled={cartTotal < 250}
+                  className={`w-full py-8 rounded-3xl font-black uppercase italic tracking-[0.2em] text-sm shadow-3xl transition-all transform active:scale-[0.98] flex items-center justify-center space-x-4 ${
+                    cartTotal < 250 
+                      ? 'bg-brand-timber border border-white/5 text-brand-cream/20 cursor-not-allowed' 
+                      : 'bg-brand-rust text-white hover:bg-brand-spiced cursor-pointer'
+                  }`}
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <span>Pay Now</span>
+                </button>
+              </div>
             </form>
           </div>
 
@@ -257,7 +298,7 @@ const Checkout = () => {
               <div className="mt-12 grid grid-cols-2 gap-4">
                 <div className="flex items-center space-x-3 text-[9px] font-black uppercase tracking-widest text-brand-cream/20 italic">
                    <Truck className="w-4 h-4 text-brand-rust" />
-                   <span>Nationwide dispatch</span>
+                   <span>Gauteng dispatch</span>
                 </div>
                 <div className="flex items-center space-x-3 text-[9px] font-black uppercase tracking-widest text-brand-cream/20 italic">
                    <ShieldCheck className="w-4 h-4 text-brand-rust" />

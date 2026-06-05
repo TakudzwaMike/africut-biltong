@@ -17,8 +17,18 @@ const Footer = () => {
             <img src="/images/logo.png" alt="Africut Biltong Logo" className="h-24 w-auto object-contain mix-blend-screen self-start -ml-2" />
           </Link>
           <p className="text-brand-cream/70 text-sm leading-relaxed max-w-xs font-medium italic">
-            Premium South African biltong, handcrafted in Johannesburg and delivered nationwide. Authentic flavors, expertly dried.
+            Premium South African biltong, handcrafted in Johannesburg and delivered across Gauteng. Authentic flavors, expertly dried.
           </p>
+          <div className="flex flex-col space-y-2 pt-2">
+            <a href="tel:+27816450133" className="flex items-center space-x-3 text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic">
+              <Phone className="w-4 h-4 text-brand-rust" />
+              <span>+27 81 645 0133</span>
+            </a>
+            <a href="mailto:sales@africutbiltong.co.za" className="flex items-center space-x-3 text-brand-cream/60 hover:text-white transition-colors text-sm font-medium italic break-all">
+              <Mail className="w-4 h-4 text-brand-rust" />
+              <span>sales@africutbiltong.co.za</span>
+            </a>
+          </div>
           <div className="flex space-x-4">
             <a href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-brand-rust hover:border-brand-rust transition-all group">
               <Instagram className="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -71,7 +81,7 @@ const Footer = () => {
           <div className="pt-4 flex items-center space-x-6 text-[10px] text-brand-cream/20 uppercase font-black tracking-widest italic">
             <div className="flex items-center space-x-2">
               <Truck className="w-3 h-3 text-brand-rust" />
-              <span>Nationwide Delivery</span>
+              <span>Gauteng Delivery</span>
             </div>
             <div className="flex items-center space-x-2">
               <ShieldCheck className="w-3 h-3 text-brand-rust" />

@@ -26,14 +26,14 @@ const Contact = () => {
                     <Mail className="w-4 h-4" />
                     <span className="text-[10px] uppercase font-black tracking-widest italic">Email Us</span>
                   </div>
-                  <p className="text-lg font-black text-brand-cream tracking-tighter italic">hello@africutbiltong.co.za</p>
+                  <p className="text-lg font-black text-brand-cream tracking-tighter italic">sales@africutbiltong.co.za</p>
                </div>
                <div className="space-y-4">
                   <div className="flex items-center space-x-3 text-brand-rust">
                     <Phone className="w-4 h-4" />
                     <span className="text-[10px] uppercase font-black tracking-widest italic">Call Us</span>
                   </div>
-                  <p className="text-lg font-black text-brand-cream tracking-tighter italic">+27 (81) 645-0133</p>
+                  <p className="text-lg font-black text-brand-cream tracking-tighter italic">+27 81 645 0133</p>
                </div>
                <div className="space-y-4">
                   <div className="flex items-center space-x-3 text-brand-rust">
@@ -47,7 +47,7 @@ const Contact = () => {
                     <Truck className="w-4 h-4" />
                     <span className="text-[10px] uppercase font-black tracking-widest italic">Delivery</span>
                   </div>
-                  <p className="text-lg font-black text-brand-cream tracking-tighter italic">Nationwide Delivery</p>
+                  <p className="text-lg font-black text-brand-cream tracking-tighter italic">Gauteng Delivery</p>
                </div>
             </div>
 

@@ -14,8 +14,8 @@ const FAQ = () => {
       answer: "Yes, our meat is sourced exclusively from Halal-certified suppliers in South Africa. We maintain strict hygiene and separation standards in our Johannesburg facility."
     },
     {
-      question: "How fast is nationwide delivery?",
-      answer: "We aim to dispatch all orders within 24 hours. Delivery typically takes 24-48 hours for main centers (JHB, CPT, DBN) and up to 72 hours for outlying areas across all provinces."
+      question: "How fast is Gauteng delivery?",
+      answer: "We aim to dispatch all orders within 24 hours. Delivery typically takes 24-48 hours across Gauteng."
     },
     {
       question: "Do you offer bulk or corporate discounts?",
@@ -86,13 +86,13 @@ const FAQ = () => {
            <div className="bg-brand-surface text-brand-cream p-12 lg:p-16 rounded-[3rem] space-y-6 border border-white/5 shadow-3xl">
               <h3 className="text-4xl font-black text-brand-rust tracking-tighter italic uppercase leading-none">Fleet Coverage</h3>
               <p className="text-brand-cream/40 text-sm leading-relaxed font-black uppercase tracking-tighter italic">
-                We dispatch from Jozi to all provinces: GP, WC, KZN, MP, LP, FS, NW, EC, and NC. 48 hour nationwide reach.
+                We dispatch from Jozi to all areas within Gauteng. 48 hour reach within Gauteng.
               </p>
            </div>
            <div className="bg-brand-rust text-white p-12 lg:p-16 rounded-[3rem] space-y-6 shadow-3xl">
               <h3 className="text-4xl font-black tracking-tighter italic uppercase leading-none">Wholesale HQ</h3>
               <p className="text-white/80 text-sm leading-relaxed font-black uppercase tracking-tighter italic">
-                Stock Africut in your retail space. We offer competitive butcher-direct pricing for verified resellers nationwide.
+                Stock Africut in your retail space. We offer competitive butcher-direct pricing for verified resellers in Gauteng.
               </p>
            </div>
         </div>
