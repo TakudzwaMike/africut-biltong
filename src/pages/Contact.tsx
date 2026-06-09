@@ -54,13 +54,15 @@ const Contact = () => {
             <div className="pt-12 border-t border-white/5">
                <p className="text-[10px] uppercase font-black tracking-widest text-brand-cream/20 mb-6 italic">The Social Rack</p>
                <div className="flex space-x-8">
-                  <a href="#" className="flex items-center space-x-2 text-brand-cream/60 hover:text-brand-rust transition-colors group">
+                  <a href="https://www.instagram.com/africutbiltongofficial_2026?igsh=MWRmczNscnp6Nzk3NQ%3D%3D&utm_source=qr" target="_blank" rel="noreferrer" className="flex items-center space-x-2 text-brand-cream/60 hover:text-brand-rust transition-colors group">
                     <Instagram className="w-5 h-5" />
                     <span className="text-xs font-black uppercase tracking-widest italic">Instagram</span>
                   </a>
-                  <a href="#" className="flex items-center space-x-2 text-brand-cream/60 hover:text-brand-rust transition-colors group">
-                    <Facebook className="w-5 h-5" />
-                    <span className="text-xs font-black uppercase tracking-widest italic">Facebook</span>
+                  <a href="https://www.tiktok.com/@africutbiltongofficial" target="_blank" rel="noreferrer" className="flex items-center space-x-2 text-brand-cream/60 hover:text-brand-rust transition-colors group">
+                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.12-3.44-3.17-3.8-5.46-.4-2.52.2-5.14 1.73-7.14 1.56-2.04 4.1-3.2 6.64-3.32v4.04c-1.35.03-2.65.68-3.48 1.75-.75.98-1.07 2.27-.85 3.49.25 1.53 1.34 2.8 2.82 3.3.93.31 1.99.3 2.93-.06 1.4-.53 2.37-1.87 2.47-3.36.14-2.82.08-5.65.12-8.48.01-4.04-.01-8.08.01-12.12z" />
+                    </svg>
+                    <span className="text-xs font-black uppercase tracking-widest italic">TikTok</span>
                   </a>
                </div>
             </div>

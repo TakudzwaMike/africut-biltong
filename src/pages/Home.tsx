@@ -310,6 +310,16 @@ const Home = () => {
               <p className="text-brand-timber/90 max-w-xl mx-auto font-medium italic">
                 Tag us in your snacks and show us how you enjoy your Africut cuts. Use #AfricutCuts for a chance to be featured.
               </p>
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                 <a href="https://www.instagram.com/africutbiltongofficial_2026?igsh=MWRmczNscnp6Nzk3NQ%3D%3D&utm_source=qr" target="_blank" rel="noreferrer" className="bg-brand-rust text-white px-8 py-4 rounded-full font-black uppercase tracking-[0.2em] text-xs flex items-center gap-2 hover:bg-brand-spiced transition-all shadow-xl italic group">
+                    <span>Follow Instagram</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                 </a>
+                 <a href="https://www.tiktok.com/@africutbiltongofficial" target="_blank" rel="noreferrer" className="bg-brand-timber text-white px-8 py-4 rounded-full font-black uppercase tracking-[0.2em] text-xs flex items-center gap-2 hover:bg-black transition-all shadow-xl italic group">
+                    <span>Follow TikTok</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                 </a>
+              </div>
            </div>
            
            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
